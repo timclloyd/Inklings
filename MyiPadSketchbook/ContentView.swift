@@ -12,6 +12,7 @@ struct Page: Identifiable, Equatable {
     let id = UUID()
     var drawing = PKDrawing()
     var position: (x: Int, y: Int)
+    var thumbnail: UIImage?
     
     static func == (lhs: Page, rhs: Page) -> Bool {
         lhs.id == rhs.id
@@ -22,7 +23,12 @@ class PageManager: ObservableObject {
     @Published private(set) var pages: [Page]
     @Published var currentPageID: UUID
     
+    let pageRect: CGRect
+    
     init() {
+        let screenSize = UIScreen.main.bounds.size
+        self.pageRect = CGRect(origin: .zero, size: screenSize)
+        
         let initialPage = Page(position: (0, 0))
         self.pages = [initialPage]
         self.currentPageID = initialPage.id
@@ -38,7 +44,7 @@ class PageManager: ObservableObject {
         if abs(direction.translation.width) > abs(direction.translation.height) {
             newPosition.x += direction.translation.width > 0 ? 1 : -1
         } else {
-            newPosition.y += direction.translation.height > 0 ? -1 : 1  // This is correct
+            newPosition.y += direction.translation.height > 0 ? -1 : 1
         }
         
         if let existingPage = pages.first(where: { $0.position == newPosition }) {
@@ -60,37 +66,95 @@ class PageManager: ObservableObject {
         guard let index = pages.firstIndex(where: { $0.id == currentPageID }) else { return }
         DispatchQueue.main.async {
             self.pages[index].drawing = drawing
+            self.updateThumbnail(for: index)
+        }
+    }
+    
+    func updateThumbnail(for index: Int) {
+        let thumbnail = pages[index].drawing.image(from: pageRect, scale: 1)
+        let aspectRatio = pageRect.size.width / pageRect.size.height
+        let thumbnailSize = CGSize(width: 120, height: 120 / aspectRatio)
+        
+        pages[index].thumbnail = UIGraphicsImageRenderer(size: thumbnailSize).image { context in
+            thumbnail.draw(in: CGRect(origin: .zero, size: thumbnailSize))
+        }
+    }
+    
+    func updateAllThumbnails() {
+        for index in pages.indices {
+            updateThumbnail(for: index)
         }
     }
 }
 
 struct MiniMapView: View {
     @ObservedObject var pageManager: PageManager
+    @Environment(\.colorScheme) var colorScheme
     var onPageSelected: (UUID) -> Void
+    let thumbnailSize: CGSize
+    
+    private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
+        let xPositions = pageManager.pages.map { $0.position.x }
+        let yPositions = pageManager.pages.map { $0.position.y }
+        return (
+            minX: xPositions.min() ?? 0,
+            maxX: xPositions.max() ?? 0,
+            minY: yPositions.min() ?? 0,
+            maxY: yPositions.max() ?? 0
+        )
+    }
+    
+    private func thumbnailPosition(for page: Page) -> CGPoint {
+        let positions = pagePositions
+        return CGPoint(
+            x: CGFloat(positions.maxX - page.position.x) * (thumbnailSize.width + 10) + thumbnailSize.width / 2,
+            y: CGFloat(page.position.y - positions.minY) * (thumbnailSize.height + 10) + thumbnailSize.height / 2
+        )
+    }
+    
+    private var frameSize: CGSize {
+        let positions = pagePositions
+        return CGSize(
+            width: CGFloat((positions.maxX - positions.minX + 1) * Int(thumbnailSize.width + 10)),
+            height: CGFloat((positions.maxY - positions.minY + 1) * Int(thumbnailSize.height + 10))
+        )
+    }
     
     var body: some View {
-        let minX = pageManager.pages.map { $0.position.x }.min() ?? 0
-        let maxX = pageManager.pages.map { $0.position.x }.max() ?? 0
-        let minY = pageManager.pages.map { $0.position.y }.min() ?? 0
-        let maxY = pageManager.pages.map { $0.position.y }.max() ?? 0
-        
-        return ZStack {
-            Color.black.opacity(0.8)
+        ZStack {
+            Color(UIColor.systemBackground)
             
             ForEach(pageManager.pages) { page in
-                RoundedRectangle(cornerRadius: 5)
-                    .fill(page.id == pageManager.currentPageID ? Color.blue : Color.gray)
-                    .frame(width: 50, height: 50)
-                    .position(
-                        x: CGFloat(maxX - page.position.x) * 60 + 30,  // Invert X-axis
-                        y: CGFloat(page.position.y - minY) * 60 + 30  // Correct Y-axis
-                    )
-                    .onTapGesture {
-                        onPageSelected(page.id)
-                    }
+                thumbnailView(for: page)
+                    .position(thumbnailPosition(for: page))
             }
         }
-        .frame(width: CGFloat((maxX - minX + 1) * 60), height: CGFloat((maxY - minY + 1) * 60))
+        .frame(width: frameSize.width, height: frameSize.height)
+    }
+    
+    private func thumbnailView(for page: Page) -> some View {
+        Group {
+            if let thumbnail = page.thumbnail {
+                Image(uiImage: thumbnail)
+                    .resizable()
+                    .scaledToFit()
+            } else {
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(Color.gray)
+            }
+        }
+        .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+        .overlay(
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 1)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(page.id == pageManager.currentPageID ? Color.blue : Color.clear, lineWidth: 2)
+        )
+        .onTapGesture {
+            onPageSelected(page.id)
+        }
     }
 }
 
@@ -103,24 +167,46 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.currentPage.drawing, onDrawingChange: pageManager.updateDrawing)
-                .ignoresSafeArea()
-                .opacity(showMiniMap ? 0.3 : 1)
+            if !showMiniMap {
+                PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.currentPage.drawing, onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect)
+                    .ignoresSafeArea()
+                    .gesture(
+                        MagnificationGesture()
+                            .updating($magnifyBy) { currentState, gestureState, transaction in
+                                gestureState = currentState
+                            }
+                            .onEnded { value in
+                                if value < 0.8 {
+                                    pageManager.updateAllThumbnails()
+                                    showMiniMap = true
+                                }
+                            }
+                    )
             
-            if showMiniMap {
-                MiniMapView(pageManager: pageManager) { selectedPageID in
+                VStack {
+                    Spacer()
+                    Text("Page Position: \(pageManager.currentPage.position.x), \(pageManager.currentPage.position.y)")
+                        .padding()
+                        .background(Color(UIColor.systemBackground).opacity(0.7))
+                        .cornerRadius(10)
+                }
+            } else {
+                MiniMapView(pageManager: pageManager, onPageSelected: { selectedPageID in
                     pageManager.currentPageID = selectedPageID
                     canvasView.drawing = pageManager.currentPage.drawing
                     showMiniMap = false
-                }
-            }
-            
-            VStack {
-                Spacer()
-                Text("Page Position: \(pageManager.currentPage.position.x), \(pageManager.currentPage.position.y)")
-                    .padding()
-                    .background(Color.white.opacity(0.7))
-                    .cornerRadius(10)
+                }, thumbnailSize: CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height)))
+                .gesture(
+                    MagnificationGesture()
+                        .updating($magnifyBy) { currentState, gestureState, transaction in
+                            gestureState = currentState
+                        }
+                        .onEnded { value in
+                            if value > 1.2 {
+                                showMiniMap = false
+                            }
+                        }
+                )
             }
         }
         .gesture(
@@ -132,17 +218,6 @@ struct ContentView: View {
                     }
                 }
         )
-        .gesture(
-            MagnificationGesture()
-                .updating($magnifyBy) { currentState, gestureState, transaction in
-                    gestureState = currentState
-                }
-                .onEnded { value in
-                    if value < 0.8 {
-                        showMiniMap = true
-                    }
-                }
-        )
     }
 }
 
@@ -151,11 +226,23 @@ struct PencilKitView: UIViewRepresentable {
     @Binding var toolPicker: PKToolPicker
     var drawing: PKDrawing
     var onDrawingChange: (PKDrawing) -> Void
+    var pageRect: CGRect
     
     func makeUIView(context: Context) -> PKCanvasView {
-        canvasView.tool = PKInkingTool(.pen, color: .black, width: 1)
         canvasView.drawingPolicy = .pencilOnly
         canvasView.delegate = context.coordinator
+        
+        canvasView.drawing = drawing
+        canvasView.contentSize = pageRect.size
+        canvasView.minimumZoomScale = 1
+        canvasView.maximumZoomScale = 1  // Disable zooming
+        canvasView.zoomScale = 1
+        
+        // Disable the built-in gestures
+        canvasView.isScrollEnabled = false
+        for gesture in canvasView.gestureRecognizers ?? [] {
+            gesture.isEnabled = false
+        }
         
         toolPicker.setVisible(true, forFirstResponder: canvasView)
         toolPicker.addObserver(canvasView)
