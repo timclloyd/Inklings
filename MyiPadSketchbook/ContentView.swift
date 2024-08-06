@@ -38,7 +38,7 @@ class PageManager: ObservableObject {
         if abs(direction.translation.width) > abs(direction.translation.height) {
             newPosition.x += direction.translation.width > 0 ? 1 : -1
         } else {
-            newPosition.y += direction.translation.height > 0 ? 1 : -1
+            newPosition.y += direction.translation.height > 0 ? -1 : 1  // This is correct
         }
         
         if let existingPage = pages.first(where: { $0.position == newPosition }) {
@@ -64,15 +64,56 @@ class PageManager: ObservableObject {
     }
 }
 
+struct MiniMapView: View {
+    @ObservedObject var pageManager: PageManager
+    var onPageSelected: (UUID) -> Void
+    
+    var body: some View {
+        let minX = pageManager.pages.map { $0.position.x }.min() ?? 0
+        let maxX = pageManager.pages.map { $0.position.x }.max() ?? 0
+        let minY = pageManager.pages.map { $0.position.y }.min() ?? 0
+        let maxY = pageManager.pages.map { $0.position.y }.max() ?? 0
+        
+        return ZStack {
+            Color.black.opacity(0.8)
+            
+            ForEach(pageManager.pages) { page in
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(page.id == pageManager.currentPageID ? Color.blue : Color.gray)
+                    .frame(width: 50, height: 50)
+                    .position(
+                        x: CGFloat(maxX - page.position.x) * 60 + 30,  // Invert X-axis
+                        y: CGFloat(page.position.y - minY) * 60 + 30  // Correct Y-axis
+                    )
+                    .onTapGesture {
+                        onPageSelected(page.id)
+                    }
+            }
+        }
+        .frame(width: CGFloat((maxX - minX + 1) * 60), height: CGFloat((maxY - minY + 1) * 60))
+    }
+}
+
 struct ContentView: View {
     @StateObject private var pageManager = PageManager()
     @State private var canvasView = PKCanvasView()
     @State private var toolPicker = PKToolPicker()
+    @State private var showMiniMap = false
+    @GestureState private var magnifyBy = CGFloat(1.0)
     
     var body: some View {
         ZStack {
             PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.currentPage.drawing, onDrawingChange: pageManager.updateDrawing)
                 .ignoresSafeArea()
+                .opacity(showMiniMap ? 0.3 : 1)
+            
+            if showMiniMap {
+                MiniMapView(pageManager: pageManager) { selectedPageID in
+                    pageManager.currentPageID = selectedPageID
+                    canvasView.drawing = pageManager.currentPage.drawing
+                    showMiniMap = false
+                }
+            }
             
             VStack {
                 Spacer()
@@ -88,6 +129,17 @@ struct ContentView: View {
                     if max(abs(value.translation.width), abs(value.translation.height)) > UIScreen.main.bounds.width / 4 {
                         pageManager.addPage(direction: value)
                         canvasView.drawing = pageManager.currentPage.drawing
+                    }
+                }
+        )
+        .gesture(
+            MagnificationGesture()
+                .updating($magnifyBy) { currentState, gestureState, transaction in
+                    gestureState = currentState
+                }
+                .onEnded { value in
+                    if value < 0.8 {
+                        showMiniMap = true
                     }
                 }
         )
