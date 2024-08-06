@@ -1,0 +1,8 @@
+- [x] Implement basic concept
+- [x] Add basic minimap to navigate
+- [ ] Add state saving
+- [ ] Design in-page indicator of which directions already have pages
+	- [ ] Implement it...
+- [ ] Sketch through options for drawing minimap when there are lots of pages
+- [ ] Sketch thru options for deleting pages and handling island pages (or only allow deleting content via the eraser?) 
+
