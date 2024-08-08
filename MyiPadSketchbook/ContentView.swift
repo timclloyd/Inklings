@@ -7,39 +7,61 @@
 
 import SwiftUI
 import PencilKit
+import SwiftData
 
-struct Page: Identifiable, Equatable {
-    let id = UUID()
-    var drawing = PKDrawing()
-    var position: (x: Int, y: Int)
-    var thumbnail: UIImage?
+// MARK: - Data Model
+@Model
+final class Page {
+    var id: UUID
+    var drawingData: Data
+    var positionX: Int
+    var positionY: Int
+    var thumbnailData: Data?
     
-    static func == (lhs: Page, rhs: Page) -> Bool {
-        lhs.id == rhs.id
+    init(id: UUID = UUID(), drawing: PKDrawing = PKDrawing(), position: (x: Int, y: Int)) {
+        self.id = id
+        self.drawingData = drawing.dataRepresentation()
+        self.positionX = position.x
+        self.positionY = position.y
     }
 }
 
+// MARK: - Page Manager
+@MainActor
 class PageManager: ObservableObject {
-    @Published private(set) var pages: [Page]
-    @Published var currentPageID: UUID
-    
+    @Published var currentPageID: UUID?
+    @Published var pages: [Page] = []
     let pageRect: CGRect
     
-    init() {
+    private var modelContext: ModelContext
+    
+    init(modelContext: ModelContext) {
+        self.modelContext = modelContext
         let screenSize = UIScreen.main.bounds.size
         self.pageRect = CGRect(origin: .zero, size: screenSize)
         
-        let initialPage = Page(position: (0, 0))
-        self.pages = [initialPage]
-        self.currentPageID = initialPage.id
+        let descriptor = FetchDescriptor<Page>()
+        self.pages = (try? modelContext.fetch(descriptor)) ?? []
+        
+        if let firstPage = pages.first {
+            currentPageID = firstPage.id
+        } else {
+            let initialPage = createPage(position: (0, 0))
+            currentPageID = initialPage.id
+        }
     }
     
-    var currentPage: Page {
-        pages.first { $0.id == currentPageID }!
+    func createPage(position: (x: Int, y: Int)) -> Page {
+        let newPage = Page(position: position)
+        modelContext.insert(newPage)
+        pages.append(newPage)
+        return newPage
     }
     
     func addPage(direction: DragGesture.Value) {
-        var newPosition = currentPage.position
+        guard let currentPage = getCurrentPage() else { return }
+        
+        var newPosition = (x: currentPage.positionX, y: currentPage.positionY)
         
         if abs(direction.translation.width) > abs(direction.translation.height) {
             newPosition.x += direction.translation.width > 0 ? 1 : -1
@@ -47,55 +69,140 @@ class PageManager: ObservableObject {
             newPosition.y += direction.translation.height > 0 ? -1 : 1
         }
         
-        if let existingPage = pages.first(where: { $0.position == newPosition }) {
-            DispatchQueue.main.async {
-                self.currentPageID = existingPage.id
-            }
-            print("Moved to existing page at position: \(newPosition)")
+        let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
+        
+        if let existingPage = existingPage {
+            currentPageID = existingPage.id
         } else {
-            let newPage = Page(position: newPosition)
-            DispatchQueue.main.async {
-                self.pages.append(newPage)
-                self.currentPageID = newPage.id
-            }
-            print("Created new page at position: \(newPosition)")
+            let newPage = createPage(position: newPosition)
+            currentPageID = newPage.id
         }
     }
     
     func updateDrawing(_ drawing: PKDrawing) {
-        guard let index = pages.firstIndex(where: { $0.id == currentPageID }) else { return }
-        DispatchQueue.main.async {
-            self.pages[index].drawing = drawing
-            self.updateThumbnail(for: index)
-        }
+        guard let currentPage = getCurrentPage() else { return }
+        currentPage.drawingData = drawing.dataRepresentation()
+        updateThumbnail(for: currentPage)
     }
     
-    func updateThumbnail(for index: Int) {
-        let thumbnail = pages[index].drawing.image(from: pageRect, scale: 1)
+    func updateThumbnail(for page: Page) {
+        guard let drawing = try? PKDrawing(data: page.drawingData) else { return }
+        let thumbnail = drawing.image(from: pageRect, scale: 1)
         let aspectRatio = pageRect.size.width / pageRect.size.height
         let thumbnailSize = CGSize(width: 120, height: 120 / aspectRatio)
         
-        pages[index].thumbnail = UIGraphicsImageRenderer(size: thumbnailSize).image { context in
+        let thumbnailImage = UIGraphicsImageRenderer(size: thumbnailSize).image { context in
             thumbnail.draw(in: CGRect(origin: .zero, size: thumbnailSize))
         }
+        
+        page.thumbnailData = thumbnailImage.pngData()
     }
     
     func updateAllThumbnails() {
-        for index in pages.indices {
-            updateThumbnail(for: index)
+        let descriptor = FetchDescriptor<Page>()
+        if let pages = try? modelContext.fetch(descriptor) {
+            for page in pages {
+                updateThumbnail(for: page)
+            }
         }
+    }
+    
+    func getCurrentPage() -> Page? {
+        guard let currentPageID = currentPageID else { return nil }
+        let descriptor = FetchDescriptor<Page>(predicate: #Predicate {
+            $0.id == currentPageID
+        })
+        return try? modelContext.fetch(descriptor).first
+    }
+}
+
+// MARK: - Views
+struct ContentView: View {
+    @Environment(\.modelContext) private var modelContext
+    @Query private var pages: [Page]
+    @StateObject private var pageManager: PageManager
+    @State private var canvasView = PKCanvasView()
+    @State private var toolPicker = PKToolPicker()
+    @State private var showMiniMap = false
+    @GestureState private var magnifyBy = CGFloat(1.0)
+    
+    init(modelContext: ModelContext) {
+        _pageManager = StateObject(wrappedValue: PageManager(modelContext: modelContext))
+    }
+    
+    var body: some View {
+        ZStack {
+            if !showMiniMap {
+                PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect)
+                    .ignoresSafeArea()
+                    .gesture(
+                        MagnificationGesture()
+                            .updating($magnifyBy) { currentState, gestureState, transaction in
+                                gestureState = currentState
+                            }
+                            .onEnded { value in
+                                if value < 0.8 {
+                                    pageManager.updateAllThumbnails()
+                                    showMiniMap = true
+                                }
+                            }
+                    )
+            
+                VStack {
+                    Spacer()
+                    if let currentPage = pageManager.getCurrentPage() {
+                        Text("Page Position: \(currentPage.positionX), \(currentPage.positionY)")
+                            .padding()
+                            .background(Color(UIColor.systemBackground).opacity(0.7))
+                            .cornerRadius(10)
+                    }
+                }
+            } else {
+                MiniMapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPageID in
+                    pageManager.currentPageID = selectedPageID
+                    if let selectedPage = pages.first(where: { $0.id == selectedPageID }),
+                       let drawing = try? PKDrawing(data: selectedPage.drawingData) {
+                        canvasView.drawing = drawing
+                    }
+                    showMiniMap = false
+                })
+                .gesture(
+                    MagnificationGesture()
+                        .updating($magnifyBy) { currentState, gestureState, transaction in
+                            gestureState = currentState
+                        }
+                        .onEnded { value in
+                            if value > 1.2 {
+                                showMiniMap = false
+                            }
+                        }
+                )
+            }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 50)
+                .onEnded { value in
+                    if max(abs(value.translation.width), abs(value.translation.height)) > UIScreen.main.bounds.width / 4 {
+                        pageManager.addPage(direction: value)
+                        if let currentPage = pageManager.getCurrentPage(),
+                           let drawing = try? PKDrawing(data: currentPage.drawingData) {
+                            canvasView.drawing = drawing
+                        }
+                    }
+                }
+        )
     }
 }
 
 struct MiniMapView: View {
     @ObservedObject var pageManager: PageManager
+    let pages: [Page]
     @Environment(\.colorScheme) var colorScheme
     var onPageSelected: (UUID) -> Void
-    let thumbnailSize: CGSize
     
     private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
-        let xPositions = pageManager.pages.map { $0.position.x }
-        let yPositions = pageManager.pages.map { $0.position.y }
+        let xPositions = pages.map { $0.positionX }
+        let yPositions = pages.map { $0.positionY }
         return (
             minX: xPositions.min() ?? 0,
             maxX: xPositions.max() ?? 0,
@@ -106,14 +213,16 @@ struct MiniMapView: View {
     
     private func thumbnailPosition(for page: Page) -> CGPoint {
         let positions = pagePositions
+        let thumbnailSize = CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height))
         return CGPoint(
-            x: CGFloat(positions.maxX - page.position.x) * (thumbnailSize.width + 10) + thumbnailSize.width / 2,
-            y: CGFloat(page.position.y - positions.minY) * (thumbnailSize.height + 10) + thumbnailSize.height / 2
+            x: CGFloat(positions.maxX - page.positionX) * (thumbnailSize.width + 10) + thumbnailSize.width / 2,
+            y: CGFloat(page.positionY - positions.minY) * (thumbnailSize.height + 10) + thumbnailSize.height / 2
         )
     }
     
     private var frameSize: CGSize {
         let positions = pagePositions
+        let thumbnailSize = CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height))
         return CGSize(
             width: CGFloat((positions.maxX - positions.minX + 1) * Int(thumbnailSize.width + 10)),
             height: CGFloat((positions.maxY - positions.minY + 1) * Int(thumbnailSize.height + 10))
@@ -124,7 +233,7 @@ struct MiniMapView: View {
         ZStack {
             Color(UIColor.systemBackground)
             
-            ForEach(pageManager.pages) { page in
+            ForEach(pages) { page in
                 thumbnailView(for: page)
                     .position(thumbnailPosition(for: page))
             }
@@ -133,9 +242,10 @@ struct MiniMapView: View {
     }
     
     private func thumbnailView(for page: Page) -> some View {
-        Group {
-            if let thumbnail = page.thumbnail {
-                Image(uiImage: thumbnail)
+        let thumbnailSize = CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height))
+        return Group {
+            if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
+                Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFit()
             } else {
@@ -158,73 +268,10 @@ struct MiniMapView: View {
     }
 }
 
-struct ContentView: View {
-    @StateObject private var pageManager = PageManager()
-    @State private var canvasView = PKCanvasView()
-    @State private var toolPicker = PKToolPicker()
-    @State private var showMiniMap = false
-    @GestureState private var magnifyBy = CGFloat(1.0)
-    
-    var body: some View {
-        ZStack {
-            if !showMiniMap {
-                PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.currentPage.drawing, onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect)
-                    .ignoresSafeArea()
-                    .gesture(
-                        MagnificationGesture()
-                            .updating($magnifyBy) { currentState, gestureState, transaction in
-                                gestureState = currentState
-                            }
-                            .onEnded { value in
-                                if value < 0.8 {
-                                    pageManager.updateAllThumbnails()
-                                    showMiniMap = true
-                                }
-                            }
-                    )
-            
-                VStack {
-                    Spacer()
-                    Text("Page Position: \(pageManager.currentPage.position.x), \(pageManager.currentPage.position.y)")
-                        .padding()
-                        .background(Color(UIColor.systemBackground).opacity(0.7))
-                        .cornerRadius(10)
-                }
-            } else {
-                MiniMapView(pageManager: pageManager, onPageSelected: { selectedPageID in
-                    pageManager.currentPageID = selectedPageID
-                    canvasView.drawing = pageManager.currentPage.drawing
-                    showMiniMap = false
-                }, thumbnailSize: CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height)))
-                .gesture(
-                    MagnificationGesture()
-                        .updating($magnifyBy) { currentState, gestureState, transaction in
-                            gestureState = currentState
-                        }
-                        .onEnded { value in
-                            if value > 1.2 {
-                                showMiniMap = false
-                            }
-                        }
-                )
-            }
-        }
-        .gesture(
-            DragGesture(minimumDistance: 50)
-                .onEnded { value in
-                    if max(abs(value.translation.width), abs(value.translation.height)) > UIScreen.main.bounds.width / 4 {
-                        pageManager.addPage(direction: value)
-                        canvasView.drawing = pageManager.currentPage.drawing
-                    }
-                }
-        )
-    }
-}
-
 struct PencilKitView: UIViewRepresentable {
     @Binding var canvasView: PKCanvasView
     @Binding var toolPicker: PKToolPicker
-    var drawing: PKDrawing
+    var drawing: Data
     var onDrawingChange: (PKDrawing) -> Void
     var pageRect: CGRect
     
@@ -232,7 +279,9 @@ struct PencilKitView: UIViewRepresentable {
         canvasView.drawingPolicy = .pencilOnly
         canvasView.delegate = context.coordinator
         
-        canvasView.drawing = drawing
+        if let pkDrawing = try? PKDrawing(data: drawing) {
+            canvasView.drawing = pkDrawing
+        }
         canvasView.contentSize = pageRect.size
         canvasView.minimumZoomScale = 1
         canvasView.maximumZoomScale = 1  // Disable zooming
@@ -252,7 +301,9 @@ struct PencilKitView: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: PKCanvasView, context: Context) {
-        uiView.drawing = drawing
+        if let pkDrawing = try? PKDrawing(data: drawing), uiView.drawing != pkDrawing {
+            uiView.drawing = pkDrawing
+        }
     }
     
     func makeCoordinator() -> Coordinator {
@@ -272,9 +323,26 @@ struct PencilKitView: UIViewRepresentable {
     }
 }
 
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-            .previewDevice("iPad Pro (11-inch) (3rd generation)")
+// MARK: - App Entry Point
+@main
+struct MyiPadSketchbookApp: App {
+    var sharedModelContainer: ModelContainer = {
+        let schema = Schema([
+            Page.self,
+        ])
+        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
+        }
+    }()
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView(modelContext: sharedModelContainer.mainContext)
+        }
+        .modelContainer(sharedModelContainer)
     }
 }

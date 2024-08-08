@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		155C1DBE2C62BD6A00FC5882 /* MyiPadSketchbookApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBD2C62BD6A00FC5882 /* MyiPadSketchbookApp.swift */; };
 		155C1DC02C62BD6A00FC5882 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* ContentView.swift */; };
 		155C1DC22C62BD6A00FC5882 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DC12C62BD6A00FC5882 /* Item.swift */; };
 		155C1DC42C62BD6B00FC5882 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC32C62BD6B00FC5882 /* Assets.xcassets */; };
@@ -36,7 +35,6 @@
 
 /* Begin PBXFileReference section */
 		155C1DBA2C62BD6A00FC5882 /* MyiPadSketchbook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyiPadSketchbook.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		155C1DBD2C62BD6A00FC5882 /* MyiPadSketchbookApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookApp.swift; sourceTree = "<group>"; };
 		155C1DBF2C62BD6A00FC5882 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		155C1DC12C62BD6A00FC5882 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		155C1DC32C62BD6B00FC5882 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -96,7 +94,6 @@
 		155C1DBC2C62BD6A00FC5882 /* MyiPadSketchbook */ = {
 			isa = PBXGroup;
 			children = (
-				155C1DBD2C62BD6A00FC5882 /* MyiPadSketchbookApp.swift */,
 				155C1DBF2C62BD6A00FC5882 /* ContentView.swift */,
 				155C1DC12C62BD6A00FC5882 /* Item.swift */,
 				155C1DC32C62BD6B00FC5882 /* Assets.xcassets */,
@@ -262,7 +259,6 @@
 			files = (
 				155C1DC02C62BD6A00FC5882 /* ContentView.swift in Sources */,
 				155C1DC22C62BD6A00FC5882 /* Item.swift in Sources */,
-				155C1DBE2C62BD6A00FC5882 /* MyiPadSketchbookApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
