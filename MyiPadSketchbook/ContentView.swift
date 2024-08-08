@@ -17,12 +17,14 @@ final class Page {
     var positionX: Int
     var positionY: Int
     var thumbnailData: Data?
+    var isSelected: Bool // New property
     
-    init(id: UUID = UUID(), drawing: PKDrawing = PKDrawing(), position: (x: Int, y: Int)) {
+    init(id: UUID = UUID(), drawing: PKDrawing = PKDrawing(), position: (x: Int, y: Int), isSelected: Bool = false) {
         self.id = id
         self.drawingData = drawing.dataRepresentation()
         self.positionX = position.x
         self.positionY = position.y
+        self.isSelected = isSelected
     }
 }
 
@@ -43,11 +45,15 @@ class PageManager: ObservableObject {
         let descriptor = FetchDescriptor<Page>()
         self.pages = (try? modelContext.fetch(descriptor)) ?? []
         
-        if let firstPage = pages.first {
+        if let selectedPage = pages.first(where: { $0.isSelected }) {
+            currentPageID = selectedPage.id
+        } else if let firstPage = pages.first {
             currentPageID = firstPage.id
+            firstPage.isSelected = true
         } else {
             let initialPage = createPage(position: (0, 0))
             currentPageID = initialPage.id
+            initialPage.isSelected = true
         }
     }
     
@@ -72,11 +78,19 @@ class PageManager: ObservableObject {
         let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
         
         if let existingPage = existingPage {
-            currentPageID = existingPage.id
+            setCurrentPage(existingPage)
         } else {
             let newPage = createPage(position: newPosition)
-            currentPageID = newPage.id
+            setCurrentPage(newPage)
         }
+    }
+    
+    func setCurrentPage(_ page: Page) {
+        if let currentPage = getCurrentPage() {
+            currentPage.isSelected = false
+        }
+        page.isSelected = true
+        currentPageID = page.id
     }
     
     func updateDrawing(_ drawing: PKDrawing) {
@@ -158,10 +172,9 @@ struct ContentView: View {
                     }
                 }
             } else {
-                MiniMapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPageID in
-                    pageManager.currentPageID = selectedPageID
-                    if let selectedPage = pages.first(where: { $0.id == selectedPageID }),
-                       let drawing = try? PKDrawing(data: selectedPage.drawingData) {
+                MiniMapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
+                    pageManager.setCurrentPage(selectedPage)
+                    if let drawing = try? PKDrawing(data: selectedPage.drawingData) {
                         canvasView.drawing = drawing
                     }
                     showMiniMap = false
@@ -198,7 +211,7 @@ struct MiniMapView: View {
     @ObservedObject var pageManager: PageManager
     let pages: [Page]
     @Environment(\.colorScheme) var colorScheme
-    var onPageSelected: (UUID) -> Void
+    var onPageSelected: (Page) -> Void
     
     private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
         let xPositions = pages.map { $0.positionX }
@@ -260,10 +273,10 @@ struct MiniMapView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 5)
-                .stroke(page.id == pageManager.currentPageID ? Color.blue : Color.clear, lineWidth: 2)
+                .stroke(page.isSelected ? Color.blue : Color.clear, lineWidth: 2)
         )
         .onTapGesture {
-            onPageSelected(page.id)
+            onPageSelected(page)
         }
     }
 }
