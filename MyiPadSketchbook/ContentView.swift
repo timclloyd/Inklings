@@ -17,7 +17,7 @@ final class Page {
     var positionX: Int
     var positionY: Int
     var thumbnailData: Data?
-    var isSelected: Bool // New property
+    var isSelected: Bool
     
     init(id: UUID = UUID(), drawing: PKDrawing = PKDrawing(), position: (x: Int, y: Int), isSelected: Bool = false) {
         self.id = id
@@ -65,25 +65,27 @@ class PageManager: ObservableObject {
     }
     
     func addPage(direction: DragGesture.Value) {
-        guard let currentPage = getCurrentPage() else { return }
-        
-        var newPosition = (x: currentPage.positionX, y: currentPage.positionY)
-        
-        if abs(direction.translation.width) > abs(direction.translation.height) {
-            newPosition.x += direction.translation.width > 0 ? 1 : -1
-        } else {
-            newPosition.y += direction.translation.height > 0 ? -1 : 1
+            guard let currentPage = getCurrentPage() else { return }
+            
+            var newPosition = (x: currentPage.positionX, y: currentPage.positionY)
+            
+            if abs(direction.translation.width) > abs(direction.translation.height) {
+                // Horizontal movement
+                newPosition.x += direction.translation.width > 0 ? -1 : 1
+            } else {
+                // Vertical movement
+                newPosition.y += direction.translation.height < 0 ? -1 : 1
+            }
+            
+            let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
+            
+            if let existingPage = existingPage {
+                setCurrentPage(existingPage)
+            } else {
+                let newPage = createPage(position: newPosition)
+                setCurrentPage(newPage)
+            }
         }
-        
-        let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
-        
-        if let existingPage = existingPage {
-            setCurrentPage(existingPage)
-        } else {
-            let newPage = createPage(position: newPosition)
-            setCurrentPage(newPage)
-        }
-    }
     
     func setCurrentPage(_ page: Page) {
         if let currentPage = getCurrentPage() {
@@ -165,7 +167,7 @@ struct ContentView: View {
                 VStack {
                     Spacer()
                     if let currentPage = pageManager.getCurrentPage() {
-                        Text("Page Position: \(currentPage.positionX), \(currentPage.positionY)")
+                        Text("Page \(currentPage.positionX), \(currentPage.positionY)")
                             .padding()
                             .background(Color(UIColor.systemBackground).opacity(0.7))
                             .cornerRadius(10)
@@ -228,8 +230,8 @@ struct MiniMapView: View {
         let positions = pagePositions
         let thumbnailSize = CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height))
         return CGPoint(
-            x: CGFloat(positions.maxX - page.positionX) * (thumbnailSize.width + 10) + thumbnailSize.width / 2,
-            y: CGFloat(page.positionY - positions.minY) * (thumbnailSize.height + 10) + thumbnailSize.height / 2
+            x: CGFloat(page.positionX - positions.minX) * (thumbnailSize.width + 10) + thumbnailSize.width / 2,
+            y: CGFloat(positions.maxY - page.positionY) * (thumbnailSize.height + 10) + thumbnailSize.height / 2
         )
     }
     
