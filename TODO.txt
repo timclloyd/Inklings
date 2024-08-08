@@ -1,6 +1,7 @@
 - [x] Implement basic concept
 - [x] Add basic minimap to navigate
-- [ ] Add state saving
+- [/] Add state saving
+- [ ] Make minimap view scrollable / pannable for when there are too many pages to fit in the screen
 - [ ] Design in-page indicator of which directions already have pages
 	- [ ] Implement it...
 - [ ] Sketch through options for drawing minimap when there are lots of pages
