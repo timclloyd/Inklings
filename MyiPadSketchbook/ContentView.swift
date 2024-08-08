@@ -130,6 +130,21 @@ class PageManager: ObservableObject {
         })
         return try? modelContext.fetch(descriptor).first
     }
+    
+    func deleteAllPages() {
+        let descriptor = FetchDescriptor<Page>()
+        if let pages = try? modelContext.fetch(descriptor) {
+            for page in pages {
+                modelContext.delete(page)
+            }
+        }
+        self.pages.removeAll()
+        
+        // Create a new initial page
+        let initialPage = createPage(position: (0, 0))
+        currentPageID = initialPage.id
+        initialPage.isSelected = true
+    }
 }
 
 // MARK: - Views
@@ -180,7 +195,7 @@ struct ContentView: View {
                         canvasView.drawing = drawing
                     }
                     showMiniMap = false
-                })
+                }, showMiniMap: $showMiniMap)
                 .gesture(
                     MagnificationGesture()
                         .updating($magnifyBy) { currentState, gestureState, transaction in
@@ -214,7 +229,18 @@ struct MiniMapView: View {
     let pages: [Page]
     @Environment(\.colorScheme) var colorScheme
     var onPageSelected: (Page) -> Void
-    
+    @State private var showingDeleteConfirmation = false
+    @Binding var showMiniMap: Bool
+    @State private var panOffset: CGSize = .zero
+    @State private var initialOffset: CGSize = .zero
+    @GestureState private var dragOffset: CGSize = .zero
+
+    private var thumbnailSize: CGSize {
+        let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
+        return CGSize(width: 120, height: 120 / aspectRatio)
+    }
+    private let spacing: CGFloat = 10
+
     private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
         let xPositions = pages.map { $0.positionX }
         let yPositions = pages.map { $0.positionY }
@@ -225,40 +251,84 @@ struct MiniMapView: View {
             maxY: yPositions.max() ?? 0
         )
     }
-    
-    private func thumbnailPosition(for page: Page) -> CGPoint {
-        let positions = pagePositions
-        let thumbnailSize = CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height))
-        return CGPoint(
-            x: CGFloat(page.positionX - positions.minX) * (thumbnailSize.width + 10) + thumbnailSize.width / 2,
-            y: CGFloat(positions.maxY - page.positionY) * (thumbnailSize.height + 10) + thumbnailSize.height / 2
-        )
-    }
-    
-    private var frameSize: CGSize {
-        let positions = pagePositions
-        let thumbnailSize = CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height))
-        return CGSize(
-            width: CGFloat((positions.maxX - positions.minX + 1) * Int(thumbnailSize.width + 10)),
-            height: CGFloat((positions.maxY - positions.minY + 1) * Int(thumbnailSize.height + 10))
-        )
-    }
-    
+
     var body: some View {
-        ZStack {
-            Color(UIColor.systemBackground)
-            
-            ForEach(pages) { page in
-                thumbnailView(for: page)
-                    .position(thumbnailPosition(for: page))
+        GeometryReader { geometry in
+            ZStack {
+                Color(UIColor.systemBackground)
+                    .contentShape(Rectangle())  // This makes the entire background interactive
+                
+                ZStack {
+                    ForEach(pages) { page in
+                        thumbnailView(for: page)
+                            .position(thumbnailPosition(for: page, in: geometry))
+                    }
+                }
+                .offset(x: panOffset.width + dragOffset.width, y: panOffset.height + dragOffset.height)
             }
+            .gesture(
+                DragGesture()
+                    .updating($dragOffset) { value, state, _ in
+                        state = value.translation
+                    }
+                    .onEnded { value in
+                        panOffset.width += value.translation.width
+                        panOffset.height += value.translation.height
+                    }
+            )
+            .overlay(
+                Button(action: {
+                    showingDeleteConfirmation = true
+                }) {
+                    Text("Delete All Pages")
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.red)
+                        .cornerRadius(10)
+                }
+                .padding(),
+                alignment: .topTrailing
+            )
         }
-        .frame(width: frameSize.width, height: frameSize.height)
+        .alert("Delete All Pages", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                pageManager.deleteAllPages()
+                showMiniMap = false
+            }
+        } message: {
+            Text("Delete all pages? This cannot be undone.")
+        }
+        .onAppear {
+            centerOnCurrentPage()
+        }
     }
-    
+
+    private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
+        let x = CGFloat(page.positionX - pagePositions.minX) * (thumbnailSize.width + spacing)
+        let y = CGFloat(pagePositions.maxY - page.positionY) * (thumbnailSize.height + spacing)
+        return CGPoint(x: x, y: y)
+    }
+
+    private func centerOnCurrentPage() {
+        guard let currentPage = pageManager.getCurrentPage() else { return }
+        let screenSize = UIScreen.main.bounds.size
+        
+        let currentPagePosition = CGPoint(
+            x: CGFloat(currentPage.positionX - pagePositions.minX) * (thumbnailSize.width + spacing),
+            y: CGFloat(pagePositions.maxY - currentPage.positionY) * (thumbnailSize.height + spacing)
+        )
+        
+        panOffset = CGSize(
+            width: screenSize.width / 2 - currentPagePosition.x - thumbnailSize.width / 2,
+            height: screenSize.height / 2 - currentPagePosition.y - thumbnailSize.height / 2
+        )
+        
+        initialOffset = panOffset
+    }
+
     private func thumbnailView(for page: Page) -> some View {
-        let thumbnailSize = CGSize(width: 120, height: 120 / (pageManager.pageRect.width / pageManager.pageRect.height))
-        return Group {
+        Group {
             if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
                 Image(uiImage: uiImage)
                     .resizable()
