@@ -374,15 +374,15 @@ struct ContentView: View {
                 PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect, onSwipe: handleSwipe)
                     .ignoresSafeArea()
                 
-                VStack {
-                    Spacer()
-                    if let currentPage = pageManager.getCurrentPage() {
-                        Text("Page \(currentPage.positionX), \(currentPage.positionY)")
-                            .padding()
-                            .background(Color(UIColor.systemBackground).opacity(0.7))
-                            .cornerRadius(10)
-                    }
-                }
+//                VStack { // Show page coordinates for debugging
+//                    Spacer()
+//                    if let currentPage = pageManager.getCurrentPage() {
+//                        Text("Page \(currentPage.positionX), \(currentPage.positionY)")
+//                            .padding()
+//                            .background(Color(UIColor.systemBackground).opacity(0.7))
+//                            .cornerRadius(10)
+//                    }
+//                }
             } else {
                 MiniMapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
                     pageManager.setCurrentPage(selectedPage)
