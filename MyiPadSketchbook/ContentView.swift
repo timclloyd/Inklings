@@ -148,6 +148,47 @@ class PageManager: ObservableObject {
 }
 
 // MARK: - Views
+struct DottedBackgroundView: View {
+    @Environment(\.colorScheme) var colorScheme
+    let pageRect: CGRect
+    let dotSize: CGFloat = 2
+    let dotOpacity: CGFloat = 0.2
+    let targetSpacing: CGFloat = 28 // Target spacing between dots
+    
+    var body: some View {
+        Canvas { context, size in
+            let dotColor = (colorScheme == .dark ? Color.white : Color.black).opacity(dotOpacity)
+            
+            // Calculate the number of spaces (gaps between dots, including edges)
+            let horizontalSpaces = max(2, Int((size.width / targetSpacing).rounded()))
+            let verticalSpaces = max(2, Int((size.height / targetSpacing).rounded()))
+            
+            // Calculate actual spacing to fit the size perfectly
+            let horizontalSpacing = size.width / CGFloat(horizontalSpaces)
+            let verticalSpacing = size.height / CGFloat(verticalSpaces)
+            
+            // Number of dots is one less than the number of spaces
+            let horizontalDots = horizontalSpaces - 1
+            let verticalDots = verticalSpaces - 1
+            
+            for x in 0..<horizontalDots {
+                for y in 0..<verticalDots {
+                    let dotRect = CGRect(
+                        x: CGFloat(x + 1) * horizontalSpacing - dotSize/2,
+                        y: CGFloat(y + 1) * verticalSpacing - dotSize/2,
+                        width: dotSize,
+                        height: dotSize
+                    )
+                    let dotPath = Path(ellipseIn: dotRect)
+                    context.fill(dotPath, with: .color(dotColor))
+                }
+            }
+        }
+        .frame(width: pageRect.width, height: pageRect.height)
+        .background(colorScheme == .dark ? Color.black : Color.white)
+    }
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var pages: [Page]
@@ -164,6 +205,9 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             if !showMiniMap {
+                DottedBackgroundView(pageRect: pageManager.pageRect)
+                    .ignoresSafeArea()
+                
                 PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect)
                     .ignoresSafeArea()
                     .gesture(
@@ -363,6 +407,9 @@ struct PencilKitView: UIViewRepresentable {
     func makeUIView(context: Context) -> PKCanvasView {
         canvasView.drawingPolicy = .pencilOnly
         canvasView.delegate = context.coordinator
+        
+        canvasView.backgroundColor = .clear
+        canvasView.isOpaque = false
         
         if let pkDrawing = try? PKDrawing(data: drawing) {
             canvasView.drawing = pkDrawing
