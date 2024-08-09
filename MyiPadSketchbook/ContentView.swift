@@ -65,27 +65,27 @@ class PageManager: ObservableObject {
     }
     
     func addPage(direction: DragGesture.Value) {
-            guard let currentPage = getCurrentPage() else { return }
-            
-            var newPosition = (x: currentPage.positionX, y: currentPage.positionY)
-            
-            if abs(direction.translation.width) > abs(direction.translation.height) {
-                // Horizontal movement
-                newPosition.x += direction.translation.width > 0 ? -1 : 1
-            } else {
-                // Vertical movement
-                newPosition.y += direction.translation.height < 0 ? -1 : 1
-            }
-            
-            let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
-            
-            if let existingPage = existingPage {
-                setCurrentPage(existingPage)
-            } else {
-                let newPage = createPage(position: newPosition)
-                setCurrentPage(newPage)
-            }
+        guard let currentPage = getCurrentPage() else { return }
+        
+        var newPosition = (x: currentPage.positionX, y: currentPage.positionY)
+        
+        if abs(direction.translation.width) > abs(direction.translation.height) {
+            // Horizontal movement
+            newPosition.x += direction.translation.width > 0 ? -1 : 1
+        } else {
+            // Vertical movement
+            newPosition.y += direction.translation.height < 0 ? -1 : 1
         }
+        
+        let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
+        
+        if let existingPage = existingPage {
+            setCurrentPage(existingPage)
+        } else {
+            let newPage = createPage(position: newPosition)
+            setCurrentPage(newPage)
+        }
+    }
     
     func setCurrentPage(_ page: Page) {
         if let currentPage = getCurrentPage() {
@@ -155,6 +155,24 @@ struct AdjacentPages {
     let bottom: Bool
 }
 
+struct SwipeProgress: Equatable {
+    var direction: EdgeDirection?
+    var progress: CGFloat
+    
+    static func == (lhs: SwipeProgress, rhs: SwipeProgress) -> Bool {
+        lhs.direction == rhs.direction && lhs.progress == rhs.progress
+    }
+}
+
+enum EdgeDirection: Equatable {
+    case left, right, top, bottom
+}
+
+enum DragState: Equatable {
+    case inactive
+    case dragging(translation: CGSize)
+}
+
 struct DottedBackgroundView: View {
     @Environment(\.colorScheme) var colorScheme
     let pageRect: CGRect
@@ -164,6 +182,8 @@ struct DottedBackgroundView: View {
     let largeDotOpacity: CGFloat = 0.45
     let targetSpacing: CGFloat = 28
     let adjacentPages: AdjacentPages
+    let swipeProgress: SwipeProgress
+    let dragState: DragState
     
     var dotColor: Color {
         colorScheme == .dark ? .white : .black
@@ -175,17 +195,28 @@ struct DottedBackgroundView: View {
     
     var body: some View {
         Canvas { context, size in
-            // Calculate the number of spaces (gaps between dots, including edges)
             let horizontalSpaces = max(2, Int((size.width / targetSpacing).rounded()))
             let verticalSpaces = max(2, Int((size.height / targetSpacing).rounded()))
-            
-            // Calculate actual spacing to fit the size perfectly
             let horizontalSpacing = size.width / CGFloat(horizontalSpaces)
             let verticalSpacing = size.height / CGFloat(verticalSpaces)
-            
-            // Number of dots is one less than the number of spaces
             let horizontalDots = horizontalSpaces - 1
             let verticalDots = verticalSpaces - 1
+            
+            let animationProgress: CGFloat
+            let animationDirection: EdgeDirection?
+            
+            switch dragState {
+            case .inactive:
+                animationProgress = swipeProgress.progress
+                animationDirection = swipeProgress.direction
+            case .dragging(let translation):
+                animationProgress = min(1.0, max(abs(translation.width), abs(translation.height)) / (size.width / 4))
+                if abs(translation.width) > abs(translation.height) {
+                    animationDirection = translation.width > 0 ? .left : .right
+                } else {
+                    animationDirection = translation.height > 0 ? .top : .bottom
+                }
+            }
             
             for x in 0..<horizontalDots {
                 for y in 0..<verticalDots {
@@ -193,19 +224,45 @@ struct DottedBackgroundView: View {
                     var currentOpacity = dotOpacity
                     var currentColor = dotColor
                     
-                    // Check if the dot should be modified (on an edge with an adjacent page)
-                    if (x == 0 && adjacentPages.left) || (x == horizontalDots - 1 && adjacentPages.right) {
-                        let progress = CGFloat(y) / CGFloat(verticalDots - 1)
-                        let centerProgress = 1 - abs(progress - 0.5) * 2 // 0 at edges, 1 in center
-                        currentDotSize = dotSize + (largeDotSize - dotSize) * centerProgress
-                        currentOpacity = dotOpacity + (largeDotOpacity - dotOpacity) * centerProgress
-                        currentColor = largeDotColor
-                    } else if (y == 0 && adjacentPages.top) || (y == verticalDots - 1 && adjacentPages.bottom) {
-                        let progress = CGFloat(x) / CGFloat(horizontalDots - 1)
-                        let centerProgress = 1 - abs(progress - 0.5) * 2 // 0 at edges, 1 in center
-                        currentDotSize = dotSize + (largeDotSize - dotSize) * centerProgress
-                        currentOpacity = dotOpacity + (largeDotOpacity - dotOpacity) * centerProgress
-                        currentColor = largeDotColor
+                    let isEdgeDot = x == 0 || x == horizontalDots - 1 || y == 0 || y == verticalDots - 1
+                    let isAnimatedEdge = (x == 0 && animationDirection == .left) ||
+                                         (x == horizontalDots - 1 && animationDirection == .right) ||
+                                         (y == 0 && animationDirection == .top) ||
+                                         (y == verticalDots - 1 && animationDirection == .bottom)
+                    
+                    if isEdgeDot {
+                        let edgeProgress: CGFloat
+                        if x == 0 || x == horizontalDots - 1 {
+                            edgeProgress = 1 - abs((CGFloat(y) / CGFloat(verticalDots - 1)) - 0.5) * 2
+                        } else {
+                            edgeProgress = 1 - abs((CGFloat(x) / CGFloat(horizontalDots - 1)) - 0.5) * 2
+                        }
+                        
+                        let isAdjacentEdge = (x == 0 && adjacentPages.left) ||
+                                             (x == horizontalDots - 1 && adjacentPages.right) ||
+                                             (y == 0 && adjacentPages.top) ||
+                                             (y == verticalDots - 1 && adjacentPages.bottom)
+                        
+                        if isAdjacentEdge {
+                            // Existing page: enhance current large dot attributes while maintaining progression
+                            let baseSize = dotSize + (largeDotSize - dotSize) * edgeProgress
+                            let baseOpacity = dotOpacity + (largeDotOpacity - dotOpacity) * edgeProgress
+                            
+                            if isAnimatedEdge {
+                                let enhancementFactor = 0.5 * animationProgress * edgeProgress
+                                currentDotSize = baseSize + (largeDotSize - dotSize) * enhancementFactor
+                                currentOpacity = baseOpacity + (1 - baseOpacity) * enhancementFactor
+                            } else {
+                                currentDotSize = baseSize
+                                currentOpacity = baseOpacity
+                            }
+                            currentColor = largeDotColor
+                        } else if isAnimatedEdge {
+                            // New page: animate from normal to large dot attributes
+                            currentDotSize = dotSize + (largeDotSize - dotSize) * edgeProgress * animationProgress
+                            currentOpacity = min(1, dotOpacity + (largeDotOpacity - dotOpacity) * edgeProgress * animationProgress * 2)
+                            currentColor = Color.interpolate(from: dotColor, to: largeDotColor, progress: animationProgress)
+                        }
                     }
                     
                     let dotRect = CGRect(
@@ -221,6 +278,36 @@ struct DottedBackgroundView: View {
         }
         .frame(width: pageRect.width, height: pageRect.height)
         .background(colorScheme == .dark ? Color.black : Color.white)
+        .animation(.linear(duration: 0.1), value: dragState)
+        .animation(.linear(duration: 0.1), value: swipeProgress)
+    }
+}
+
+// Helper extension for color interpolation
+extension Color {
+    static func interpolate(from: Color, to: Color, progress: CGFloat) -> Color {
+        let fromComponents = from.components
+        let toComponents = to.components
+        
+        let r = fromComponents.red + (toComponents.red - fromComponents.red) * progress
+        let g = fromComponents.green + (toComponents.green - fromComponents.green) * progress
+        let b = fromComponents.blue + (toComponents.blue - fromComponents.blue) * progress
+        let a = fromComponents.opacity + (toComponents.opacity - fromComponents.opacity) * progress
+        
+        return Color(.displayP3, red: r, green: g, blue: b, opacity: a)
+    }
+    
+    var components: (red: CGFloat, green: CGFloat, blue: CGFloat, opacity: CGFloat) {
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var o: CGFloat = 0
+        
+        guard UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &o) else {
+            return (0, 0, 0, 0)
+        }
+        
+        return (r, g, b, o)
     }
 }
 
@@ -232,6 +319,8 @@ struct ContentView: View {
     @State private var toolPicker = PKToolPicker()
     @State private var showMiniMap = false
     @GestureState private var magnifyBy = CGFloat(1.0)
+    @State private var swipeProgress = SwipeProgress(direction: nil, progress: 0)
+    @GestureState private var dragState = DragState.inactive
     
     init(modelContext: ModelContext) {
         _pageManager = StateObject(wrappedValue: PageManager(modelContext: modelContext))
@@ -240,7 +329,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             if !showMiniMap {
-                DottedBackgroundView(pageRect: pageManager.pageRect, adjacentPages: getAdjacentPages())
+                DottedBackgroundView(pageRect: pageManager.pageRect, adjacentPages: getAdjacentPages(), swipeProgress: swipeProgress, dragState: dragState)
                     .ignoresSafeArea()
                 
                 PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect)
@@ -289,7 +378,27 @@ struct ContentView: View {
             }
         }
         .gesture(
-            DragGesture(minimumDistance: 50)
+            DragGesture(minimumDistance: 0, coordinateSpace: .global)
+                .updating($dragState) { value, state, _ in
+                    state = .dragging(translation: value.translation)
+                }
+        )
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 20, coordinateSpace: .global)
+                .onChanged { value in
+                    let translation = value.translation
+                    let progress = min(1.0, max(abs(translation.width), abs(translation.height)) / (UIScreen.main.bounds.width / 4))
+                    
+                    let direction: EdgeDirection
+                    if abs(translation.width) > abs(translation.height) {
+                        direction = translation.width > 0 ? .left : .right
+                    } else {
+                        direction = translation.height > 0 ? .top : .bottom
+                    }
+                    
+                    swipeProgress = SwipeProgress(direction: direction, progress: progress)
+                    print("Swipe Progress: \(swipeProgress)")
+                }
                 .onEnded { value in
                     if max(abs(value.translation.width), abs(value.translation.height)) > UIScreen.main.bounds.width / 4 {
                         pageManager.addPage(direction: value)
@@ -298,6 +407,10 @@ struct ContentView: View {
                             canvasView.drawing = drawing
                         }
                     }
+                    withAnimation(.linear(duration: 0.2)) {
+                        swipeProgress = SwipeProgress(direction: nil, progress: 0)
+                    }
+                    print("Swipe Ended: \(swipeProgress)")
                 }
         )
     }
