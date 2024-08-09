@@ -130,24 +130,6 @@ class PageManager: ObservableObject {
         })
         return try? modelContext.fetch(descriptor).first
     }
-    
-    func canSafelyDeletePage(_ page: Page) -> Bool { // THIS IS NOT WORKING
-        let adjacentPages = [
-            pages.first(where: { $0.positionX == page.positionX - 1 && $0.positionY == page.positionY }),
-            pages.first(where: { $0.positionX == page.positionX + 1 && $0.positionY == page.positionY }),
-            pages.first(where: { $0.positionX == page.positionX && $0.positionY == page.positionY - 1 }),
-            pages.first(where: { $0.positionX == page.positionX && $0.positionY == page.positionY + 1 })
-        ].compactMap { $0 }
-
-        // Check if deleting this page would create an island
-        if adjacentPages.count > 1 {
-            let connectedPages = findConnectedPages(from: adjacentPages[0], excluding: page)
-            return connectedPages.count == pages.count - 2 // All pages except the current one and the one to be deleted
-        }
-
-        // If there's only one or no adjacent pages, it's safe to delete
-        return true
-    }
 
     private func findConnectedPages(from startPage: Page, excluding pageToDelete: Page) -> Set<Page> {
         var visited = Set<Page>()
@@ -630,10 +612,8 @@ struct MiniMapView: View {
         .gesture(
             LongPressGesture(minimumDuration: 0.5)
                 .onEnded { _ in
-                    if pageManager.canSafelyDeletePage(page) {
-                        pageToDelete = page
-                        showingDeleteConfirmation = true
-                    }
+                    pageToDelete = page
+                    showingDeleteConfirmation = true
                 }
         )
     }
