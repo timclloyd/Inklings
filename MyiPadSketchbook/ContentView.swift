@@ -313,7 +313,7 @@ struct DottedBackgroundView: View {
                             // New page: animate from normal to large dot attributes
                             currentDotSize = dotSize + (largeDotSize - dotSize) * edgeProgress * animationProgress
                             currentOpacity = min(1, dotOpacity + (largeDotOpacity - dotOpacity) * edgeProgress * animationProgress * 2)
-                            currentColor = Color.interpolate(from: dotColor, to: largeDotColor, progress: animationProgress)
+                            currentColor = Color.interpolate(from: dotColor, to: .green, progress: animationProgress)
                             
                             if animationProgress >= 1.0 {
                                 currentDotSize *= 2
