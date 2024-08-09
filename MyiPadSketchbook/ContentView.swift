@@ -148,17 +148,33 @@ class PageManager: ObservableObject {
 }
 
 // MARK: - Views
+struct AdjacentPages {
+    let left: Bool
+    let right: Bool
+    let top: Bool
+    let bottom: Bool
+}
+
 struct DottedBackgroundView: View {
     @Environment(\.colorScheme) var colorScheme
     let pageRect: CGRect
     let dotSize: CGFloat = 2
+    let largeDotSize: CGFloat = 3
     let dotOpacity: CGFloat = 0.2
-    let targetSpacing: CGFloat = 28 // Target spacing between dots
+    let largeDotOpacity: CGFloat = 0.45
+    let targetSpacing: CGFloat = 28
+    let adjacentPages: AdjacentPages
+    
+    var dotColor: Color {
+        colorScheme == .dark ? .white : .black
+    }
+    
+    var largeDotColor: Color {
+        colorScheme == .dark ? .blue : .blue
+    }
     
     var body: some View {
         Canvas { context, size in
-            let dotColor = (colorScheme == .dark ? Color.white : Color.black).opacity(dotOpacity)
-            
             // Calculate the number of spaces (gaps between dots, including edges)
             let horizontalSpaces = max(2, Int((size.width / targetSpacing).rounded()))
             let verticalSpaces = max(2, Int((size.height / targetSpacing).rounded()))
@@ -173,14 +189,33 @@ struct DottedBackgroundView: View {
             
             for x in 0..<horizontalDots {
                 for y in 0..<verticalDots {
+                    var currentDotSize = dotSize
+                    var currentOpacity = dotOpacity
+                    var currentColor = dotColor
+                    
+                    // Check if the dot should be modified (on an edge with an adjacent page)
+                    if (x == 0 && adjacentPages.left) || (x == horizontalDots - 1 && adjacentPages.right) {
+                        let progress = CGFloat(y) / CGFloat(verticalDots - 1)
+                        let centerProgress = 1 - abs(progress - 0.5) * 2 // 0 at edges, 1 in center
+                        currentDotSize = dotSize + (largeDotSize - dotSize) * centerProgress
+                        currentOpacity = dotOpacity + (largeDotOpacity - dotOpacity) * centerProgress
+                        currentColor = largeDotColor
+                    } else if (y == 0 && adjacentPages.top) || (y == verticalDots - 1 && adjacentPages.bottom) {
+                        let progress = CGFloat(x) / CGFloat(horizontalDots - 1)
+                        let centerProgress = 1 - abs(progress - 0.5) * 2 // 0 at edges, 1 in center
+                        currentDotSize = dotSize + (largeDotSize - dotSize) * centerProgress
+                        currentOpacity = dotOpacity + (largeDotOpacity - dotOpacity) * centerProgress
+                        currentColor = largeDotColor
+                    }
+                    
                     let dotRect = CGRect(
-                        x: CGFloat(x + 1) * horizontalSpacing - dotSize/2,
-                        y: CGFloat(y + 1) * verticalSpacing - dotSize/2,
-                        width: dotSize,
-                        height: dotSize
+                        x: CGFloat(x + 1) * horizontalSpacing - currentDotSize/2,
+                        y: CGFloat(y + 1) * verticalSpacing - currentDotSize/2,
+                        width: currentDotSize,
+                        height: currentDotSize
                     )
                     let dotPath = Path(ellipseIn: dotRect)
-                    context.fill(dotPath, with: .color(dotColor))
+                    context.fill(dotPath, with: .color(currentColor.opacity(currentOpacity)))
                 }
             }
         }
@@ -205,7 +240,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             if !showMiniMap {
-                DottedBackgroundView(pageRect: pageManager.pageRect)
+                DottedBackgroundView(pageRect: pageManager.pageRect, adjacentPages: getAdjacentPages())
                     .ignoresSafeArea()
                 
                 PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect)
@@ -264,6 +299,19 @@ struct ContentView: View {
                         }
                     }
                 }
+        )
+    }
+    
+    private func getAdjacentPages() -> AdjacentPages {
+        guard let currentPage = pageManager.getCurrentPage() else {
+            return AdjacentPages(left: false, right: false, top: false, bottom: false)
+        }
+        
+        return AdjacentPages(
+            left: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX - 1 && $0.positionY == currentPage.positionY }),
+            right: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX + 1 && $0.positionY == currentPage.positionY }),
+            top: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == currentPage.positionY + 1 }),
+            bottom: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == currentPage.positionY - 1 })
         )
     }
 }
