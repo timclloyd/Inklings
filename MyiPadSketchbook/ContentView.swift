@@ -64,28 +64,28 @@ class PageManager: ObservableObject {
         return newPage
     }
     
-    func addPage(direction: DragGesture.Value) {
-        guard let currentPage = getCurrentPage() else { return }
-        
-        var newPosition = (x: currentPage.positionX, y: currentPage.positionY)
-        
-        if abs(direction.translation.width) > abs(direction.translation.height) {
-            // Horizontal movement
-            newPosition.x += direction.translation.width > 0 ? -1 : 1
-        } else {
-            // Vertical movement
-            newPosition.y += direction.translation.height < 0 ? -1 : 1
+    func addPage(translation: CGSize) {
+            guard let currentPage = getCurrentPage() else { return }
+            
+            var newPosition = (x: currentPage.positionX, y: currentPage.positionY)
+            
+            if abs(translation.width) > abs(translation.height) {
+                // Horizontal movement
+                newPosition.x += translation.width > 0 ? -1 : 1
+            } else {
+                // Vertical movement
+                newPosition.y += translation.height < 0 ? -1 : 1
+            }
+            
+            let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
+            
+            if let existingPage = existingPage {
+                setCurrentPage(existingPage)
+            } else {
+                let newPage = createPage(position: newPosition)
+                setCurrentPage(newPage)
+            }
         }
-        
-        let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
-        
-        if let existingPage = existingPage {
-            setCurrentPage(existingPage)
-        } else {
-            let newPage = createPage(position: newPosition)
-            setCurrentPage(newPage)
-        }
-    }
     
     func setCurrentPage(_ page: Page) {
         if let currentPage = getCurrentPage() {
@@ -383,8 +383,8 @@ struct ContentView: View {
             if !showMiniMap {
                 DottedBackgroundView(pageRect: pageManager.pageRect, adjacentPages: getAdjacentPages(), swipeProgress: swipeProgress, dragState: dragState)
                     .ignoresSafeArea()
-                
-                PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect)
+
+                PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect, onSwipe: handleSwipe)
                     .ignoresSafeArea()
                 
                 VStack {
@@ -406,30 +406,7 @@ struct ContentView: View {
                 }, showMiniMap: $showMiniMap)
             }
         }
-        .gesture(makeDragGesture())
         .gesture(makeMagnificationGesture())
-    }
-    
-    private func makeDragGesture() -> some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .global)
-            .updating($dragState) { value, state, _ in
-                if !showMiniMap {
-                    state = .dragging(translation: value.translation)
-                }
-            }
-            .simultaneously(with:
-                DragGesture(minimumDistance: 20, coordinateSpace: .global)
-                    .onChanged { value in
-                        if !showMiniMap {
-                            updateSwipeProgress(for: value)
-                        }
-                    }
-                    .onEnded { value in
-                        if !showMiniMap {
-                            handleSwipeEnd(for: value)
-                        }
-                    }
-            )
     }
     
     private func makeMagnificationGesture() -> some Gesture {
@@ -447,30 +424,42 @@ struct ContentView: View {
             }
     }
     
-    private func updateSwipeProgress(for value: DragGesture.Value) {
-        let translation = value.translation
-        let progress = min(1.0, max(abs(translation.width), abs(translation.height)) / (UIScreen.main.bounds.width / 4))
+    private func updateSwipeProgress(for gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: gesture.view)
+        let progress = min(1.0, max(abs(translation.x), abs(translation.y)) / (UIScreen.main.bounds.width / 4))
         
         let direction: EdgeDirection
-        if abs(translation.width) > abs(translation.height) {
-            direction = translation.width > 0 ? .left : .right
+        if abs(translation.x) > abs(translation.y) {
+            direction = translation.x > 0 ? .left : .right
         } else {
-            direction = translation.height > 0 ? .top : .bottom
+            direction = translation.y > 0 ? .top : .bottom
         }
         
         swipeProgress = SwipeProgress(direction: direction, progress: progress)
     }
     
-    private func handleSwipeEnd(for value: DragGesture.Value) {
-        if max(abs(value.translation.width), abs(value.translation.height)) > UIScreen.main.bounds.width / 4 {
-            pageManager.addPage(direction: value)
+    private func handleSwipe(_ gesture: UIPanGestureRecognizer) {
+        let translation = gesture.translation(in: gesture.view)
+        let progress = min(1.0, max(abs(translation.x), abs(translation.y)) / (UIScreen.main.bounds.width / 4))
+        
+        let direction: EdgeDirection
+        if abs(translation.x) > abs(translation.y) {
+            direction = translation.x > 0 ? .left : .right
+        } else {
+            direction = translation.y > 0 ? .top : .bottom
+        }
+        
+        swipeProgress = SwipeProgress(direction: direction, progress: progress)
+        
+        if gesture.state == .ended && progress >= 1.0 {
+            pageManager.addPage(translation: CGSize(width: translation.x, height: translation.y))
             if let currentPage = pageManager.getCurrentPage(),
                let drawing = try? PKDrawing(data: currentPage.drawingData) {
                 canvasView.drawing = drawing
             }
-        }
-        withAnimation(.linear(duration: 0.2)) {
-            swipeProgress = SwipeProgress(direction: nil, progress: 0)
+            withAnimation(.linear(duration: 0.2)) {
+                swipeProgress = SwipeProgress(direction: nil, progress: 0)
+            }
         }
     }
     
@@ -646,54 +635,54 @@ struct PencilKitView: UIViewRepresentable {
     var drawing: Data
     var onDrawingChange: (PKDrawing) -> Void
     var pageRect: CGRect
-    
+    var onSwipe: (UIPanGestureRecognizer) -> Void
+
     func makeUIView(context: Context) -> PKCanvasView {
-        canvasView.drawingPolicy = .pencilOnly
         canvasView.delegate = context.coordinator
-        
+        canvasView.drawing = try! PKDrawing(data: drawing)
         canvasView.backgroundColor = .clear
         canvasView.isOpaque = false
-        
-        if let pkDrawing = try? PKDrawing(data: drawing) {
-            canvasView.drawing = pkDrawing
-        }
         canvasView.contentSize = pageRect.size
         canvasView.minimumZoomScale = 1
-        canvasView.maximumZoomScale = 1  // Disable zooming
+        canvasView.maximumZoomScale = 1
         canvasView.zoomScale = 1
-        
-        // Disable the built-in gestures
-        canvasView.isScrollEnabled = false
-        for gesture in canvasView.gestureRecognizers ?? [] {
-            gesture.isEnabled = false
-        }
-        
+
+        // Set drawing policy to pencil only
+        canvasView.drawingPolicy = .pencilOnly
+
+        let panGesture = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handlePan(_:)))
+        canvasView.addGestureRecognizer(panGesture)
+
         toolPicker.setVisible(true, forFirstResponder: canvasView)
         toolPicker.addObserver(canvasView)
         canvasView.becomeFirstResponder()
-        
+
         return canvasView
     }
-    
+
     func updateUIView(_ uiView: PKCanvasView, context: Context) {
         if let pkDrawing = try? PKDrawing(data: drawing), uiView.drawing != pkDrawing {
             uiView.drawing = pkDrawing
         }
     }
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-    
+
     class Coordinator: NSObject, PKCanvasViewDelegate {
         var parent: PencilKitView
-        
+
         init(_ parent: PencilKitView) {
             self.parent = parent
         }
-        
+
         func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
             parent.onDrawingChange(canvasView.drawing)
+        }
+
+        @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
+            parent.onSwipe(gesture)
         }
     }
 }
