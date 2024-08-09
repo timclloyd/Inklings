@@ -131,7 +131,7 @@ class PageManager: ObservableObject {
         return try? modelContext.fetch(descriptor).first
     }
     
-    func canSafelyDeletePage(_ page: Page) -> Bool {
+    func canSafelyDeletePage(_ page: Page) -> Bool { // THIS IS NOT WORKING
         let adjacentPages = [
             pages.first(where: { $0.positionX == page.positionX - 1 && $0.positionY == page.positionY }),
             pages.first(where: { $0.positionX == page.positionX + 1 && $0.positionY == page.positionY }),
@@ -453,17 +453,23 @@ struct ContentView: View {
             direction = translation.y > 0 ? .top : .bottom
         }
         
-        swipeProgress = SwipeProgress(direction: direction, progress: progress)
-        
-        if gesture.state == .ended && progress >= 1.0 {
-            pageManager.addPage(translation: CGSize(width: translation.x, height: translation.y))
-            if let currentPage = pageManager.getCurrentPage(),
-               let drawing = try? PKDrawing(data: currentPage.drawingData) {
-                canvasView.drawing = drawing
+        switch gesture.state {
+        case .changed:
+            swipeProgress = SwipeProgress(direction: direction, progress: progress)
+        case .ended:
+            if progress >= 1.0 {
+                pageManager.addPage(translation: CGSize(width: translation.x, height: translation.y))
+                if let currentPage = pageManager.getCurrentPage(),
+                   let drawing = try? PKDrawing(data: currentPage.drawingData) {
+                    canvasView.drawing = drawing
+                }
             }
+            // Always reset the swipe progress when the gesture ends
             withAnimation(.linear(duration: 0.2)) {
                 swipeProgress = SwipeProgress(direction: nil, progress: 0)
             }
+        default:
+            break
         }
     }
     
