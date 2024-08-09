@@ -386,19 +386,7 @@ struct ContentView: View {
                 
                 PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect)
                     .ignoresSafeArea()
-                    .gesture(
-                        MagnificationGesture()
-                            .updating($magnifyBy) { currentState, gestureState, transaction in
-                                gestureState = currentState
-                            }
-                            .onEnded { value in
-                                if value < 0.8 {
-                                    pageManager.updateAllThumbnails()
-                                    showMiniMap = true
-                                }
-                            }
-                    )
-            
+                
                 VStack {
                     Spacer()
                     if let currentPage = pageManager.getCurrentPage() {
@@ -416,55 +404,74 @@ struct ContentView: View {
                     }
                     showMiniMap = false
                 }, showMiniMap: $showMiniMap)
-                .gesture(
-                    MagnificationGesture()
-                        .updating($magnifyBy) { currentState, gestureState, transaction in
-                            gestureState = currentState
-                        }
-                        .onEnded { value in
-                            if value > 1.2 {
-                                showMiniMap = false
-                            }
-                        }
-                )
             }
         }
-        .gesture(
-            DragGesture(minimumDistance: 0, coordinateSpace: .global)
-                .updating($dragState) { value, state, _ in
+        .gesture(makeDragGesture())
+        .gesture(makeMagnificationGesture())
+    }
+    
+    private func makeDragGesture() -> some Gesture {
+        DragGesture(minimumDistance: 0, coordinateSpace: .global)
+            .updating($dragState) { value, state, _ in
+                if !showMiniMap {
                     state = .dragging(translation: value.translation)
                 }
-        )
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 20, coordinateSpace: .global)
-                .onChanged { value in
-                    let translation = value.translation
-                    let progress = min(1.0, max(abs(translation.width), abs(translation.height)) / (UIScreen.main.bounds.width / 4))
-                    
-                    let direction: EdgeDirection
-                    if abs(translation.width) > abs(translation.height) {
-                        direction = translation.width > 0 ? .left : .right
-                    } else {
-                        direction = translation.height > 0 ? .top : .bottom
-                    }
-                    
-                    swipeProgress = SwipeProgress(direction: direction, progress: progress)
-                    print("Swipe Progress: \(swipeProgress)")
-                }
-                .onEnded { value in
-                    if max(abs(value.translation.width), abs(value.translation.height)) > UIScreen.main.bounds.width / 4 {
-                        pageManager.addPage(direction: value)
-                        if let currentPage = pageManager.getCurrentPage(),
-                           let drawing = try? PKDrawing(data: currentPage.drawingData) {
-                            canvasView.drawing = drawing
+            }
+            .simultaneously(with:
+                DragGesture(minimumDistance: 20, coordinateSpace: .global)
+                    .onChanged { value in
+                        if !showMiniMap {
+                            updateSwipeProgress(for: value)
                         }
                     }
-                    withAnimation(.linear(duration: 0.2)) {
-                        swipeProgress = SwipeProgress(direction: nil, progress: 0)
+                    .onEnded { value in
+                        if !showMiniMap {
+                            handleSwipeEnd(for: value)
+                        }
                     }
-                    print("Swipe Ended: \(swipeProgress)")
+            )
+    }
+    
+    private func makeMagnificationGesture() -> some Gesture {
+        MagnificationGesture()
+            .updating($magnifyBy) { currentState, gestureState, _ in
+                gestureState = currentState
+            }
+            .onEnded { value in
+                if !showMiniMap && value < 0.8 {
+                    pageManager.updateAllThumbnails()
+                    showMiniMap = true
+                } else if showMiniMap && value > 1.2 {
+                    showMiniMap = false
                 }
-        )
+            }
+    }
+    
+    private func updateSwipeProgress(for value: DragGesture.Value) {
+        let translation = value.translation
+        let progress = min(1.0, max(abs(translation.width), abs(translation.height)) / (UIScreen.main.bounds.width / 4))
+        
+        let direction: EdgeDirection
+        if abs(translation.width) > abs(translation.height) {
+            direction = translation.width > 0 ? .left : .right
+        } else {
+            direction = translation.height > 0 ? .top : .bottom
+        }
+        
+        swipeProgress = SwipeProgress(direction: direction, progress: progress)
+    }
+    
+    private func handleSwipeEnd(for value: DragGesture.Value) {
+        if max(abs(value.translation.width), abs(value.translation.height)) > UIScreen.main.bounds.width / 4 {
+            pageManager.addPage(direction: value)
+            if let currentPage = pageManager.getCurrentPage(),
+               let drawing = try? PKDrawing(data: currentPage.drawingData) {
+                canvasView.drawing = drawing
+            }
+        }
+        withAnimation(.linear(duration: 0.2)) {
+            swipeProgress = SwipeProgress(direction: nil, progress: 0)
+        }
     }
     
     private func getAdjacentPages() -> AdjacentPages {
