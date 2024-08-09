@@ -615,11 +615,15 @@ struct MiniMapView: View {
         .frame(width: thumbnailSize.width, height: thumbnailSize.height)
         .overlay(
             RoundedRectangle(cornerRadius: 5)
-                .stroke(colorScheme == .dark ? Color.white : Color.black, lineWidth: 1)
+                .fill(page.isSelected ? Color.clear : (colorScheme == .dark ? Color.black.opacity(0.25) : Color.white.opacity(0.25)))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 5)
-                .stroke(page.isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                .stroke(colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25), lineWidth: 1)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(page.isSelected ? (colorScheme == .dark ? Color.white : Color.black) : Color.clear, lineWidth: 2)
         )
         .onTapGesture {
             onPageSelected(page)
