@@ -131,6 +131,58 @@ class PageManager: ObservableObject {
         return try? modelContext.fetch(descriptor).first
     }
     
+    func canSafelyDeletePage(_ page: Page) -> Bool {
+        let adjacentPages = [
+            pages.first(where: { $0.positionX == page.positionX - 1 && $0.positionY == page.positionY }),
+            pages.first(where: { $0.positionX == page.positionX + 1 && $0.positionY == page.positionY }),
+            pages.first(where: { $0.positionX == page.positionX && $0.positionY == page.positionY - 1 }),
+            pages.first(where: { $0.positionX == page.positionX && $0.positionY == page.positionY + 1 })
+        ].compactMap { $0 }
+
+        // Check if deleting this page would create an island
+        if adjacentPages.count > 1 {
+            let connectedPages = findConnectedPages(from: adjacentPages[0], excluding: page)
+            return connectedPages.count == pages.count - 2 // All pages except the current one and the one to be deleted
+        }
+
+        // If there's only one or no adjacent pages, it's safe to delete
+        return true
+    }
+
+    private func findConnectedPages(from startPage: Page, excluding pageToDelete: Page) -> Set<Page> {
+        var visited = Set<Page>()
+        var queue = [startPage]
+
+        while !queue.isEmpty {
+            let currentPage = queue.removeFirst()
+            if !visited.contains(currentPage) && currentPage != pageToDelete {
+                visited.insert(currentPage)
+                
+                let adjacentPages = [
+                    pages.first(where: { $0.positionX == currentPage.positionX - 1 && $0.positionY == currentPage.positionY }),
+                    pages.first(where: { $0.positionX == currentPage.positionX + 1 && $0.positionY == currentPage.positionY }),
+                    pages.first(where: { $0.positionX == currentPage.positionX && $0.positionY == currentPage.positionY - 1 }),
+                    pages.first(where: { $0.positionX == currentPage.positionX && $0.positionY == currentPage.positionY + 1 })
+                ].compactMap { $0 }
+                
+                queue.append(contentsOf: adjacentPages)
+            }
+        }
+
+        return visited
+    }
+
+    func deletePage(_ page: Page) {
+        modelContext.delete(page)
+        if let index = pages.firstIndex(where: { $0.id == page.id }) {
+            pages.remove(at: index)
+        }
+        
+        if page.isSelected, let firstPage = pages.first {
+            setCurrentPage(firstPage)
+        }
+    }
+    
     func deleteAllPages() {
         let descriptor = FetchDescriptor<Page>()
         if let pages = try? modelContext.fetch(descriptor) {
@@ -435,6 +487,7 @@ struct MiniMapView: View {
     @Environment(\.colorScheme) var colorScheme
     var onPageSelected: (Page) -> Void
     @State private var showingDeleteConfirmation = false
+    @State private var pageToDelete: Page?
     @Binding var showMiniMap: Bool
     @State private var panOffset: CGSize = .zero
     @State private var initialOffset: CGSize = .zero
@@ -461,7 +514,7 @@ struct MiniMapView: View {
         GeometryReader { geometry in
             ZStack {
                 Color(UIColor.systemBackground)
-                    .contentShape(Rectangle())  // This makes the entire background interactive
+                    .contentShape(Rectangle())
                 
                 ZStack {
                     ForEach(pages) { page in
@@ -484,6 +537,7 @@ struct MiniMapView: View {
             .overlay(
                 Button(action: {
                     showingDeleteConfirmation = true
+                    pageToDelete = nil
                 }) {
                     Text("Delete All Pages")
                         .foregroundColor(.white)
@@ -495,14 +549,22 @@ struct MiniMapView: View {
                 alignment: .topTrailing
             )
         }
-        .alert("Delete All Pages", isPresented: $showingDeleteConfirmation) {
+        .alert(pageToDelete == nil ? "Delete All Pages" : "Delete Page", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
-                pageManager.deleteAllPages()
-                showMiniMap = false
+                if let page = pageToDelete {
+                    pageManager.deletePage(page)
+                } else {
+                    pageManager.deleteAllPages()
+                    showMiniMap = false
+                }
             }
         } message: {
-            Text("Delete all pages? This cannot be undone.")
+            if pageToDelete == nil {
+                Text("Delete all pages? This cannot be undone.")
+            } else {
+                Text("Delete this page? This cannot be undone.")
+            }
         }
         .onAppear {
             centerOnCurrentPage()
@@ -555,6 +617,15 @@ struct MiniMapView: View {
         .onTapGesture {
             onPageSelected(page)
         }
+        .gesture(
+            LongPressGesture(minimumDuration: 0.5)
+                .onEnded { _ in
+                    if pageManager.canSafelyDeletePage(page) {
+                        pageToDelete = page
+                        showingDeleteConfirmation = true
+                    }
+                }
+        )
     }
 }
 
