@@ -2,7 +2,7 @@
 - [x] Add basic minimap to navigate
 - [x] Add state saving
 - [x] Make minimap view scrollable / pannable for when there are too many pages to fit in the screen
-- [/] Design * implement in-page indicator of which directions already have pages
-- [ ] Sketch through options for drawing minimap when there are lots of pages
-- [ ] Sketch thru options for deleting pages and handling island pages (or only allow deleting content via the eraser?) 
+- [x] Design * implement in-page indicator of which directions already have pages
+- [-] Sketch thru options for deleting pages and handling island pages (or only allow deleting content via the eraser?) 
+- [ ] Sketch through options for drawing minimap when there are lots of pages !!!
 
