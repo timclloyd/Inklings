@@ -210,10 +210,10 @@ enum DragState: Equatable {
 struct DottedBackgroundView: View {
     @Environment(\.colorScheme) var colorScheme
     let pageRect: CGRect
-    let dotSize: CGFloat = 2
-    let largeDotSize: CGFloat = 3
-    let dotOpacity: CGFloat = 0.2
-    let largeDotOpacity: CGFloat = 0.45
+    let dotSize: CGFloat = 2.5
+    let largeDotSize: CGFloat = 4
+    let dotOpacity: CGFloat = 0.15
+    let largeDotOpacity: CGFloat = 0.5
     let targetSpacing: CGFloat = 28
     let adjacentPages: AdjacentPages
     let swipeProgress: SwipeProgress
@@ -293,8 +293,8 @@ struct DottedBackgroundView: View {
                             currentColor = largeDotColor
                         } else if isAnimatedEdge {
                             // New page: animate from normal to large dot attributes
-                            currentDotSize = dotSize + (largeDotSize - dotSize) * edgeProgress * animationProgress * 2
-                            currentOpacity = min(1, dotOpacity + (largeDotOpacity - dotOpacity) * edgeProgress * animationProgress * 2)
+                            currentDotSize = dotSize + (largeDotSize - dotSize) * edgeProgress * animationProgress * 1.5
+                            currentOpacity = min(1, dotOpacity + (largeDotOpacity - dotOpacity) * edgeProgress * animationProgress * 1.5)
 //                            currentColor = Color.interpolate(from: dotColor, to: .green, progress: animationProgress)
                             
                             if animationProgress >= 1.0 {
