@@ -181,6 +181,21 @@ class PageManager: ObservableObject {
     }
 }
 
+extension PageManager {
+    func movePage(_ page: Page, to newPosition: (x: Int, y: Int)) {
+        page.positionX = newPosition.x
+        page.positionY = newPosition.y
+        try? modelContext.save()
+    }
+}
+
+extension PageManager {
+    func updatePagePosition(_ page: Page) {
+        objectWillChange.send()
+        try? modelContext.save()
+    }
+}
+
 // MARK: - Views
 struct AdjacentPages {
     let left: Bool
@@ -475,12 +490,13 @@ struct MiniMapView: View {
     let pages: [Page]
     @Environment(\.colorScheme) var colorScheme
     var onPageSelected: (Page) -> Void
-    @State private var showingDeleteConfirmation = false
-    @State private var pageToDelete: Page?
     @Binding var showMiniMap: Bool
     @State private var panOffset: CGSize = .zero
     @State private var initialOffset: CGSize = .zero
     @GestureState private var dragOffset: CGSize = .zero
+    @GestureState private var isDragging: Bool = false
+    @State private var draggedPage: Page?
+    @State private var draggedPageOffset: CGSize = .zero
 
     private var thumbnailSize: CGSize {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
@@ -507,57 +523,94 @@ struct MiniMapView: View {
                 
                 ZStack {
                     ForEach(pages) { page in
-                        thumbnailView(for: page)
-                            .position(thumbnailPosition(for: page, in: geometry))
+                        thumbnailView(for: page, in: geometry)
                     }
                 }
-                .offset(x: panOffset.width + dragOffset.width, y: panOffset.height + dragOffset.height)
+                .offset(x: panOffset.width + (isDragging ? 0 : dragOffset.width),
+                        y: panOffset.height + (isDragging ? 0 : dragOffset.height))
             }
-            .gesture(
-                DragGesture()
-                    .updating($dragOffset) { value, state, _ in
-                        state = value.translation
-                    }
-                    .onEnded { value in
-                        panOffset.width += value.translation.width
-                        panOffset.height += value.translation.height
-                    }
-            )
-            .overlay(
-                Button(action: {
-                    showingDeleteConfirmation = true
-                    pageToDelete = nil
-                }) {
-                    Text("Delete All Pages")
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.red)
-                        .cornerRadius(10)
-                }
-                .padding(),
-                alignment: .topTrailing
-            )
-        }
-        .alert(pageToDelete == nil ? "Delete All Pages" : "Delete Page", isPresented: $showingDeleteConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                if let page = pageToDelete {
-                    pageManager.deletePage(page)
-                } else {
-                    pageManager.deleteAllPages()
-                    showMiniMap = false
-                }
-            }
-        } message: {
-            if pageToDelete == nil {
-                Text("Delete all pages? This cannot be undone.")
-            } else {
-                Text("Delete this page? This cannot be undone.")
-            }
+            .gesture(panGesture)
         }
         .onAppear {
             centerOnCurrentPage()
         }
+    }
+
+    private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
+        ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
+            .overlay(selectionOverlay(for: page))
+            .overlay(movementOverlay(for: page))
+            .position(thumbnailPosition(for: page, in: geometry))
+            .offset(page == draggedPage ? draggedPageOffset : .zero)
+            .gesture(
+                longPressDragGesture(for: page)
+                    .simultaneously(with:
+                        TapGesture()
+                            .onEnded {
+                                onPageSelected(page)
+                                showMiniMap = false
+                            }
+                    )
+            )
+    }
+
+    private var panGesture: some Gesture {
+        DragGesture()
+            .updating($dragOffset) { value, state, _ in
+                guard draggedPage == nil else { return }
+                state = value.translation
+            }
+            .onEnded { value in
+                guard draggedPage == nil else { return }
+                panOffset.width += value.translation.width
+                panOffset.height += value.translation.height
+            }
+    }
+
+    private func longPressDragGesture(for page: Page) -> some Gesture {
+        LongPressGesture(minimumDuration: 0.5)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($isDragging) { value, state, _ in
+                state = true
+            }
+            .onChanged { value in
+                switch value {
+                case .first(true):
+                    self.draggedPage = page
+                    self.draggedPageOffset = .zero
+                case .second(true, let drag?):
+                    self.draggedPageOffset = drag.translation
+                default:
+                    break
+                }
+            }
+            .onEnded { value in
+                guard let draggedPage = self.draggedPage else { return }
+                if case .second(true, let drag?) = value {
+                    let gridMovement = calculateGridMovement(drag.translation)
+                    let newPosition = (
+                        x: draggedPage.positionX + gridMovement.x,
+                        y: draggedPage.positionY + gridMovement.y
+                    )
+                    if self.isValidMove(to: newPosition) {
+                        draggedPage.positionX = newPosition.x
+                        draggedPage.positionY = newPosition.y
+                        self.pageManager.updatePagePosition(draggedPage)
+                    }
+                }
+                self.draggedPage = nil
+                self.draggedPageOffset = .zero
+            }
+    }
+
+    private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
+        let xMovement = Int(round(translation.width / (thumbnailSize.width + spacing)))
+        let yMovement = -Int(round(translation.height / (thumbnailSize.height + spacing)))
+        return (x: xMovement, y: yMovement)
+    }
+
+    private func isValidMove(to position: (x: Int, y: Int)) -> Bool {
+        !pages.contains { $0 !== draggedPage && $0.positionX == position.x && $0.positionY == position.y }
     }
 
     private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
@@ -583,7 +636,25 @@ struct MiniMapView: View {
         initialOffset = panOffset
     }
 
-    private func thumbnailView(for page: Page) -> some View {
+    private func selectionOverlay(for page: Page) -> some View {
+        RoundedRectangle(cornerRadius: 5)
+            .stroke(colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25), lineWidth: 1)
+    }
+
+    private func movementOverlay(for page: Page) -> some View {
+        RoundedRectangle(cornerRadius: 5)
+            .stroke(page.isSelected ? (colorScheme == .dark ? Color.white : Color.black) :
+                   (draggedPage == page ? Color.blue : Color.clear),
+                   lineWidth: 2)
+    }
+}
+
+struct ThumbnailContent: View {
+    let page: Page
+    let thumbnailSize: CGSize
+    let colorScheme: ColorScheme
+    
+    var body: some View {
         Group {
             if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
                 Image(uiImage: uiImage)
@@ -598,24 +669,6 @@ struct MiniMapView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 5)
                 .fill(page.isSelected ? Color.clear : (colorScheme == .dark ? Color.black.opacity(0.25) : Color.white.opacity(0.25)))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 5)
-                .stroke(colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25), lineWidth: 1)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 5)
-                .stroke(page.isSelected ? (colorScheme == .dark ? Color.white : Color.black) : Color.clear, lineWidth: 2)
-        )
-        .onTapGesture {
-            onPageSelected(page)
-        }
-        .gesture(
-            LongPressGesture(minimumDuration: 0.5)
-                .onEnded { _ in
-                    pageToDelete = page
-                    showingDeleteConfirmation = true
-                }
         )
     }
 }
