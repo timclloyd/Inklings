@@ -227,8 +227,8 @@ struct DottedBackgroundView: View {
     let pageRect: CGRect
     let dotSize: CGFloat = 2.5
     let largeDotSize: CGFloat = 4
-    let dotOpacity: CGFloat = 0.15
-    let largeDotOpacity: CGFloat = 0.5
+    let dotOpacity: CGFloat = 0.2
+    let largeDotOpacity: CGFloat = 0.55
     let targetSpacing: CGFloat = 28
     let adjacentPages: AdjacentPages
     let swipeProgress: SwipeProgress
