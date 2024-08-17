@@ -494,7 +494,7 @@ struct MiniMapView: View {
     @State private var panOffset: CGSize = .zero
     @State private var initialOffset: CGSize = .zero
     @GestureState private var dragOffset: CGSize = .zero
-    @GestureState private var isDragging: Bool = false
+    @GestureState private var isLongPressing: Bool = false
     @State private var draggedPage: Page?
     @State private var draggedPageOffset: CGSize = .zero
 
@@ -526,10 +526,23 @@ struct MiniMapView: View {
                         thumbnailView(for: page, in: geometry)
                     }
                 }
-                .offset(x: panOffset.width + (isDragging ? 0 : dragOffset.width),
-                        y: panOffset.height + (isDragging ? 0 : dragOffset.height))
+                .offset(x: panOffset.width + dragOffset.width,
+                        y: panOffset.height + dragOffset.height)
             }
-            .gesture(panGesture)
+            .gesture(
+                DragGesture()
+                    .updating($dragOffset) { value, state, _ in
+                        guard !isLongPressing else { return }
+                        state = value.translation
+                    }
+                    .onEnded { value in
+                        guard !isLongPressing else { return }
+                        panOffset = CGSize(
+                            width: panOffset.width + value.translation.width,
+                            height: panOffset.height + value.translation.height
+                        )
+                    }
+            )
         }
         .onAppear {
             centerOnCurrentPage()
@@ -538,69 +551,57 @@ struct MiniMapView: View {
 
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
         ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
-            .overlay(selectionOverlay(for: page))
-            .overlay(movementOverlay(for: page))
+            .overlay(thumbnailOverlay(for: page))
             .position(thumbnailPosition(for: page, in: geometry))
             .offset(page == draggedPage ? draggedPageOffset : .zero)
             .gesture(
-                longPressDragGesture(for: page)
-                    .simultaneously(with:
-                        TapGesture()
-                            .onEnded {
-                                onPageSelected(page)
-                                showMiniMap = false
-                            }
-                    )
-            )
-    }
-
-    private var panGesture: some Gesture {
-        DragGesture()
-            .updating($dragOffset) { value, state, _ in
-                guard draggedPage == nil else { return }
-                state = value.translation
-            }
-            .onEnded { value in
-                guard draggedPage == nil else { return }
-                panOffset.width += value.translation.width
-                panOffset.height += value.translation.height
-            }
-    }
-
-    private func longPressDragGesture(for page: Page) -> some Gesture {
-        LongPressGesture(minimumDuration: 0.5)
-            .sequenced(before: DragGesture(minimumDistance: 0))
-            .updating($isDragging) { value, state, _ in
-                state = true
-            }
-            .onChanged { value in
-                switch value {
-                case .first(true):
-                    self.draggedPage = page
-                    self.draggedPageOffset = .zero
-                case .second(true, let drag?):
-                    self.draggedPageOffset = drag.translation
-                default:
-                    break
-                }
-            }
-            .onEnded { value in
-                guard let draggedPage = self.draggedPage else { return }
-                if case .second(true, let drag?) = value {
-                    let gridMovement = calculateGridMovement(drag.translation)
-                    let newPosition = (
-                        x: draggedPage.positionX + gridMovement.x,
-                        y: draggedPage.positionY + gridMovement.y
-                    )
-                    if self.isValidMove(to: newPosition) {
-                        draggedPage.positionX = newPosition.x
-                        draggedPage.positionY = newPosition.y
-                        self.pageManager.updatePagePosition(draggedPage)
+                TapGesture()
+                    .onEnded {
+                        onPageSelected(page)
+                        showMiniMap = false
                     }
-                }
-                self.draggedPage = nil
-                self.draggedPageOffset = .zero
-            }
+            )
+            .gesture(
+                LongPressGesture(minimumDuration: 0.5)
+                    .sequenced(before: DragGesture())
+                    .updating($isLongPressing) { value, state, _ in
+                        switch value {
+                        case .first(true), .second(true, _):
+                            state = true
+                        default:
+                            state = false
+                        }
+                    }
+                    .onChanged { value in
+                        switch value {
+                        case .first(true):
+                            self.draggedPage = page
+                            self.draggedPageOffset = .zero
+                        case .second(true, let drag):
+                            if let drag = drag {
+                                self.draggedPageOffset = drag.translation
+                            }
+                        default:
+                            break
+                        }
+                    }
+                    .onEnded { value in
+                        if case .second(true, let drag?) = value {
+                            let gridMovement = calculateGridMovement(drag.translation)
+                            let newPosition = (
+                                x: page.positionX + gridMovement.x,
+                                y: page.positionY + gridMovement.y
+                            )
+                            if self.isValidMove(to: newPosition) {
+                                page.positionX = newPosition.x
+                                page.positionY = newPosition.y
+                                self.pageManager.updatePagePosition(page)
+                            }
+                        }
+                        self.draggedPage = nil
+                        self.draggedPageOffset = .zero
+                    }
+            )
     }
 
     private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
@@ -636,16 +637,14 @@ struct MiniMapView: View {
         initialOffset = panOffset
     }
 
-    private func selectionOverlay(for page: Page) -> some View {
+    private func thumbnailOverlay(for page: Page) -> some View {
         RoundedRectangle(cornerRadius: 5)
-            .stroke(colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25), lineWidth: 1)
-    }
-
-    private func movementOverlay(for page: Page) -> some View {
-        RoundedRectangle(cornerRadius: 5)
-            .stroke(page.isSelected ? (colorScheme == .dark ? Color.white : Color.black) :
-                   (draggedPage == page ? Color.blue : Color.clear),
-                   lineWidth: 2)
+            .stroke(
+                page.id == pageManager.currentPageID ? .blue :
+                    (draggedPage == page ? .green :
+                        (colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25))),
+                lineWidth: (page.id == pageManager.currentPageID || draggedPage == page) ? 2 : 1
+            )
     }
 }
 
@@ -666,10 +665,6 @@ struct ThumbnailContent: View {
             }
         }
         .frame(width: thumbnailSize.width, height: thumbnailSize.height)
-        .overlay(
-            RoundedRectangle(cornerRadius: 5)
-                .fill(page.isSelected ? Color.clear : (colorScheme == .dark ? Color.black.opacity(0.25) : Color.white.opacity(0.25)))
-        )
     }
 }
 
