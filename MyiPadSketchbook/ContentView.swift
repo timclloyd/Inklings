@@ -556,11 +556,15 @@ struct MiniMapView: View {
             .position(thumbnailPosition(for: page, in: geometry))
             .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
             .gesture(
-                DragGesture()
+                DragGesture(minimumDistance: 0)
                     .onChanged { value in
                         if self.isRearranging {
                             self.draggedPage = page
                             self.draggedPageOffset = value.translation
+                        } else if value.translation != .zero {
+                            // Handle panning when not rearranging
+                            self.panOffset.width += value.translation.width
+                            self.panOffset.height += value.translation.height
                         }
                     }
                     .onEnded { value in
@@ -577,15 +581,13 @@ struct MiniMapView: View {
                             }
                             self.draggedPage = nil
                             self.draggedPageOffset = .zero
+                        } else if value.translation == .zero {
+                            // Handle tap when not rearranging
+                            self.onPageSelected(page)
+                            self.showMiniMap = false
                         }
                     }
             )
-            .onTapGesture {
-                if !self.isRearranging {
-                    self.onPageSelected(page)
-                    self.showMiniMap = false
-                }
-            }
     }
 
     private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
