@@ -43,7 +43,13 @@ class PageManager: ObservableObject {
         let descriptor = FetchDescriptor<Page>()
         self.pages = (try? modelContext.fetch(descriptor)) ?? []
         
-        if let firstPage = pages.first {
+        // Load saved position
+        let savedX = UserDefaults.standard.integer(forKey: "CurrentPageX")
+        let savedY = UserDefaults.standard.integer(forKey: "CurrentPageY")
+        
+        if let savedPage = pages.first(where: { $0.positionX == savedX && $0.positionY == savedY }) {
+            currentPageID = savedPage.id
+        } else if let firstPage = pages.first {
             currentPageID = firstPage.id
         } else {
             let initialPage = createPage(position: (0, 0))
@@ -60,6 +66,9 @@ class PageManager: ObservableObject {
     
     func setCurrentPage(_ page: Page) {
         currentPageID = page.id
+        // Save current page position
+        UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
+        UserDefaults.standard.set(page.positionY, forKey: "CurrentPageY")
     }
     
     func addPage(translation: CGSize) {
@@ -118,6 +127,11 @@ class PageManager: ObservableObject {
     func updatePagePosition(_ page: Page) {
         objectWillChange.send()
         try? modelContext.save()
+        // Update saved position if this is the current page
+        if page.id == currentPageID {
+            UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
+            UserDefaults.standard.set(page.positionY, forKey: "CurrentPageY")
+        }
     }
 }
 
