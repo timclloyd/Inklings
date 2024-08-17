@@ -470,13 +470,10 @@ struct MiniMapView: View {
     var onPageSelected: (Page) -> Void
     @Binding var showMiniMap: Bool
     @State private var panOffset: CGSize = .zero
-    @State private var initialOffset: CGSize = .zero
-    @GestureState private var dragOffset: CGSize = .zero
     @State private var draggedPage: Page?
     @State private var draggedPageOffset: CGSize = .zero
-    @State private var isDragging: Bool = false
-    @State private var draggedPageId: UUID?
-    @GestureState private var isLongPressing = false
+    @State private var isRearranging: Bool = false
+    @GestureState private var dragGestureState: CGSize = .zero
 
     private var thumbnailSize: CGSize {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
@@ -500,26 +497,41 @@ struct MiniMapView: View {
             ZStack {
                 Color(UIColor.systemBackground)
                     .contentShape(Rectangle())
-                
+
                 ZStack {
                     ForEach(pages) { page in
                         thumbnailView(for: page, in: geometry)
                     }
                 }
-                .offset(x: panOffset.width + dragOffset.width,
-                        y: panOffset.height + dragOffset.height)
+                .offset(x: panOffset.width + dragGestureState.width,
+                        y: panOffset.height + dragGestureState.height)
+
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            isRearranging.toggle()
+                        }) {
+                            Text(isRearranging ? "Done" : "Rearrange")
+                                .padding(8)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        .padding()
+                    }
+                    Spacer()
+                }
             }
             .gesture(
                 DragGesture()
-                    .updating($dragOffset) { value, state, _ in
-                        guard draggedPageId == nil else { return }
+                    .updating($dragGestureState) { value, state, _ in
                         state = value.translation
                     }
                     .onEnded { value in
-                        guard draggedPageId == nil else { return }
-                        panOffset = CGSize(
-                            width: panOffset.width + value.translation.width,
-                            height: panOffset.height + value.translation.height
+                        self.panOffset = CGSize(
+                            width: self.panOffset.width + value.translation.width,
+                            height: self.panOffset.height + value.translation.height
                         )
                     }
             )
@@ -530,8 +542,8 @@ struct MiniMapView: View {
     }
 
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
-        let isSelected = draggedPageId == page.id
-        let appearance = (isSelected && (isLongPressing || isDragging)) ?
+        let isSelected = draggedPage?.id == page.id
+        let appearance = isSelected && isRearranging ?
             ThumbnailAppearance.dragging(colorScheme: colorScheme) :
             ThumbnailAppearance.normal(colorScheme: colorScheme)
 
@@ -541,54 +553,19 @@ struct MiniMapView: View {
             .background(appearance.backgroundColor)
             .scaleEffect(appearance.scale)
             .opacity(appearance.opacity)
-            .shadow(
-                color: appearance.shadow?.color ?? .clear,
-                radius: appearance.shadow?.radius ?? 0,
-                x: appearance.shadow?.x ?? 0,
-                y: appearance.shadow?.y ?? 0
-            )
             .position(thumbnailPosition(for: page, in: geometry))
-            .offset(isSelected ? draggedPageOffset : .zero)
+            .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
             .gesture(
-                TapGesture()
-                    .onEnded {
-                        onPageSelected(page)
-                        showMiniMap = false
-                    }
-            )
-            .gesture(
-                LongPressGesture(minimumDuration: 0.5)
-                    .updating($isLongPressing) { currentState, gestureState, _ in
-                        gestureState = currentState
-                    }
-                    .onEnded { _ in
-                        self.draggedPageId = page.id
-                    }
-                    .sequenced(before: DragGesture())
-                    .updating($isLongPressing) { value, state, _ in
-                        switch value {
-                        case .first(true):
-                            state = true
-                        case .second(true, _):
-                            state = true
-                        default:
-                            state = false
-                        }
-                    }
+                DragGesture()
                     .onChanged { value in
-                        switch value {
-                        case .first(true):
-                            self.isDragging = false
-                        case .second(true, let drag?):
-                            self.isDragging = true
-                            self.draggedPageOffset = drag.translation
-                        default:
-                            break
+                        if self.isRearranging {
+                            self.draggedPage = page
+                            self.draggedPageOffset = value.translation
                         }
                     }
                     .onEnded { value in
-                        if case .second(true, let drag?) = value {
-                            let gridMovement = calculateGridMovement(drag.translation)
+                        if self.isRearranging {
+                            let gridMovement = self.calculateGridMovement(value.translation)
                             let newPosition = (
                                 x: page.positionX + gridMovement.x,
                                 y: page.positionY + gridMovement.y
@@ -598,12 +575,17 @@ struct MiniMapView: View {
                                 page.positionY = newPosition.y
                                 self.pageManager.updatePagePosition(page)
                             }
+                            self.draggedPage = nil
+                            self.draggedPageOffset = .zero
                         }
-                        self.draggedPageId = nil
-                        self.draggedPageOffset = .zero
-                        self.isDragging = false
                     }
             )
+            .onTapGesture {
+                if !self.isRearranging {
+                    self.onPageSelected(page)
+                    self.showMiniMap = false
+                }
+            }
     }
 
     private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
@@ -613,7 +595,7 @@ struct MiniMapView: View {
     }
 
     private func isValidMove(to position: (x: Int, y: Int)) -> Bool {
-        !pages.contains { $0 !== draggedPage && $0.positionX == position.x && $0.positionY == position.y }
+        !pages.contains { $0.id != draggedPage?.id && $0.positionX == position.x && $0.positionY == position.y }
     }
 
     private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
@@ -635,18 +617,6 @@ struct MiniMapView: View {
             width: screenSize.width / 2 - currentPagePosition.x - thumbnailSize.width / 2,
             height: screenSize.height / 2 - currentPagePosition.y - thumbnailSize.height / 2
         )
-        
-        initialOffset = panOffset
-    }
-
-    private func thumbnailOverlay(for page: Page) -> some View {
-        RoundedRectangle(cornerRadius: 5)
-            .stroke(
-                page.id == pageManager.currentPageID ? .blue :
-                    (isDragging && draggedPage?.id == page.id ? .green :
-                        (colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25))),
-                lineWidth: (page.id == pageManager.currentPageID || (isDragging && draggedPage?.id == page.id)) ? 2 : 1
-            )
     }
 }
 
