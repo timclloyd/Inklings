@@ -107,7 +107,11 @@ class PageManager: ObservableObject {
     
     func updateThumbnail(for page: Page) {
         guard let drawing = try? PKDrawing(data: page.drawingData) else { return }
-        let thumbnail = drawing.image(from: pageRect, scale: 1)
+        
+        // Reduce scale for efficiency
+        let scale = UIScreen.main.scale * 0.2
+        
+        let thumbnail = drawing.image(from: pageRect, scale: scale)
         let aspectRatio = pageRect.size.width / pageRect.size.height
         let thumbnailSize = CGSize(width: 120, height: 120 / aspectRatio)
         
@@ -115,7 +119,13 @@ class PageManager: ObservableObject {
             thumbnail.draw(in: CGRect(origin: .zero, size: thumbnailSize))
         }
         
-        page.thumbnailData = thumbnailImage.pngData()
+        // Use JPEG instead of PNG for smaller file size
+        if let jpegData = thumbnailImage.jpegData(compressionQuality: 0.7) {
+            page.thumbnailData = jpegData
+        } else {
+            // Fallback to PNG if JPEG compression fails
+            page.thumbnailData = thumbnailImage.pngData()
+        }
     }
     
     func updateAllThumbnails() {
