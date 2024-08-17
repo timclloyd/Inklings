@@ -555,6 +555,7 @@ struct MiniMapView: View {
             .opacity(appearance.opacity)
             .position(thumbnailPosition(for: page, in: geometry))
             .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
+            .zIndex(isSelected && isRearranging ? 1 : 0)
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
