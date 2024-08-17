@@ -474,7 +474,7 @@ struct MiniMapView: View {
     @State private var draggedPageOffset: CGSize = .zero
     @State private var isDragging: Bool = false
     @State private var draggedPageId: UUID?
-    @GestureState private var longPressActive = false
+    @GestureState private var isLongPressing = false
 
     private var thumbnailSize: CGSize {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
@@ -528,7 +528,8 @@ struct MiniMapView: View {
     }
 
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
-        let appearance = (draggedPageId == page.id && (longPressActive || isDragging)) ?
+        let isSelected = draggedPageId == page.id
+        let appearance = (isSelected && (isLongPressing || isDragging)) ?
             ThumbnailAppearance.dragging :
             ThumbnailAppearance.normal(colorScheme: colorScheme)
 
@@ -545,7 +546,7 @@ struct MiniMapView: View {
                 y: appearance.shadow?.y ?? 0
             )
             .position(thumbnailPosition(for: page, in: geometry))
-            .offset(draggedPageId == page.id ? draggedPageOffset : .zero)
+            .offset(isSelected ? draggedPageOffset : .zero)
             .gesture(
                 TapGesture()
                     .onEnded {
@@ -555,13 +556,23 @@ struct MiniMapView: View {
             )
             .gesture(
                 LongPressGesture(minimumDuration: 0.5)
-                    .updating($longPressActive) { currentState, gestureState, _ in
+                    .updating($isLongPressing) { currentState, gestureState, _ in
                         gestureState = currentState
                     }
                     .onEnded { _ in
                         self.draggedPageId = page.id
                     }
                     .sequenced(before: DragGesture())
+                    .updating($isLongPressing) { value, state, _ in
+                        switch value {
+                        case .first(true):
+                            state = true
+                        case .second(true, _):
+                            state = true
+                        default:
+                            state = false
+                        }
+                    }
                     .onChanged { value in
                         switch value {
                         case .first(true):
