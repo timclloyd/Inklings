@@ -109,23 +109,25 @@ class PageManager: ObservableObject {
         guard let drawing = try? PKDrawing(data: page.drawingData) else { return }
         
         // Reduce scale for efficiency
-        let scale = UIScreen.main.scale * 0.2
+        let scale = UIScreen.main.scale * 0.1
         
         let thumbnail = drawing.image(from: pageRect, scale: scale)
         let aspectRatio = pageRect.size.width / pageRect.size.height
         let thumbnailSize = CGSize(width: 120, height: 120 / aspectRatio)
         
-        let thumbnailImage = UIGraphicsImageRenderer(size: thumbnailSize).image { context in
+        let renderer = UIGraphicsImageRenderer(size: thumbnailSize)
+        let thumbnailImage = renderer.image { context in
+            // Set background color based on color scheme
+            let backgroundColor = UIColor { traitCollection in
+                traitCollection.userInterfaceStyle == .dark ? .black : .white
+            }
+            context.cgContext.setFillColor(backgroundColor.cgColor)
+            context.cgContext.fill(CGRect(origin: .zero, size: thumbnailSize))
+            
+            // Draw the thumbnail
             thumbnail.draw(in: CGRect(origin: .zero, size: thumbnailSize))
         }
-        
-        // Use JPEG instead of PNG for smaller file size
-        if let jpegData = thumbnailImage.jpegData(compressionQuality: 0.7) {
-            page.thumbnailData = jpegData
-        } else {
-            // Fallback to PNG if JPEG compression fails
-            page.thumbnailData = thumbnailImage.pngData()
-        }
+        page.thumbnailData = thumbnailImage.pngData()
     }
     
     func updateAllThumbnails() {
