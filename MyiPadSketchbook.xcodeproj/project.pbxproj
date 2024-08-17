@@ -44,6 +44,7 @@
 		155C1DD62C62BD6B00FC5882 /* MyiPadSketchbookUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyiPadSketchbookUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		155C1DDA2C62BD6B00FC5882 /* MyiPadSketchbookUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookUITests.swift; sourceTree = "<group>"; };
 		155C1DDC2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		158F41B42C715DEA00FC886D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -94,6 +95,7 @@
 		155C1DBC2C62BD6A00FC5882 /* MyiPadSketchbook */ = {
 			isa = PBXGroup;
 			children = (
+				158F41B42C715DEA00FC886D /* Info.plist */,
 				155C1DBF2C62BD6A00FC5882 /* ContentView.swift */,
 				155C1DC12C62BD6A00FC5882 /* Item.swift */,
 				155C1DC32C62BD6B00FC5882 /* Assets.xcassets */,
@@ -426,9 +428,9 @@
 				DEVELOPMENT_TEAM = Y6G9AAT4BU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "GridPad Work";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
@@ -463,9 +465,9 @@
 				DEVELOPMENT_TEAM = Y6G9AAT4BU;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "GridPad Work";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UIStatusBarStyle = "";
