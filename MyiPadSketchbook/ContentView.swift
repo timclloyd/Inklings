@@ -442,7 +442,7 @@ struct ThumbnailAppearance {
 
     static func normal(colorScheme: ColorScheme) -> ThumbnailAppearance {
         ThumbnailAppearance(
-            backgroundColor: .clear,
+            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
             borderColor: colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25),
             borderWidth: 1,
             scale: 1.0,
@@ -451,14 +451,16 @@ struct ThumbnailAppearance {
         )
     }
 
-    static let dragging = ThumbnailAppearance(
-        backgroundColor: Color.blue.opacity(0.25),
-        borderColor: .green,
-        borderWidth: 2,
-        scale: 1.05,
-        opacity: 1.0,
-        shadow: (color: Color.black.opacity(0.3), radius: 5, x: 0, y: 5)
-    )
+    static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
+        ThumbnailAppearance(
+            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
+            borderColor: .blue,
+            borderWidth: 2.5,
+            scale: 1.075,
+            opacity: 1.0,
+            shadow: nil
+        )
+    }
 }
 
 struct MiniMapView: View {
@@ -530,7 +532,7 @@ struct MiniMapView: View {
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
         let isSelected = draggedPageId == page.id
         let appearance = (isSelected && (isLongPressing || isDragging)) ?
-            ThumbnailAppearance.dragging :
+            ThumbnailAppearance.dragging(colorScheme: colorScheme) :
             ThumbnailAppearance.normal(colorScheme: colorScheme)
 
         return ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
