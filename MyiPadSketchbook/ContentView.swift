@@ -494,9 +494,9 @@ struct MiniMapView: View {
     @State private var panOffset: CGSize = .zero
     @State private var initialOffset: CGSize = .zero
     @GestureState private var dragOffset: CGSize = .zero
-    @GestureState private var isLongPressing: Bool = false
     @State private var draggedPage: Page?
     @State private var draggedPageOffset: CGSize = .zero
+    @State private var isDragging: Bool = false
 
     private var thumbnailSize: CGSize {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
@@ -528,15 +528,19 @@ struct MiniMapView: View {
                 }
                 .offset(x: panOffset.width + dragOffset.width,
                         y: panOffset.height + dragOffset.height)
+                
+                if let draggedPage = draggedPage {
+                    draggedPageOverlay(for: draggedPage, in: geometry)
+                }
             }
             .gesture(
                 DragGesture()
                     .updating($dragOffset) { value, state, _ in
-                        guard !isLongPressing else { return }
+                        guard draggedPage == nil else { return }
                         state = value.translation
                     }
                     .onEnded { value in
-                        guard !isLongPressing else { return }
+                        guard draggedPage == nil else { return }
                         panOffset = CGSize(
                             width: panOffset.width + value.translation.width,
                             height: panOffset.height + value.translation.height
@@ -553,55 +557,55 @@ struct MiniMapView: View {
         ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
             .overlay(thumbnailOverlay(for: page))
             .position(thumbnailPosition(for: page, in: geometry))
-            .offset(page == draggedPage ? draggedPageOffset : .zero)
             .gesture(
                 TapGesture()
                     .onEnded {
+                        print("Tapped page: \(page.id)")
                         onPageSelected(page)
                         showMiniMap = false
                     }
             )
             .gesture(
                 LongPressGesture(minimumDuration: 0.5)
-                    .sequenced(before: DragGesture())
-                    .updating($isLongPressing) { value, state, _ in
-                        switch value {
-                        case .first(true), .second(true, _):
-                            state = true
-                        default:
-                            state = false
-                        }
+                    .onEnded { _ in
+                        print("Long press started on page: \(page.id)")
+                        self.draggedPage = page
+                        self.isDragging = true
                     }
+                    .sequenced(before: DragGesture())
                     .onChanged { value in
-                        switch value {
-                        case .first(true):
-                            self.draggedPage = page
-                            self.draggedPageOffset = .zero
-                        case .second(true, let drag):
-                            if let drag = drag {
-                                self.draggedPageOffset = drag.translation
-                            }
-                        default:
-                            break
-                        }
+                        guard case .second(true, let drag?) = value else { return }
+                        print("Dragging page: \(page.id), offset: \(drag.translation)")
+                        self.draggedPageOffset = drag.translation
                     }
                     .onEnded { value in
-                        if case .second(true, let drag?) = value {
-                            let gridMovement = calculateGridMovement(drag.translation)
-                            let newPosition = (
-                                x: page.positionX + gridMovement.x,
-                                y: page.positionY + gridMovement.y
-                            )
-                            if self.isValidMove(to: newPosition) {
-                                page.positionX = newPosition.x
-                                page.positionY = newPosition.y
-                                self.pageManager.updatePagePosition(page)
-                            }
+                        guard case .second(true, let drag?) = value else { return }
+                        print("Drag ended for page: \(page.id)")
+                        let gridMovement = calculateGridMovement(drag.translation)
+                        let newPosition = (
+                            x: page.positionX + gridMovement.x,
+                            y: page.positionY + gridMovement.y
+                        )
+                        if self.isValidMove(to: newPosition) {
+                            page.positionX = newPosition.x
+                            page.positionY = newPosition.y
+                            self.pageManager.updatePagePosition(page)
                         }
                         self.draggedPage = nil
                         self.draggedPageOffset = .zero
+                        self.isDragging = false
                     }
             )
+    }
+
+    private func draggedPageOverlay(for page: Page, in geometry: GeometryProxy) -> some View {
+        ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
+            .overlay(thumbnailOverlay(for: page))
+            .background(Color.blue.opacity(0.3))
+            .scaleEffect(1.05)
+            .shadow(color: Color.blue.opacity(0.5), radius: 5)
+            .position(thumbnailPosition(for: page, in: geometry))
+            .offset(draggedPageOffset)
     }
 
     private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
@@ -641,9 +645,9 @@ struct MiniMapView: View {
         RoundedRectangle(cornerRadius: 5)
             .stroke(
                 page.id == pageManager.currentPageID ? .blue :
-                    (draggedPage == page ? .green :
+                    (isDragging && draggedPage?.id == page.id ? .green :
                         (colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25))),
-                lineWidth: (page.id == pageManager.currentPageID || draggedPage == page) ? 2 : 1
+                lineWidth: (page.id == pageManager.currentPageID || (isDragging && draggedPage?.id == page.id)) ? 2 : 1
             )
     }
 }
