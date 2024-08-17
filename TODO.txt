@@ -9,3 +9,5 @@
 
 
 Bugs
+- [ ] Having multiple windows in the same app results in data loss - page content leaks across and overwrites other pages when navigating !!!
+
