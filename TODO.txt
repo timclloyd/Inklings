@@ -5,9 +5,7 @@
 - [x] Design * implement in-page indicator of which directions already have pages
 - [-] Sketch thru options for deleting pages and handling island pages (or only allow deleting content via the eraser?) 
 - [ ] Review code with Claude - is the minimap showing cached thumbnails? 
-- [/] Implement page moving in the minimap
+- [x] Implement page moving in the minimap
 
 
 Bugs
-- [ ] On dev: Minimap: There’s an unnecessary selection state which a page gets stuck in when a pan gesture starts over a page. When in this state, panning and moving pages doesn’t work. Tapping to view that page or a different page does work, and clears the selection state so that panning and moving work again the next time the Minimap is opened. 
-
