@@ -44,7 +44,7 @@ struct ContentView: View {
                     }
                 }
             } else {
-                MiniMapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
+                MapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
                     pageManager.setCurrentPage(selectedPage)
                     if let drawing = try? PKDrawing(data: selectedPage.drawingData) {
                         canvasView.drawing = drawing

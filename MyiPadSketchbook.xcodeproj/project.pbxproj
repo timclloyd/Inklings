@@ -17,7 +17,7 @@
 		15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA52C71EA9A007589CB /* PageModel.swift */; };
 		15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA72C71EAEF007589CB /* PageManager.swift */; };
 		15B03BAB2C71EB82007589CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAA2C71EB82007589CB /* ContentView.swift */; };
-		15B03BAD2C71EBC9007589CB /* MinimapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAC2C71EBC9007589CB /* MinimapView.swift */; };
+		15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAC2C71EBC9007589CB /* MapView.swift */; };
 		15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAE2C71EBF2007589CB /* PencilKitView.swift */; };
 		15B03BB12C71EC20007589CB /* DottedBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */; };
 /* End PBXBuildFile section */
@@ -54,7 +54,7 @@
 		15B03BA52C71EA9A007589CB /* PageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageModel.swift; sourceTree = "<group>"; };
 		15B03BA72C71EAEF007589CB /* PageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageManager.swift; sourceTree = "<group>"; };
 		15B03BAA2C71EB82007589CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		15B03BAC2C71EBC9007589CB /* MinimapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimapView.swift; sourceTree = "<group>"; };
+		15B03BAC2C71EBC9007589CB /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		15B03BAE2C71EBF2007589CB /* PencilKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilKitView.swift; sourceTree = "<group>"; };
 		15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DottedBackgroundView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -148,7 +148,7 @@
 			isa = PBXGroup;
 			children = (
 				15B03BAA2C71EB82007589CB /* ContentView.swift */,
-				15B03BAC2C71EBC9007589CB /* MinimapView.swift */,
+				15B03BAC2C71EBC9007589CB /* MapView.swift */,
 				15B03BAE2C71EBF2007589CB /* PencilKitView.swift */,
 				15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */,
 			);
@@ -314,7 +314,7 @@
 				15B03BAB2C71EB82007589CB /* ContentView.swift in Sources */,
 				15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */,
 				15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */,
-				15B03BAD2C71EBC9007589CB /* MinimapView.swift in Sources */,
+				15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */,
 				15B03BB12C71EC20007589CB /* DottedBackgroundView.swift in Sources */,
 				15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */,
 			);

@@ -9,7 +9,7 @@ import Foundation
 import SwiftUI
 import PencilKit
 
-struct MiniMapView: View {
+struct MapView: View {
     @ObservedObject var pageManager: PageManager
     let pages: [Page]
     @Environment(\.colorScheme) var colorScheme
