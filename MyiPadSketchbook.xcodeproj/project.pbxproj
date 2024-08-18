@@ -485,7 +485,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = GridNotesDev;
+				INFOPLIST_KEY_CFBundleDisplayName = GridNotes.Dev;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -522,7 +522,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = GridNotesDev;
+				INFOPLIST_KEY_CFBundleDisplayName = GridNotes.Dev;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
