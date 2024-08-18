@@ -11,7 +11,7 @@ Inspired by Scapple, Muse, paper notebooks.
 - Nothing gets in the way of writing & sketching - no zooming, content ignores device rotation.
 
 The first sketch in Apple Notes:
-![](http://Images/gridnotes-first-sketch.jpeg)
+![](./Images/gridnotes-first-sketch.jpeg)
 
 # Branches
 
