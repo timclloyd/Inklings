@@ -7,13 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		155C1DC02C62BD6A00FC5882 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* ContentView.swift */; };
-		155C1DC22C62BD6A00FC5882 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DC12C62BD6A00FC5882 /* Item.swift */; };
+		155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* Helpers.swift */; };
 		155C1DC42C62BD6B00FC5882 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC32C62BD6B00FC5882 /* Assets.xcassets */; };
 		155C1DC72C62BD6B00FC5882 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */; };
 		155C1DD12C62BD6B00FC5882 /* MyiPadSketchbookTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DD02C62BD6B00FC5882 /* MyiPadSketchbookTests.swift */; };
 		155C1DDB2C62BD6B00FC5882 /* MyiPadSketchbookUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DDA2C62BD6B00FC5882 /* MyiPadSketchbookUITests.swift */; };
 		155C1DDD2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DDC2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift */; };
+		15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */; };
+		15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA52C71EA9A007589CB /* PageModel.swift */; };
+		15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA72C71EAEF007589CB /* PageManager.swift */; };
+		15B03BAB2C71EB82007589CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAA2C71EB82007589CB /* ContentView.swift */; };
+		15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAC2C71EBC9007589CB /* MapView.swift */; };
+		15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAE2C71EBF2007589CB /* PencilKitView.swift */; };
+		15B03BB12C71EC20007589CB /* DottedBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,8 +41,7 @@
 
 /* Begin PBXFileReference section */
 		155C1DBA2C62BD6A00FC5882 /* MyiPadSketchbook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyiPadSketchbook.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		155C1DBF2C62BD6A00FC5882 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		155C1DC12C62BD6A00FC5882 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
+		155C1DBF2C62BD6A00FC5882 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		155C1DC32C62BD6B00FC5882 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		155C1DCC2C62BD6B00FC5882 /* MyiPadSketchbookTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyiPadSketchbookTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -44,7 +49,14 @@
 		155C1DD62C62BD6B00FC5882 /* MyiPadSketchbookUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyiPadSketchbookUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		155C1DDA2C62BD6B00FC5882 /* MyiPadSketchbookUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookUITests.swift; sourceTree = "<group>"; };
 		155C1DDC2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookUITestsLaunchTests.swift; sourceTree = "<group>"; };
-		158F41B42C715DEA00FC886D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		158F41B32C715D7A00FC886D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbook.swift; sourceTree = "<group>"; };
+		15B03BA52C71EA9A007589CB /* PageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageModel.swift; sourceTree = "<group>"; };
+		15B03BA72C71EAEF007589CB /* PageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageManager.swift; sourceTree = "<group>"; };
+		15B03BAA2C71EB82007589CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		15B03BAC2C71EBC9007589CB /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
+		15B03BAE2C71EBF2007589CB /* PencilKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilKitView.swift; sourceTree = "<group>"; };
+		15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DottedBackgroundView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,11 +107,14 @@
 		155C1DBC2C62BD6A00FC5882 /* MyiPadSketchbook */ = {
 			isa = PBXGroup;
 			children = (
-				158F41B42C715DEA00FC886D /* Info.plist */,
-				155C1DBF2C62BD6A00FC5882 /* ContentView.swift */,
-				155C1DC12C62BD6A00FC5882 /* Item.swift */,
+				15B03BB42C71EF58007589CB /* Helpers */,
+				15B03BB32C71EE42007589CB /* ViewModels */,
+				15B03BB22C71EE32007589CB /* Models */,
+				15B03BA92C71EB66007589CB /* Views */,
+				158F41B32C715D7A00FC886D /* Info.plist */,
 				155C1DC32C62BD6B00FC5882 /* Assets.xcassets */,
 				155C1DC52C62BD6B00FC5882 /* Preview Content */,
+				15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */,
 			);
 			path = MyiPadSketchbook;
 			sourceTree = "<group>";
@@ -127,6 +142,41 @@
 				155C1DDC2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift */,
 			);
 			path = MyiPadSketchbookUITests;
+			sourceTree = "<group>";
+		};
+		15B03BA92C71EB66007589CB /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				15B03BAA2C71EB82007589CB /* ContentView.swift */,
+				15B03BAC2C71EBC9007589CB /* MapView.swift */,
+				15B03BAE2C71EBF2007589CB /* PencilKitView.swift */,
+				15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		15B03BB22C71EE32007589CB /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				15B03BA52C71EA9A007589CB /* PageModel.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		15B03BB32C71EE42007589CB /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				15B03BA72C71EAEF007589CB /* PageManager.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		15B03BB42C71EF58007589CB /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				155C1DBF2C62BD6A00FC5882 /* Helpers.swift */,
+			);
+			path = Helpers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -259,8 +309,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				155C1DC02C62BD6A00FC5882 /* ContentView.swift in Sources */,
-				155C1DC22C62BD6A00FC5882 /* Item.swift in Sources */,
+				155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */,
+				15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */,
+				15B03BAB2C71EB82007589CB /* ContentView.swift in Sources */,
+				15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */,
+				15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */,
+				15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */,
+				15B03BB12C71EC20007589CB /* DottedBackgroundView.swift in Sources */,
+				15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,7 +485,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "GridPad Work";
+				INFOPLIST_KEY_CFBundleDisplayName = "GridPad Dev";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -441,7 +497,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.MyiPadSketchbook.work;
+				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.MyiPadSketchbook.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -466,7 +522,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = "GridPad Work";
+				INFOPLIST_KEY_CFBundleDisplayName = "GridPad Dev";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -478,7 +534,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.MyiPadSketchbook.work;
+				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.MyiPadSketchbook.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
