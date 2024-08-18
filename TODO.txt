@@ -1,12 +1,13 @@
+Todo
 - [x] Implement basic concept
 - [x] Add basic minimap to navigate
 - [x] Add state saving
 - [x] Make minimap view scrollable / pannable for when there are too many pages to fit in the screen
 - [x] Design * implement in-page indicator of which directions already have pages
 - [-] Sketch thru options for deleting pages and handling island pages (or only allow deleting content via the eraser?) 
-- [ ] Review code with Claude - is the minimap showing cached thumbnails? 
+- [x] Review code with Claude - is the minimap showing cached thumbnails? 
 - [x] Implement page moving in the minimap
-
+- [x] Change name to GridNotes - haven’t changed the Xcode project because it keeps crashing when I try...
 
 Bugs
 - [ ] Having multiple windows in the same app results in data loss - page content leaks across and overwrites other pages when navigating !!!
