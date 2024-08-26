@@ -12,6 +12,7 @@ import PencilKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) private var colorScheme
     @Query private var pages: [Page]
     @StateObject private var pageManager: PageManager
     @State private var canvasView = PKCanvasView()
@@ -25,6 +26,9 @@ struct ContentView: View {
         _pageManager = StateObject(wrappedValue: PageManager(modelContext: modelContext))
     }
     
+    private let buttonSize: CGFloat = 70
+    private let shadowRadius: CGFloat = 15
+    
     var body: some View {
         ZStack {
             if !showMiniMap {
@@ -33,6 +37,47 @@ struct ContentView: View {
 
                 PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect, onSwipe: handleSwipe)
                     .ignoresSafeArea()
+                
+                // Button to show the map view
+                VStack {
+                    Spacer()
+                    HStack {
+                        Button(action: {
+                            pageManager.updateAllThumbnails()
+                            showMiniMap = true
+                        }) {
+                            Image(systemName: "map")
+                                .font(.system(size: 28))
+                                .foregroundColor(.primary.opacity(0.87))
+                                .frame(width: buttonSize, height: buttonSize)
+                                .background(
+                                    Circle()
+                                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                                )
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color(.systemGray5), lineWidth: 0.5)
+                                )
+                                .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
+                                        radius: shadowRadius, x: 0, y: 0)
+                        }
+                        .padding(EdgeInsets(top: 0, leading: 30, bottom: 6, trailing: 0))
+                        
+                        Spacer()
+                    }
+                    .padding(.bottom, shadowRadius)
+                }
+                
+                // Page coordinates for development - comment out on other branches
+                VStack {
+                    Spacer()
+                    if let currentPage = pageManager.getCurrentPage() {
+                        Text("Page \(currentPage.positionX), \(currentPage.positionY)")
+                            .padding()
+                            .background(Color(UIColor.systemBackground).opacity(0.7))
+                            .cornerRadius(10)
+                    }
+                }
             } else {
                 MapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
                     pageManager.setCurrentPage(selectedPage)
