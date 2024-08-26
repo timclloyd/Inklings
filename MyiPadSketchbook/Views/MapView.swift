@@ -1,13 +1,6 @@
-//
-//  MinimapView.swift
-//  MyiPadSketchbook
-//
-//  Created by Tim Lloyd on 2024-08-18.
-//
-
-import Foundation
 import SwiftUI
 import PencilKit
+import SwiftData
 
 struct MapView: View {
     @ObservedObject var pageManager: PageManager
@@ -19,12 +12,10 @@ struct MapView: View {
     @State private var draggedPage: Page?
     @State private var draggedPageOffset: CGSize = .zero
     @State private var isRearranging: Bool = false
+    @State private var panDebouncer = Debouncer(delay: 0.001)
     @GestureState private var dragGestureState: CGSize = .zero
 
-    private var thumbnailSize: CGSize {
-        let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
-        return CGSize(width: 120, height: 120 / aspectRatio)
-    }
+    private let thumbnailSize: CGSize = CGSize(width: 120, height: 120 / (4/3))
     private let spacing: CGFloat = 10
 
     private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
@@ -41,8 +32,8 @@ struct MapView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                Color(UIColor.systemBackground)
-                    .contentShape(Rectangle())
+                backgroundColor
+                    .edgesIgnoringSafeArea(.all)
 
                 ZStack {
                     ForEach(pages) { page in
@@ -60,7 +51,7 @@ struct MapView: View {
                         }) {
                             Text(isRearranging ? "Done" : "Rearrange")
                                 .padding(8)
-                                .background(Color.blue)
+                                .background(isRearranging ? Color.blue : Color.red)
                                 .foregroundColor(.white)
                                 .cornerRadius(8)
                         }
@@ -87,54 +78,66 @@ struct MapView: View {
         }
     }
 
+    private var backgroundColor: Color {
+        colorScheme == .dark ? Color.black : Color.white
+    }
+
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
         let isSelected = draggedPage?.id == page.id
         let appearance = isSelected && isRearranging ?
             ThumbnailAppearance.dragging(colorScheme: colorScheme) :
             ThumbnailAppearance.normal(colorScheme: colorScheme)
 
-        return ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
-            .overlay(RoundedRectangle(cornerRadius: 5)
-                .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
-            .background(appearance.backgroundColor)
-            .scaleEffect(appearance.scale)
-            .opacity(appearance.opacity)
-            .position(thumbnailPosition(for: page, in: geometry))
-            .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
-            .zIndex(isSelected && isRearranging ? 1 : 0)
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
+        return WiggleThumbnail(isWiggling: isRearranging, isDragging: isSelected && isRearranging) {
+            ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
+                .overlay(RoundedRectangle(cornerRadius: 5)
+                    .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
+                .background(appearance.backgroundColor)
+                .scaleEffect(appearance.scale)
+                .opacity(appearance.opacity)
+        }
+        .position(thumbnailPosition(for: page, in: geometry))
+        .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
+        .zIndex(isSelected && isRearranging ? 1 : 0)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    panDebouncer.debounce {
                         if self.isRearranging {
                             self.draggedPage = page
                             self.draggedPageOffset = value.translation
                         } else if value.translation != .zero {
-                            // Handle panning when not rearranging
                             self.panOffset.width += value.translation.width
                             self.panOffset.height += value.translation.height
                         }
                     }
-                    .onEnded { value in
-                        if self.isRearranging {
-                            let gridMovement = self.calculateGridMovement(value.translation)
-                            let newPosition = (
-                                x: page.positionX + gridMovement.x,
-                                y: page.positionY + gridMovement.y
-                            )
-                            if self.isValidMove(to: newPosition) {
-                                page.positionX = newPosition.x
-                                page.positionY = newPosition.y
-                                self.pageManager.updatePagePosition(page)
-                            }
-                            self.draggedPage = nil
-                            self.draggedPageOffset = .zero
-                        } else if value.translation == .zero {
-                            // Handle tap when not rearranging
-                            self.onPageSelected(page)
-                            self.showMiniMap = false
+                }
+                .onEnded { value in
+                    if self.isRearranging {
+                        let gridMovement = self.calculateGridMovement(value.translation)
+                        let newPosition = (
+                            x: page.positionX + gridMovement.x,
+                            y: page.positionY + gridMovement.y
+                        )
+                        if self.isValidMove(to: newPosition) {
+                            page.positionX = newPosition.x
+                            page.positionY = newPosition.y
+                            self.pageManager.updatePagePosition(page)
                         }
+                        self.draggedPage = nil
+                        self.draggedPageOffset = .zero
+                    } else if value.translation == .zero {
+                        self.onPageSelected(page)
+                        self.showMiniMap = false
                     }
-            )
+                }
+        )
+    }
+
+    private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
+        let x = CGFloat(page.positionX - pagePositions.minX) * (thumbnailSize.width + spacing)
+        let y = CGFloat(pagePositions.maxY - page.positionY) * (thumbnailSize.height + spacing)
+        return CGPoint(x: x, y: y)
     }
 
     private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
@@ -145,12 +148,6 @@ struct MapView: View {
 
     private func isValidMove(to position: (x: Int, y: Int)) -> Bool {
         !pages.contains { $0.id != draggedPage?.id && $0.positionX == position.x && $0.positionY == position.y }
-    }
-
-    private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
-        let x = CGFloat(page.positionX - pagePositions.minX) * (thumbnailSize.width + spacing)
-        let y = CGFloat(pagePositions.maxY - page.positionY) * (thumbnailSize.height + spacing)
-        return CGPoint(x: x, y: y)
     }
 
     private func centerOnCurrentPage() {
@@ -169,36 +166,33 @@ struct MapView: View {
     }
 }
 
-// MARK: - ThumbnailAppearance
+struct WiggleThumbnail<Content: View>: View {
+    let isWiggling: Bool
+    let isDragging: Bool
+    let content: () -> Content
+    @State private var rotation: Double = 0
 
-struct ThumbnailAppearance {
-    let backgroundColor: Color
-    let borderColor: Color
-    let borderWidth: CGFloat
-    let scale: CGFloat
-    let opacity: Double
-    let shadow: (color: Color, radius: CGFloat, x: CGFloat, y: CGFloat)?
-
-    static func normal(colorScheme: ColorScheme) -> ThumbnailAppearance {
-        ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
-            borderColor: colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25),
-            borderWidth: 1,
-            scale: 1.0,
-            opacity: 1.0,
-            shadow: nil
-        )
+    var body: some View {
+        content()
+            .rotationEffect(.degrees(rotation))
+            .onChange(of: isWiggling) { _, newValue in
+                updateRotation(isWiggling: newValue, isDragging: isDragging)
+            }
+            .onChange(of: isDragging) { _, newValue in
+                updateRotation(isWiggling: isWiggling, isDragging: newValue)
+            }
     }
-
-    static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
-        ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
-            borderColor: .blue,
-            borderWidth: 2.5,
-            scale: 1.075,
-            opacity: 1.0,
-            shadow: nil
-        )
+    
+    private func updateRotation(isWiggling: Bool, isDragging: Bool) {
+        if isWiggling && !isDragging {
+            withAnimation(.easeInOut(duration: 0.15).repeatForever(autoreverses: true)) {
+                rotation = 2
+            }
+        } else {
+            withAnimation(.easeInOut(duration: 0.15)) {
+                rotation = 0
+            }
+        }
     }
 }
 
@@ -221,3 +215,48 @@ struct ThumbnailContent: View {
         .frame(width: thumbnailSize.width, height: thumbnailSize.height)
     }
 }
+
+struct ThumbnailAppearance {
+    let backgroundColor: Color
+    let borderColor: Color
+    let borderWidth: CGFloat
+    let scale: CGFloat
+    let opacity: Double
+
+    static func normal(colorScheme: ColorScheme) -> ThumbnailAppearance {
+        ThumbnailAppearance(
+            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
+            borderColor: colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25),
+            borderWidth: 1,
+            scale: 1.0,
+            opacity: 1.0
+        )
+    }
+
+    static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
+        ThumbnailAppearance(
+            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
+            borderColor: .blue,
+            borderWidth: 2.5,
+            scale: 1.075,
+            opacity: 1.0
+        )
+    }
+}
+
+class Debouncer {
+    private var workItem: DispatchWorkItem?
+    private let queue = DispatchQueue.main
+    private let delay: TimeInterval
+
+    init(delay: TimeInterval) {
+        self.delay = delay
+    }
+
+    func debounce(_ callback: @escaping () -> Void) {
+        workItem?.cancel()
+        workItem = DispatchWorkItem(block: callback)
+        queue.asyncAfter(deadline: .now() + delay, execute: workItem!)
+    }
+}
+
