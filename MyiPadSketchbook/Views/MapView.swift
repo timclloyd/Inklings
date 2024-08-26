@@ -226,7 +226,7 @@ struct ThumbnailAppearance {
     static func normal(colorScheme: ColorScheme) -> ThumbnailAppearance {
         ThumbnailAppearance(
             backgroundColor: colorScheme == .dark ? Color.black : Color.white,
-            borderColor: colorScheme == .dark ? Color.white.opacity(0.25) : Color.black.opacity(0.25),
+            borderColor: colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray2),
             borderWidth: 1,
             scale: 1.0,
             opacity: 1.0
@@ -237,8 +237,8 @@ struct ThumbnailAppearance {
         ThumbnailAppearance(
             backgroundColor: colorScheme == .dark ? Color.black : Color.white,
             borderColor: .blue,
-            borderWidth: 2.5,
-            scale: 1.075,
+            borderWidth: 1.5,
+            scale: 1.05,
             opacity: 1.0
         )
     }
