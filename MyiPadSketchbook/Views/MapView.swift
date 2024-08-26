@@ -15,7 +15,10 @@ struct MapView: View {
     @State private var panDebouncer = Debouncer(delay: 0.001)
     @GestureState private var dragGestureState: CGSize = .zero
 
-    private let thumbnailSize: CGSize = CGSize(width: 120, height: 120 / (4/3))
+    private var thumbnailSize: CGSize {
+        let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
+        return CGSize(width: 120, height: 120 / aspectRatio)
+    }
     private let spacing: CGFloat = 10
 
     private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
