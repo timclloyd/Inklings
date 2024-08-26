@@ -18,7 +18,6 @@ struct ContentView: View {
     @State private var canvasView = PKCanvasView()
     @State private var toolPicker = PKToolPicker()
     @State private var showMiniMap = false
-    @GestureState private var magnifyBy = CGFloat(1.0)
     @State private var swipeProgress = SwipeProgress(direction: nil, progress: 0)
     @GestureState private var dragState = DragState.inactive
     
@@ -88,22 +87,6 @@ struct ContentView: View {
                 }, showMiniMap: $showMiniMap)
             }
         }
-        .gesture(makeMagnificationGesture())
-    }
-    
-    private func makeMagnificationGesture() -> some Gesture {
-        MagnificationGesture()
-            .updating($magnifyBy) { currentState, gestureState, _ in
-                gestureState = currentState
-            }
-            .onEnded { value in
-                if !showMiniMap && value < 0.8 {
-                    pageManager.updateAllThumbnails()
-                    showMiniMap = true
-                } else if showMiniMap && value > 1.2 {
-                    showMiniMap = false
-                }
-            }
     }
     
     private func updateSwipeProgress(for gesture: UIPanGestureRecognizer) {
