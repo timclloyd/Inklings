@@ -225,9 +225,11 @@ struct ThumbnailContent: View {
             Text("\(page.positionX), \(page.positionY)")
                 .font(.system(size: 10))
                 .padding(2)
-                .background(Color(.systemGray5))
-                .cornerRadius(3)
-                .padding(.bottom, 0)
+                .foregroundColor(Color.primary.opacity(0.87))
+                .border(Color(.systemGray5), width: 0.5)
+                .background(Color(.systemGray6))
+                .cornerRadius(2)
+                .padding(.bottom, 3)
         }
         .frame(width: thumbnailSize.width, height: thumbnailSize.height)
     }
