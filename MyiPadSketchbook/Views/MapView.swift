@@ -205,15 +205,26 @@ struct ThumbnailContent: View {
     let colorScheme: ColorScheme
     
     var body: some View {
-        Group {
-            if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFit()
-            } else {
-                RoundedRectangle(cornerRadius: 5)
-                    .fill(Color.gray)
+        ZStack(alignment: .bottom) {
+            Group {
+                if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                } else {
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.gray)
+                }
             }
+            .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+            .clipped()
+            
+            Text("\(page.positionX), \(page.positionY)")
+                .font(.system(size: 10))
+                .padding(2)
+                .background(Color(.systemGray5))
+                .cornerRadius(3)
+                .padding(.bottom, 0)
         }
         .frame(width: thumbnailSize.width, height: thumbnailSize.height)
     }
