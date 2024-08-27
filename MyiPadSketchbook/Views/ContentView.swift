@@ -66,17 +66,6 @@ struct ContentView: View {
                     }
                     .padding(.bottom, shadowRadius)
                 }
-                
-                // Page coordinates for development - comment out on other branches
-                VStack {
-                    Spacer()
-                    if let currentPage = pageManager.getCurrentPage() {
-                        Text("Page \(currentPage.positionX), \(currentPage.positionY)")
-                            .padding()
-                            .background(Color(UIColor.systemBackground).opacity(0.7))
-                            .cornerRadius(10)
-                    }
-                }
             } else {
                 MapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
                     pageManager.setCurrentPage(selectedPage)
