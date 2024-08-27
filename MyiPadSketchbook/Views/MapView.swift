@@ -2,6 +2,7 @@ import SwiftUI
 import PencilKit
 import SwiftData
 
+// MARK: - MapView
 struct MapView: View {
     @ObservedObject var pageManager: PageManager
     let pages: [Page]
@@ -169,6 +170,7 @@ struct MapView: View {
     }
 }
 
+// MARK: - WiggleThumbnail
 struct WiggleThumbnail<Content: View>: View {
     let isWiggling: Bool
     let isDragging: Bool
@@ -199,6 +201,7 @@ struct WiggleThumbnail<Content: View>: View {
     }
 }
 
+// MARK: ThumbnailContent
 struct ThumbnailContent: View {
     let page: Page
     let thumbnailSize: CGSize
@@ -230,6 +233,7 @@ struct ThumbnailContent: View {
     }
 }
 
+// MARK: - ThumbnailAppearance
 struct ThumbnailAppearance {
     let backgroundColor: Color
     let borderColor: Color
@@ -258,6 +262,7 @@ struct ThumbnailAppearance {
     }
 }
 
+// MARK: Debouncer
 class Debouncer {
     private var workItem: DispatchWorkItem?
     private let queue = DispatchQueue.main
