@@ -58,6 +58,10 @@ struct ContentView: View {
                 PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect, onSwipe: handleSwipe)
                     .ignoresSafeArea()
                 
+                EdgeOverlayView(direction: swipeProgress.direction, progress: swipeProgress.progress, size: pageManager.pageRect.size, adjacentPages: getAdjacentPages())
+                    .allowsHitTesting(false) // Ensures the overlay doesn't interfere with touch events
+                    .ignoresSafeArea()
+                
                 // Button to show the map view
                 VStack {
                     Spacer()
