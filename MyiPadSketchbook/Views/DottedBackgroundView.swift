@@ -43,10 +43,10 @@ struct DottedBackgroundView: View {
             
             switch dragState {
             case .inactive:
-                animationProgress = swipeProgress.progress
+                animationProgress = 0 //swipeProgress.progress
                 animationDirection = swipeProgress.direction
             case .dragging(let translation):
-                animationProgress = min(1.0, max(abs(translation.width), abs(translation.height)) / (size.width / 4))
+                animationProgress = 0 //min(1.0, max(abs(translation.width), abs(translation.height)) / (size.width / 4))
                 if abs(translation.width) > abs(translation.height) {
                     animationDirection = translation.width > 0 ? .left : .right
                 } else {
