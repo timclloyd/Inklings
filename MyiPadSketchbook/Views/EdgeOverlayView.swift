@@ -18,6 +18,7 @@ struct EdgeOverlayView: View {
     @Environment(\.colorScheme) var colorScheme
 
     private let arrowDiameter: CGFloat = 70
+    private let shadowRadius: CGFloat = 15
     private let edgeDistance: CGFloat = 30
     private let mediumOpacity: Double = 0.5
 
@@ -28,12 +29,14 @@ struct EdgeOverlayView: View {
                     ZStack {
                         Circle()
                             .fill(colorScheme == .dark ? Color.black : Color.white)
-                            .frame(width: arrowDiameter, height: arrowDiameter)
+                            .frame(width: arrowDiameter-1, height: arrowDiameter-1)
                         
                         Image(systemName: arrowSystemName(for: edge))
                             .font(.system(size: arrowDiameter))
                             .foregroundColor(arrowColor(for: edge))
                     }
+                    .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
+                            radius: shadowRadius, x: 0, y: 0)
                     .opacity(arrowOpacity(for: edge))
                     .position(arrowPosition(for: edge, in: geometry))
                 }
@@ -44,13 +47,13 @@ struct EdgeOverlayView: View {
     private func arrowSystemName(for edge: EdgeDirection) -> String {
         switch edge {
         case .left:
-            return "arrowshape.left.circle.fill"
+            return "arrowshape.left.circle"
         case .right:
-            return "arrowshape.right.circle.fill"
+            return "arrowshape.right.circle"
         case .top:
-            return "arrowshape.up.circle.fill"
+            return "arrowshape.up.circle"
         case .bottom:
-            return "arrowshape.down.circle.fill"
+            return "arrowshape.down.circle"
         }
     }
     
