@@ -77,7 +77,7 @@ struct ContentView: View {
                             }
                             .buttonStyle(CustomButtonStyle(isEnabled: canUndo))
                             .disabled(!canUndo)
-                            .padding(EdgeInsets(top: 18.5, leading: 0, bottom: 0, trailing: -8))
+                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
                             
                             Button(action: {
                                 canvasView.undoManager?.redo()
@@ -91,7 +91,7 @@ struct ContentView: View {
                             }
                             .buttonStyle(CustomButtonStyle(isEnabled: canRedo))
                             .disabled(!canRedo)
-                            .padding(EdgeInsets(top: 18.5, leading: 0, bottom: 0, trailing: 20.5))
+                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
                         }
                     }
                     Spacer()
