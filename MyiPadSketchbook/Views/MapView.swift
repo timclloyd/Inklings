@@ -2,6 +2,10 @@ import SwiftUI
 import PencilKit
 import SwiftData
 
+import SwiftUI
+import PencilKit
+import SwiftData
+
 // MARK: - MapView
 struct MapView: View {
     @ObservedObject var pageManager: PageManager
@@ -83,7 +87,11 @@ struct MapView: View {
     }
 
     private var backgroundColor: Color {
-        colorScheme == .dark ? Color.black : Color.white
+        if isRearranging {
+            return colorScheme == .dark ? Color.red.opacity(0.1) : Color.red.opacity(0.075)
+        } else {
+            return colorScheme == .dark ? Color.black : Color.white
+        }
     }
 
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
@@ -92,50 +100,48 @@ struct MapView: View {
             ThumbnailAppearance.dragging(colorScheme: colorScheme) :
             ThumbnailAppearance.normal(colorScheme: colorScheme)
 
-        return WiggleThumbnail(isWiggling: isRearranging, isDragging: isSelected && isRearranging) {
-            ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
-                .overlay(RoundedRectangle(cornerRadius: 5)
-                    .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
-                .background(appearance.backgroundColor)
-                .scaleEffect(appearance.scale)
-                .opacity(appearance.opacity)
-        }
-        .position(thumbnailPosition(for: page, in: geometry))
-        .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
-        .zIndex(isSelected && isRearranging ? 1 : 0)
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    panDebouncer.debounce {
+        return ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
+            .overlay(RoundedRectangle(cornerRadius: 5)
+                .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
+            .background(appearance.backgroundColor)
+            .scaleEffect(appearance.scale)
+            .opacity(appearance.opacity)
+            .position(thumbnailPosition(for: page, in: geometry))
+            .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
+            .zIndex(isSelected && isRearranging ? 1 : 0)
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        panDebouncer.debounce {
+                            if self.isRearranging {
+                                self.draggedPage = page
+                                self.draggedPageOffset = value.translation
+                            } else if value.translation != .zero {
+                                self.panOffset.width += value.translation.width
+                                self.panOffset.height += value.translation.height
+                            }
+                        }
+                    }
+                    .onEnded { value in
                         if self.isRearranging {
-                            self.draggedPage = page
-                            self.draggedPageOffset = value.translation
-                        } else if value.translation != .zero {
-                            self.panOffset.width += value.translation.width
-                            self.panOffset.height += value.translation.height
+                            let gridMovement = self.calculateGridMovement(value.translation)
+                            let newPosition = (
+                                x: page.positionX + gridMovement.x,
+                                y: page.positionY + gridMovement.y
+                            )
+                            if self.isValidMove(to: newPosition) {
+                                page.positionX = newPosition.x
+                                page.positionY = newPosition.y
+                                self.pageManager.updatePagePosition(page)
+                            }
+                            self.draggedPage = nil
+                            self.draggedPageOffset = .zero
+                        } else if value.translation == .zero {
+                            self.onPageSelected(page)
+                            self.showMiniMap = false
                         }
                     }
-                }
-                .onEnded { value in
-                    if self.isRearranging {
-                        let gridMovement = self.calculateGridMovement(value.translation)
-                        let newPosition = (
-                            x: page.positionX + gridMovement.x,
-                            y: page.positionY + gridMovement.y
-                        )
-                        if self.isValidMove(to: newPosition) {
-                            page.positionX = newPosition.x
-                            page.positionY = newPosition.y
-                            self.pageManager.updatePagePosition(page)
-                        }
-                        self.draggedPage = nil
-                        self.draggedPageOffset = .zero
-                    } else if value.translation == .zero {
-                        self.onPageSelected(page)
-                        self.showMiniMap = false
-                    }
-                }
-        )
+            )
     }
 
     private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
@@ -157,47 +163,16 @@ struct MapView: View {
     private func centerOnCurrentPage() {
         guard let currentPage = pageManager.getCurrentPage() else { return }
         let screenSize = UIScreen.main.bounds.size
-        
+
         let currentPagePosition = CGPoint(
             x: CGFloat(currentPage.positionX - pagePositions.minX) * (thumbnailSize.width + spacing),
             y: CGFloat(pagePositions.maxY - currentPage.positionY) * (thumbnailSize.height + spacing)
         )
-        
+
         panOffset = CGSize(
             width: screenSize.width / 2 - currentPagePosition.x - thumbnailSize.width / 2,
             height: screenSize.height / 2 - currentPagePosition.y - thumbnailSize.height / 2
         )
-    }
-}
-
-// MARK: - WiggleThumbnail
-struct WiggleThumbnail<Content: View>: View {
-    let isWiggling: Bool
-    let isDragging: Bool
-    let content: () -> Content
-    @State private var rotation: Double = 0
-
-    var body: some View {
-        content()
-            .rotationEffect(.degrees(rotation))
-            .onChange(of: isWiggling) { _, newValue in
-                updateRotation(isWiggling: newValue, isDragging: isDragging)
-            }
-            .onChange(of: isDragging) { _, newValue in
-                updateRotation(isWiggling: isWiggling, isDragging: newValue)
-            }
-    }
-    
-    private func updateRotation(isWiggling: Bool, isDragging: Bool) {
-        if isWiggling && !isDragging {
-            withAnimation(.easeInOut(duration: 0.15).repeatForever(autoreverses: true)) {
-                rotation = 2
-            }
-        } else {
-            withAnimation(.easeInOut(duration: 0.15)) {
-                rotation = 0
-            }
-        }
     }
 }
 
@@ -206,7 +181,7 @@ struct ThumbnailContent: View {
     let page: Page
     let thumbnailSize: CGSize
     let colorScheme: ColorScheme
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
@@ -221,7 +196,7 @@ struct ThumbnailContent: View {
             }
             .frame(width: thumbnailSize.width, height: thumbnailSize.height)
             .clipped()
-            
+
             Text("\(page.positionX), \(page.positionY)")
                 .font(.system(size: 10))
                 .padding(2)
@@ -280,4 +255,3 @@ class Debouncer {
         queue.asyncAfter(deadline: .now() + delay, execute: workItem!)
     }
 }
-
