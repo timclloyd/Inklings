@@ -56,7 +56,7 @@ struct ContentView: View {
                 }, pageRect: pageManager.pageRect, onSwipe: handleSwipe)
                     .ignoresSafeArea()
 
-                EdgeOverlayView(direction: swipeProgress.direction, progress: swipeProgress.progress, size: pageManager.pageRect.size, adjacentPages: getAdjacentPages())
+                NavIndicatorView(direction: swipeProgress.direction, progress: swipeProgress.progress, size: pageManager.pageRect.size, adjacentPages: getAdjacentPages())
                     .allowsHitTesting(false)
                     .ignoresSafeArea()
 

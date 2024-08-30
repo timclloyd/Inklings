@@ -8,7 +8,7 @@
 import Foundation
 import SwiftUI
 
-struct EdgeOverlayView: View {
+struct NavIndicatorView: View {
     let direction: EdgeDirection?
     let progress: CGFloat
     let size: CGSize
