@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		154A78AE2C7FB1DA00088B86 /* EdgeOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154A78AD2C7FB1DA00088B86 /* EdgeOverlayView.swift */; };
+		154A78AE2C7FB1DA00088B86 /* NavIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154A78AD2C7FB1DA00088B86 /* NavIndicatorView.swift */; };
 		155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* Helpers.swift */; };
 		155C1DC42C62BD6B00FC5882 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC32C62BD6B00FC5882 /* Assets.xcassets */; };
 		155C1DC72C62BD6B00FC5882 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */; };
@@ -41,7 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		154A78AD2C7FB1DA00088B86 /* EdgeOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeOverlayView.swift; sourceTree = "<group>"; };
+		154A78AD2C7FB1DA00088B86 /* NavIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavIndicatorView.swift; sourceTree = "<group>"; };
 		155C1DBA2C62BD6A00FC5882 /* MyiPadSketchbook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyiPadSketchbook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		155C1DBF2C62BD6A00FC5882 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		155C1DC32C62BD6B00FC5882 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -153,7 +153,7 @@
 				15B03BAC2C71EBC9007589CB /* MapView.swift */,
 				15B03BAE2C71EBF2007589CB /* PencilKitView.swift */,
 				15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */,
-				154A78AD2C7FB1DA00088B86 /* EdgeOverlayView.swift */,
+				154A78AD2C7FB1DA00088B86 /* NavIndicatorView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -315,7 +315,7 @@
 				155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */,
 				15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */,
 				15B03BAB2C71EB82007589CB /* ContentView.swift in Sources */,
-				154A78AE2C7FB1DA00088B86 /* EdgeOverlayView.swift in Sources */,
+				154A78AE2C7FB1DA00088B86 /* NavIndicatorView.swift in Sources */,
 				15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */,
 				15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */,
 				15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */,
