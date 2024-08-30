@@ -198,7 +198,7 @@ struct ContentView: View {
                 }
             }
             // Always reset the swipe progress when the gesture ends
-            withAnimation(.linear(duration: 0.2)) {
+            withAnimation(.linear(duration: 0)) {
                 swipeProgress = SwipeProgress(direction: nil, progress: 0)
             }
         default:
