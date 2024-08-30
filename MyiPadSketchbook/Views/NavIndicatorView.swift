@@ -19,7 +19,7 @@ struct NavIndicatorView: View {
 
     private let arrowDiameter: CGFloat = 32
     private let shadowRadius: CGFloat = 15
-    private let edgeDistance: CGFloat = 26
+    private let edgeDistance: CGFloat = 39.5
 
     var body: some View {
         GeometryReader { geometry in
@@ -37,7 +37,7 @@ struct NavIndicatorView: View {
                     .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
                             radius: shadowRadius, x: 0, y: 0)
                     .opacity(arrowOpacity(for: edge))
-                    .position(CGPoint(x: geometry.size.width / 2, y: edgeDistance + arrowDiameter / 2 - 1))
+                    .position(CGPoint(x: geometry.size.width / 2, y: edgeDistance + arrowDiameter / 2))
                 }
             }
         }
