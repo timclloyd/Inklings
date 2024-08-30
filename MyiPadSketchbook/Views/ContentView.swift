@@ -141,8 +141,10 @@ struct ContentView: View {
     }
     
     private func updateUndoRedoState() {
-        canUndo = canvasView.undoManager?.canUndo ?? false
-        canRedo = canvasView.undoManager?.canRedo ?? false
+        DispatchQueue.main.async {
+            self.canUndo = self.canvasView.undoManager?.canUndo ?? false
+            self.canRedo = self.canvasView.undoManager?.canRedo ?? false
+        }
     }
     
     private func updateSwipeProgress(for gesture: UIPanGestureRecognizer) {
