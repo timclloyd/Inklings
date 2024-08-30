@@ -29,6 +29,10 @@ struct NavIndicatorView: View {
                         Circle()
                             .fill(colorScheme == .dark ? Color.black : Color.white)
                             .frame(width: arrowDiameter-1, height: arrowDiameter-1)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color(UIColor.systemBackground).opacity(0.3), lineWidth: 2)
+                            ) // add a border
                         
                         Image(systemName: arrowSystemName(for: edge))
                             .font(.system(size: arrowDiameter))
