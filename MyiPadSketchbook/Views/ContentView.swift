@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 import PencilKit
 
-struct CustomButtonStyle: ButtonStyle {
+struct UndoRedoButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) var colorScheme
     var isEnabled: Bool
 
@@ -19,6 +19,28 @@ struct CustomButtonStyle: ButtonStyle {
             .background(Circle().fill((colorScheme == .dark ? Color.black : Color.white)))
             .foregroundColor(isEnabled ? .primary.opacity(0.87) : .primary.opacity(0.2))
             .scaleEffect(configuration.isPressed ? 1.2 : 1.0)
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
+struct MapButtonStyle: ButtonStyle {
+    @Environment(\.colorScheme) var colorScheme
+    var isEnabled: Bool
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                Circle()
+                    .fill(configuration.isPressed ?
+                          (colorScheme == .dark ? Color(.systemGray5) : Color.white) :
+                          (colorScheme == .dark ? Color(.systemGray6) : Color.white)
+                    )
+            )
+            .overlay(
+                Circle()
+                    .stroke(Color(.systemGray5), lineWidth: 0.5)
+            )
+            .scaleEffect(configuration.isPressed ? 1.075 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
     }
 }
@@ -75,7 +97,7 @@ struct ContentView: View {
                                     .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
                                     .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
                             }
-                            .buttonStyle(CustomButtonStyle(isEnabled: canUndo))
+                            .buttonStyle(UndoRedoButtonStyle(isEnabled: canUndo))
                             .disabled(!canUndo)
                             .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
                             
@@ -89,7 +111,7 @@ struct ContentView: View {
                                     .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
                                     .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
                             }
-                            .buttonStyle(CustomButtonStyle(isEnabled: canRedo))
+                            .buttonStyle(UndoRedoButtonStyle(isEnabled: canRedo))
                             .disabled(!canRedo)
                             .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
                         }
@@ -107,7 +129,7 @@ struct ContentView: View {
                                 .foregroundColor(.primary.opacity(0.87))
                                 .frame(width: buttonSize, height: buttonSize)
                         }
-                        .buttonStyle(CustomButtonStyle(isEnabled: true))
+                        .buttonStyle(MapButtonStyle(isEnabled: true))
                         .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
                                 radius: shadowRadius, x: 0, y: 0)
                         .padding(EdgeInsets(top: 0, leading: 30, bottom: 6, trailing: 0))
