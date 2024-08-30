@@ -17,10 +17,9 @@ struct EdgeOverlayView: View {
     let adjacentPages: AdjacentPages
     @Environment(\.colorScheme) var colorScheme
 
-    private let arrowDiameter: CGFloat = 70
+    private let arrowDiameter: CGFloat = 30
     private let shadowRadius: CGFloat = 15
-    private let edgeDistance: CGFloat = 30
-    private let mediumOpacity: Double = 0.5
+    private let edgeDistance: CGFloat = 26
 
     var body: some View {
         GeometryReader { geometry in
@@ -38,7 +37,7 @@ struct EdgeOverlayView: View {
                     .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
                             radius: shadowRadius, x: 0, y: 0)
                     .opacity(arrowOpacity(for: edge))
-                    .position(arrowPosition(for: edge, in: geometry))
+                    .position(CGPoint(x: geometry.size.width / 2, y: edgeDistance + arrowDiameter / 2))
                 }
             }
         }
@@ -47,26 +46,13 @@ struct EdgeOverlayView: View {
     private func arrowSystemName(for edge: EdgeDirection) -> String {
         switch edge {
         case .left:
-            return "arrowshape.left.circle"
+            return "arrow.left.circle.fill"
         case .right:
-            return "arrowshape.right.circle"
+            return "arrow.right.circle.fill"
         case .top:
-            return "arrowshape.up.circle"
+            return "arrow.up.circle.fill"
         case .bottom:
-            return "arrowshape.down.circle"
-        }
-    }
-    
-    private func arrowPosition(for edge: EdgeDirection, in geometry: GeometryProxy) -> CGPoint {
-        switch edge {
-        case .left:
-            return CGPoint(x: edgeDistance + arrowDiameter / 2, y: geometry.size.height / 2)
-        case .right:
-            return CGPoint(x: geometry.size.width - edgeDistance - arrowDiameter / 2, y: geometry.size.height / 2)
-        case .top:
-            return CGPoint(x: geometry.size.width / 2, y: edgeDistance + arrowDiameter / 2)
-        case .bottom:
-            return CGPoint(x: geometry.size.width / 2, y: geometry.size.height - edgeDistance - arrowDiameter / 2)
+            return "arrow.down.circle.fill"
         }
     }
 
@@ -78,8 +64,7 @@ struct EdgeOverlayView: View {
         if progress >= createThreshold {
             return 1
         } else if progress > threshold {
-            // Smooth transition from 0 to mediumOpacity
-            return Double(progress) * mediumOpacity
+            return 0
         } else {
             return 0
         }
@@ -94,7 +79,7 @@ struct EdgeOverlayView: View {
         if hasAdjacentPage {
             return .blue
         } else {
-            return progress >= createThreshold ? .green : .blue
+            return .green
         }
     }
     
