@@ -12,7 +12,8 @@ import PencilKit
 
 struct CustomButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) var colorScheme
-    
+    var isEnabled: Bool
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .background(
@@ -26,8 +27,9 @@ struct CustomButtonStyle: ButtonStyle {
                 Circle()
                     .stroke(Color(.systemGray5), lineWidth: 0.5)
             )
-            .scaleEffect(configuration.isPressed ? 1.075 : 1.0)
+            .scaleEffect(configuration.isPressed ? 1.2 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+            .opacity(isEnabled ? 1.0 : 0.25)
     }
 }
 
@@ -41,6 +43,8 @@ struct ContentView: View {
     @State private var showMiniMap = false
     @State private var swipeProgress = SwipeProgress(direction: nil, progress: 0)
     @GestureState private var dragState = DragState.inactive
+    @State private var canUndo = false
+    @State private var canRedo = false
     
     init(modelContext: ModelContext) {
         _pageManager = StateObject(wrappedValue: PageManager(modelContext: modelContext))
@@ -48,6 +52,7 @@ struct ContentView: View {
     
     private let buttonSize: CGFloat = 70
     private let shadowRadius: CGFloat = 15
+    private let undoRedoButtonSize: CGFloat = 20
     
     var body: some View {
         ZStack {
@@ -55,16 +60,51 @@ struct ContentView: View {
                 DottedBackgroundView(pageRect: pageManager.pageRect, adjacentPages: getAdjacentPages(), swipeProgress: swipeProgress, dragState: dragState)
                     .ignoresSafeArea()
 
-                PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: pageManager.updateDrawing, pageRect: pageManager.pageRect, onSwipe: handleSwipe)
+                PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: { drawing in
+                    pageManager.updateDrawing(drawing)
+                    updateUndoRedoState()
+                }, pageRect: pageManager.pageRect, onSwipe: handleSwipe)
                     .ignoresSafeArea()
-                
+
                 EdgeOverlayView(direction: swipeProgress.direction, progress: swipeProgress.progress, size: pageManager.pageRect.size, adjacentPages: getAdjacentPages())
-                    .allowsHitTesting(false) // Ensures the overlay doesn't interfere with touch events
+                    .allowsHitTesting(false)
                     .ignoresSafeArea()
-                
-                // Button to show the map view
+
+                // Undo and Redo buttons
                 VStack {
+                    HStack {
+                        Spacer()
+                        HStack(spacing: 10) {
+                            Button(action: {
+                                canvasView.undoManager?.undo()
+                                updateUndoRedoState()
+                            }) {
+                                Image(systemName: "arrow.uturn.left.circle")
+                                    .font(.system(size: undoRedoButtonSize))
+                                    .foregroundColor(.primary.opacity(0.87))
+                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                            }
+                            .buttonStyle(CustomButtonStyle(isEnabled: canUndo))
+                            .disabled(!canUndo)
+                            .padding(EdgeInsets(top: 29.5, leading: 0, bottom: 0, trailing: -2.5))
+
+                            Button(action: {
+                                canvasView.undoManager?.redo()
+                                updateUndoRedoState()
+                            }) {
+                                Image(systemName: "arrow.uturn.right.circle")
+                                    .font(.system(size: undoRedoButtonSize))
+                                    .foregroundColor(.primary.opacity(0.87))
+                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                            }
+                            .buttonStyle(CustomButtonStyle(isEnabled: canRedo))
+                            .disabled(!canRedo)
+                            .padding(EdgeInsets(top: 29.5, leading: 0, bottom: 0, trailing: 31.5))
+                        }
+                    }
                     Spacer()
+
+                    // Map button
                     HStack {
                         Button(action: {
                             pageManager.updateAllThumbnails()
@@ -75,7 +115,7 @@ struct ContentView: View {
                                 .foregroundColor(.primary.opacity(0.87))
                                 .frame(width: buttonSize, height: buttonSize)
                         }
-                        .buttonStyle(CustomButtonStyle())
+                        .buttonStyle(CustomButtonStyle(isEnabled: true))
                         .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
                                 radius: shadowRadius, x: 0, y: 0)
                         .padding(EdgeInsets(top: 0, leading: 30, bottom: 6, trailing: 0))
@@ -89,11 +129,20 @@ struct ContentView: View {
                     pageManager.setCurrentPage(selectedPage)
                     if let drawing = try? PKDrawing(data: selectedPage.drawingData) {
                         canvasView.drawing = drawing
+                        updateUndoRedoState()
                     }
                     showMiniMap = false
                 }, showMiniMap: $showMiniMap)
             }
         }
+        .onAppear {
+            updateUndoRedoState()
+        }
+    }
+    
+    private func updateUndoRedoState() {
+        canUndo = canvasView.undoManager?.canUndo ?? false
+        canRedo = canvasView.undoManager?.canRedo ?? false
     }
     
     private func updateSwipeProgress(for gesture: UIPanGestureRecognizer) {
