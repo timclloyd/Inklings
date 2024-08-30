@@ -17,7 +17,7 @@ struct EdgeOverlayView: View {
     let adjacentPages: AdjacentPages
     @Environment(\.colorScheme) var colorScheme
 
-    private let arrowDiameter: CGFloat = 30
+    private let arrowDiameter: CGFloat = 32
     private let shadowRadius: CGFloat = 15
     private let edgeDistance: CGFloat = 26
 
@@ -37,7 +37,7 @@ struct EdgeOverlayView: View {
                     .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
                             radius: shadowRadius, x: 0, y: 0)
                     .opacity(arrowOpacity(for: edge))
-                    .position(CGPoint(x: geometry.size.width / 2, y: edgeDistance + arrowDiameter / 2))
+                    .position(CGPoint(x: geometry.size.width / 2, y: edgeDistance + arrowDiameter / 2 - 1))
                 }
             }
         }
