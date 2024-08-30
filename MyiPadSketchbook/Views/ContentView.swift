@@ -16,20 +16,10 @@ struct CustomButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .background(
-                Circle()
-                    .fill(configuration.isPressed ?
-                          (colorScheme == .dark ? Color(.systemGray5) : Color.white) :
-                          (colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                    )
-            )
-            .overlay(
-                Circle()
-                    .stroke(Color(.systemGray5), lineWidth: 0.5)
-            )
+            .background(Circle().fill((colorScheme == .dark ? Color.black : Color.white)))
+            .foregroundColor(isEnabled ? .primary.opacity(0.87) : .primary.opacity(0.2))
             .scaleEffect(configuration.isPressed ? 1.2 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
-            .opacity(isEnabled ? 1.0 : 0.25)
     }
 }
 
@@ -74,32 +64,34 @@ struct ContentView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        HStack(spacing: 10) {
+                        HStack() {
                             Button(action: {
                                 canvasView.undoManager?.undo()
                                 updateUndoRedoState()
                             }) {
                                 Image(systemName: "arrow.uturn.left.circle")
                                     .font(.system(size: undoRedoButtonSize))
-                                    .foregroundColor(.primary.opacity(0.87))
                                     .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                                    .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
                             }
                             .buttonStyle(CustomButtonStyle(isEnabled: canUndo))
                             .disabled(!canUndo)
-                            .padding(EdgeInsets(top: 29.5, leading: 0, bottom: 0, trailing: -2.5))
-
+                            .padding(EdgeInsets(top: 18.5, leading: 0, bottom: 0, trailing: -8))
+                            
                             Button(action: {
                                 canvasView.undoManager?.redo()
                                 updateUndoRedoState()
                             }) {
                                 Image(systemName: "arrow.uturn.right.circle")
                                     .font(.system(size: undoRedoButtonSize))
-                                    .foregroundColor(.primary.opacity(0.87))
                                     .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                                    .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
                             }
                             .buttonStyle(CustomButtonStyle(isEnabled: canRedo))
                             .disabled(!canRedo)
-                            .padding(EdgeInsets(top: 29.5, leading: 0, bottom: 0, trailing: 31.5))
+                            .padding(EdgeInsets(top: 18.5, leading: 0, bottom: 0, trailing: 20.5))
                         }
                     }
                     Spacer()
