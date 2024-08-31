@@ -141,7 +141,7 @@ struct ContentView: View {
             } else {
                 MapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
                     pageManager.setCurrentPage(selectedPage)
-                    if let drawing = try? PKDrawing(data: selectedPage.drawingData) {
+                    if let drawing = try? PKDrawing(data: selectedPage.drawingData!) {
                         canvasView.drawing = drawing
                         updateUndoRedoState()
                     }
@@ -193,7 +193,7 @@ struct ContentView: View {
             if progress >= 1.0 {
                 pageManager.addPage(translation: CGSize(width: translation.x, height: translation.y))
                 if let currentPage = pageManager.getCurrentPage(),
-                   let drawing = try? PKDrawing(data: currentPage.drawingData) {
+                   let drawing = try? PKDrawing(data: currentPage.drawingData!) {
                     canvasView.drawing = drawing
                 }
             }
@@ -212,10 +212,10 @@ struct ContentView: View {
         }
         
         return AdjacentPages(
-            left: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX - 1 && $0.positionY == currentPage.positionY }),
-            right: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX + 1 && $0.positionY == currentPage.positionY }),
-            top: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == currentPage.positionY + 1 }),
-            bottom: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == currentPage.positionY - 1 })
+            left: pageManager.pages.contains(where: { $0.positionX == (currentPage.positionX ?? 0) - 1 && $0.positionY == currentPage.positionY }),
+            right: pageManager.pages.contains(where: { $0.positionX == (currentPage.positionX ?? 0) + 1 && $0.positionY == currentPage.positionY }),
+            top: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == (currentPage.positionY ?? 0) + 1 }),
+            bottom: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == (currentPage.positionY ?? 0) - 1 })
         )
     }
 }

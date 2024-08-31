@@ -41,7 +41,7 @@ class PageManager: ObservableObject {
     }
     
     func createPage(position: (x: Int, y: Int)) -> Page {
-        let newPage = Page(position: position)
+        let newPage = Page(positionX: position.x, positionY: position.y)
         modelContext.insert(newPage)
         pages.append(newPage)
         return newPage
@@ -61,10 +61,10 @@ class PageManager: ObservableObject {
         
         if abs(translation.width) > abs(translation.height) {
             // Horizontal movement
-            newPosition.x += translation.width > 0 ? -1 : 1
+            newPosition.x! += translation.width > 0 ? -1 : 1
         } else {
             // Vertical movement
-            newPosition.y += translation.height < 0 ? -1 : 1
+            newPosition.y! += translation.height < 0 ? -1 : 1
         }
         
         let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
@@ -72,7 +72,7 @@ class PageManager: ObservableObject {
         if let existingPage = existingPage {
             setCurrentPage(existingPage)
         } else {
-            let newPage = createPage(position: newPosition)
+            let newPage = createPage(position: (newPosition.x!, newPosition.y!))
             setCurrentPage(newPage)
         }
     }
@@ -89,7 +89,7 @@ class PageManager: ObservableObject {
     }
     
     func updateThumbnail(for page: Page) {
-        guard let drawing = try? PKDrawing(data: page.drawingData) else { return }
+        guard let drawing = try? PKDrawing(data: page.drawingData!) else { return }
         
         // Reduce scale for efficiency
         let scale = UIScreen.main.scale * 0.1

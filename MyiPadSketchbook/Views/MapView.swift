@@ -27,8 +27,9 @@ struct MapView: View {
     private let spacing: CGFloat = 10
 
     private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
-        let xPositions = pages.map { $0.positionX }
-        let yPositions = pages.map { $0.positionY }
+        let xPositions = pages.map { $0.positionX ?? 0 }
+        let yPositions = pages.map { $0.positionY ?? 0 }
+        
         return (
             minX: xPositions.min() ?? 0,
             maxX: xPositions.max() ?? 0,
@@ -126,8 +127,8 @@ struct MapView: View {
                         if self.isRearranging {
                             let gridMovement = self.calculateGridMovement(value.translation)
                             let newPosition = (
-                                x: page.positionX + gridMovement.x,
-                                y: page.positionY + gridMovement.y
+                                x: (page.positionX ?? 0) + gridMovement.x,
+                                y: (page.positionY ?? 0) + gridMovement.y
                             )
                             if self.isValidMove(to: newPosition) {
                                 page.positionX = newPosition.x
@@ -145,8 +146,8 @@ struct MapView: View {
     }
 
     private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
-        let x = CGFloat(page.positionX - pagePositions.minX) * (thumbnailSize.width + spacing)
-        let y = CGFloat(pagePositions.maxY - page.positionY) * (thumbnailSize.height + spacing)
+        let x = CGFloat((page.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing)
+        let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (thumbnailSize.height + spacing)
         return CGPoint(x: x, y: y)
     }
 
@@ -165,8 +166,8 @@ struct MapView: View {
         let screenSize = UIScreen.main.bounds.size
 
         let currentPagePosition = CGPoint(
-            x: CGFloat(currentPage.positionX - pagePositions.minX) * (thumbnailSize.width + spacing),
-            y: CGFloat(pagePositions.maxY - currentPage.positionY) * (thumbnailSize.height + spacing)
+            x: CGFloat((currentPage.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing),
+            y: CGFloat(pagePositions.maxY - (currentPage.positionY ?? 0)) * (thumbnailSize.height + spacing)
         )
 
         panOffset = CGSize(
@@ -197,7 +198,7 @@ struct ThumbnailContent: View {
             .frame(width: thumbnailSize.width, height: thumbnailSize.height)
             .clipped()
 
-            Text("\(page.positionX), \(page.positionY)")
+            Text("\(page.positionX ?? 0), \(page.positionY ?? 0)")
                 .font(.system(size: 10))
                 .padding(2)
                 .foregroundColor(Color.primary.opacity(0.87))
