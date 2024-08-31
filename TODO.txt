@@ -1,14 +1,20 @@
-Todo
-- [x] Implement basic concept
-- [x] Add basic minimap to navigate
-- [x] Add state saving
-- [x] Make minimap view scrollable / pannable for when there are too many pages to fit in the screen
-- [x] Design * implement in-page indicator of which directions already have pages
-- [-] Sketch thru options for deleting pages and handling island pages (or only allow deleting content via the eraser?) 
-- [x] Review code with Claude - is the minimap showing cached thumbnails? 
-- [x] Implement page moving in the minimap
-- [x] Change name to GridNotes - haven’t changed the Xcode project because it keeps crashing when I try...
+# Bugs
 
-Bugs
-- [ ] Having multiple windows in the same app results in data loss - page content leaks across and overwrites other pages when navigating !!!
+- [ ] Thumbnails in Map view don’t update when system light/dark mode changes
+
+# Important tasks
+
+- [ ] Figure out whether iCloud sync is working as expected on experiments/icloud-sync. It seems to work intermittently and slowly, and potentially not at all if any content is modified on two devices at once
+
+- [ ] Add tests for the data model
+- [ ] Add tests for page rearranging in the Map
+- [ ] Support all device orientations but prevent the page content from rotating (let buttons etc change position)
+
+# New features
+
+- [ ] Consider adding page numbers to main view so that 
+
+- Wait for iOS 18 because things are changing there
+	- [ ] Buttons (below undo/redo) to change the selected tool: https://developer.apple.com/documentation/pencilkit/pktoolpicker/selectedtoolitem
+	- [ ] Show only certain tools in the default tool picker: https://developer.apple.com/documentation/pencilkit/pktoolpicker/init(toolitems:)?changes=latest_minor
 
