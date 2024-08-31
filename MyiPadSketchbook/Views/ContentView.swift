@@ -124,7 +124,7 @@ struct ContentView: View {
                             pageManager.updateAllThumbnails()
                             showMiniMap = true
                         }) {
-                            Image(systemName: "map")
+                            Image(systemName: "rectangle.grid.3x2")
                                 .font(.system(size: 28))
                                 .foregroundColor(.primary.opacity(0.87))
                                 .frame(width: buttonSize, height: buttonSize)
