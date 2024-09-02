@@ -1,3 +1,14 @@
+# Roadmap
+
+Now
+- Add tests, particularly to the data model !!!
+- Fix bug: first rearrange takes ages, getting worse with more pages
+Next
+- Add labels (with an updated PageModel), working TDD
+Later
+
+──────────────────────────────────────────────────────────────────
+
 # Bugs
 
 - [ ] Thumbnails in Map view don’t update when system light/dark mode changes
@@ -10,11 +21,18 @@
 - [ ] Add tests for page rearranging in the Map
 - [ ] Support all device orientations but prevent the page content from rotating (let buttons etc change position)
 
-# New features
+──────────────────────────────────────────────────────────────────
 
-- [ ] Consider adding page numbers to main view so that 
+# New feature ideas
+
+- [ ] Sketch through options for page markers - trying to replicate what I like about paper notebooks - colourful page markers with scribbles on them. See page 7,-3 and 7,-4
+
+- [ ] Consider adding page numbers to main view - y tho? The idea occurred to me once, and now I forget the context - which is a signal it isn’t important.
 
 - Wait for iOS 18 because things are changing there
 	- [ ] Buttons (below undo/redo) to change the selected tool: https://developer.apple.com/documentation/pencilkit/pktoolpicker/selectedtoolitem
 	- [ ] Show only certain tools in the default tool picker: https://developer.apple.com/documentation/pencilkit/pktoolpicker/init(toolitems:)?changes=latest_minor
+
+- [ ] Sketch thru - what if I could rearrange pages in the Map and give areas section headings - like hypercard in the world? https://www.youtube.com/watch?v=uI7J3II59lc
+
 
