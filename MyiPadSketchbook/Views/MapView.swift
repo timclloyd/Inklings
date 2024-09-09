@@ -1,10 +1,7 @@
 import SwiftUI
 import PencilKit
 import SwiftData
-
-import SwiftUI
-import PencilKit
-import SwiftData
+import UIKit
 
 // MARK: - MapView
 struct MapView: View {
@@ -19,6 +16,7 @@ struct MapView: View {
     @State private var isRearranging: Bool = false
     @State private var panDebouncer = Debouncer(delay: 0.001)
     @GestureState private var dragGestureState: CGSize = .zero
+    @State private var isSharePresented: Bool = false
 
     private var thumbnailSize: CGSize {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
@@ -56,9 +54,19 @@ struct MapView: View {
                     HStack {
                         Spacer()
                         Button(action: {
+                            isSharePresented = true
+                        }) {
+                            Text("Export Map Image")
+                                .padding(8)
+                                .background(Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        
+                        Button(action: {
                             isRearranging.toggle()
                         }) {
-                            Text(isRearranging ? "Done" : "Rearrange")
+                            Text(isRearranging ? "Done" : "Rearrange Pages")
                                 .padding(8)
                                 .background(isRearranging ? Color.blue : Color.red)
                                 .foregroundColor(.white)
@@ -81,12 +89,23 @@ struct MapView: View {
                         )
                     }
             )
+            .sheet(isPresented: $isSharePresented, content: {
+                let image = generateMapImage()
+                let fileName = getISODateString()
+                ActivityViewController(activityItems: [image, fileName])
+            })
         }
         .onAppear {
             centerOnCurrentPage()
         }
     }
 
+    func getISODateString() -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate, .withTime]
+        return formatter.string(from: Date())
+    }
+    
     private var backgroundColor: Color {
         if isRearranging {
             return colorScheme == .dark ? Color.red.opacity(0.1) : Color.red.opacity(0.075)
@@ -174,6 +193,120 @@ struct MapView: View {
             width: screenSize.width / 2 - currentPagePosition.x - thumbnailSize.width / 2,
             height: screenSize.height / 2 - currentPagePosition.y - thumbnailSize.height / 2
         )
+    }
+}
+
+struct ActivityViewController: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: UIViewControllerRepresentableContext<ActivityViewController>) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
+}
+
+extension MapView {
+    func generateFullScaleThumbnail(for page: Page) -> UIImage {
+        guard let drawing = try? PKDrawing(data: page.drawingData!) else {
+            return UIImage() // Return an empty image if drawing can't be loaded
+        }
+        
+        let fullScaleThumbnailSize = pageManager.pageRect.size
+        let cornerRadius: CGFloat = 15
+        
+        let renderer = UIGraphicsImageRenderer(size: fullScaleThumbnailSize)
+        let thumbnailImage = renderer.image { context in
+            let rect = CGRect(origin: .zero, size: fullScaleThumbnailSize)
+            
+            // Create rounded rectangle path
+            let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+            context.cgContext.addPath(path.cgPath)
+            context.cgContext.clip()
+            
+            // Set background color based on color scheme
+            let backgroundColor = UIColor { traitCollection in
+                traitCollection.userInterfaceStyle == .dark ? .black : .white
+            }
+            context.cgContext.setFillColor(backgroundColor.cgColor)
+            context.cgContext.fill(rect)
+            
+            // Draw the full-scale drawing
+            let fullScaleImage = drawing.image(from: pageManager.pageRect, scale: 1.0)
+            fullScaleImage.draw(in: rect)
+            
+            // Draw border
+            context.cgContext.setStrokeColor(UIColor.systemGray5.cgColor)
+            context.cgContext.setLineWidth(4)
+            context.cgContext.addPath(path.cgPath)
+            context.cgContext.strokePath()
+            
+            // Draw page coordinates
+            let text = "\(page.positionX ?? 0), \(page.positionY ?? 0)"
+            let scaleFactor = fullScaleThumbnailSize.width / thumbnailSize.width
+            let fontSize = 5 * scaleFactor
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: fontSize),
+                .foregroundColor: UIColor.label.withAlphaComponent(0.87)
+            ]
+            let textSize = (text as NSString).size(withAttributes: attributes)
+            
+            let padding: CGFloat = 2 * scaleFactor
+            let textRect = CGRect(
+                x: (fullScaleThumbnailSize.width / 2) - textSize.width,
+                y: fullScaleThumbnailSize.height - textSize.height - padding - (3 * scaleFactor),
+                width: textSize.width + (padding * 2),
+                height: textSize.height + (padding * 2)
+            )
+            
+            let textBackgroundPath = UIBezierPath(roundedRect: textRect, cornerRadius: 2 * scaleFactor)
+            UIColor.systemGray6.setFill()
+            textBackgroundPath.fill()
+            
+            context.cgContext.setStrokeColor(UIColor.systemGray5.cgColor)
+            context.cgContext.setLineWidth(2 * scaleFactor)
+            textBackgroundPath.stroke()
+            
+            text.draw(in: textRect.insetBy(dx: padding, dy: padding), withAttributes: attributes)
+        }
+        
+        return thumbnailImage
+    }
+
+    func generateMapImage() -> UIImage {
+        let pagePositions = self.pagePositions
+        let horizontalPages = pagePositions.maxX - pagePositions.minX + 1
+        let verticalPages = pagePositions.maxY - pagePositions.minY + 1
+        
+        let fullScaleThumbnailSize = pageManager.pageRect.size
+        let spacing: CGFloat = 10 // Use the same spacing as in the live Map view
+        let fullSize = CGSize(
+            width: CGFloat(horizontalPages) * (fullScaleThumbnailSize.width + spacing) - spacing,
+            height: CGFloat(verticalPages) * (fullScaleThumbnailSize.height + spacing) - spacing
+        )
+        
+        let renderer = UIGraphicsImageRenderer(size: fullSize)
+        
+        return renderer.image { context in
+            // Fill background
+            if colorScheme == .dark {
+                UIColor.black.setFill()
+            } else {
+                UIColor.white.setFill()
+            }
+            context.fill(CGRect(origin: .zero, size: fullSize))
+            
+            // Draw thumbnails
+            for page in pages {
+                let x = CGFloat((page.positionX ?? 0) - pagePositions.minX) * (fullScaleThumbnailSize.width + spacing)
+                let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (fullScaleThumbnailSize.height + spacing)
+                
+                let fullScaleThumbnail = generateFullScaleThumbnail(for: page)
+                fullScaleThumbnail.draw(in: CGRect(origin: CGPoint(x: x, y: y), size: fullScaleThumbnailSize))
+            }
+        }
     }
 }
 
