@@ -11,6 +11,7 @@ Later
 
 # Bugs
 
+- [ ] On branch experiment/icloud-sync the Thumbnail data isn’t always updated when opening the Map... which can result in the Thumbnail showing stale data even while the page itself shows the correct data
 - [ ] Thumbnails in Map view don’t update when system light/dark mode changes
 
 # Important tasks
