@@ -68,7 +68,7 @@ struct MapView: View {
                         Button(action: {
                             isSharePresented = true
                         }) {
-                            Image(systemName: "square.and.arrow.up")
+                            Image(systemName: "square.and.arrow.up.on.square")
                                 .foregroundColor(Color.primary)
                                 .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
                                 .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
@@ -132,7 +132,7 @@ struct MapView: View {
     
     private var backgroundColor: Color {
         if isRearranging {
-            return colorScheme == .dark ? Color.red.opacity(0.1) : Color.red.opacity(0.075)
+            return colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.075)
         } else {
             return colorScheme == .dark ? Color.black : Color.white
         }
