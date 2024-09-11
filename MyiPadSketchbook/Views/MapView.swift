@@ -1,10 +1,7 @@
 import SwiftUI
 import PencilKit
 import SwiftData
-
-import SwiftUI
-import PencilKit
-import SwiftData
+import UIKit
 
 // MARK: - MapView
 struct MapView: View {
@@ -19,6 +16,7 @@ struct MapView: View {
     @State private var isRearranging: Bool = false
     @State private var panDebouncer = Debouncer(delay: 0.001)
     @GestureState private var dragGestureState: CGSize = .zero
+    @State private var isSharePresented: Bool = false
 
     private var thumbnailSize: CGSize {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
@@ -27,8 +25,9 @@ struct MapView: View {
     private let spacing: CGFloat = 10
 
     private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
-        let xPositions = pages.map { $0.positionX }
-        let yPositions = pages.map { $0.positionY }
+        let xPositions = pages.map { $0.positionX ?? 0 }
+        let yPositions = pages.map { $0.positionY ?? 0 }
+        
         return (
             minX: xPositions.min() ?? 0,
             maxX: xPositions.max() ?? 0,
@@ -54,19 +53,31 @@ struct MapView: View {
                 VStack {
                     HStack {
                         Spacer()
+
                         Button(action: {
                             isRearranging.toggle()
                         }) {
-                            Text(isRearranging ? "Done" : "Rearrange")
-                                .padding(8)
-                                .background(isRearranging ? Color.blue : Color.red)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
+                            Image(systemName: isRearranging ? "checkmark.circle" : "arrow.up.and.down.and.arrow.left.and.right")
+                                .scaleEffect(isRearranging ? 1.75 : 1.0)
+                                .foregroundColor(isRearranging ? Color.blue : Color.primary)
+                                .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
+                                .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                .padding(EdgeInsets(top: 0, leading: 10, bottom: 10, trailing: 5))
                         }
-                        .padding()
+                        
+                        Button(action: {
+                            isSharePresented = true
+                        }) {
+                            Image(systemName: "square.and.arrow.up")
+                                .foregroundColor(Color.primary)
+                                .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
+                                .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                .padding(EdgeInsets(top: 0, leading: 5, bottom: 10, trailing: 10))
+                        }
                     }
                     Spacer()
                 }
+                .padding(20)
             }
             .gesture(
                 DragGesture()
@@ -80,12 +91,23 @@ struct MapView: View {
                         )
                     }
             )
+            .sheet(isPresented: $isSharePresented, content: {
+                let image = generateMapImage()
+                let fileName = getISODateString()
+                ActivityViewController(activityItems: [image, fileName])
+            })
         }
         .onAppear {
             centerOnCurrentPage()
         }
     }
 
+    func getISODateString() -> String {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate, .withTime]
+        return formatter.string(from: Date())
+    }
+    
     private var backgroundColor: Color {
         if isRearranging {
             return colorScheme == .dark ? Color.red.opacity(0.1) : Color.red.opacity(0.075)
@@ -99,54 +121,70 @@ struct MapView: View {
         let appearance = isSelected && isRearranging ?
             ThumbnailAppearance.dragging(colorScheme: colorScheme) :
             ThumbnailAppearance.normal(colorScheme: colorScheme)
+        
+        let overlappingPages = getOverlappingPages(for: page)
+        let hasOverlap = overlappingPages.count > 1
 
-        return ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
-            .overlay(RoundedRectangle(cornerRadius: 5)
-                .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
-            .background(appearance.backgroundColor)
-            .scaleEffect(appearance.scale)
-            .opacity(appearance.opacity)
-            .position(thumbnailPosition(for: page, in: geometry))
-            .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
-            .zIndex(isSelected && isRearranging ? 1 : 0)
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        panDebouncer.debounce {
-                            if self.isRearranging {
-                                self.draggedPage = page
-                                self.draggedPageOffset = value.translation
-                            } else if value.translation != .zero {
-                                self.panOffset.width += value.translation.width
-                                self.panOffset.height += value.translation.height
-                            }
-                        }
-                    }
-                    .onEnded { value in
+        return ZStack {
+            ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
+                .overlay(RoundedRectangle(cornerRadius: 5)
+                    .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
+                .background(appearance.backgroundColor)
+                .scaleEffect(appearance.scale)
+                .opacity(appearance.opacity)
+            
+            if hasOverlap {
+                Text("\(overlappingPages.count)")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+                    .padding(6)
+                    .background(Color.red)
+                    .clipShape(Circle())
+                    .offset(x: thumbnailSize.width / 2 - 16, y: -thumbnailSize.height / 2 + 16)
+            }
+        }
+        .position(thumbnailPosition(for: page, in: geometry))
+        .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
+        .zIndex(isSelected && isRearranging ? 1 : 0)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    panDebouncer.debounce {
                         if self.isRearranging {
-                            let gridMovement = self.calculateGridMovement(value.translation)
-                            let newPosition = (
-                                x: page.positionX + gridMovement.x,
-                                y: page.positionY + gridMovement.y
-                            )
-                            if self.isValidMove(to: newPosition) {
-                                page.positionX = newPosition.x
-                                page.positionY = newPosition.y
-                                self.pageManager.updatePagePosition(page)
-                            }
-                            self.draggedPage = nil
-                            self.draggedPageOffset = .zero
-                        } else if value.translation == .zero {
-                            self.onPageSelected(page)
-                            self.showMiniMap = false
+                            self.draggedPage = page
+                            self.draggedPageOffset = value.translation
+                        } else if value.translation != .zero {
+                            self.panOffset.width += value.translation.width
+                            self.panOffset.height += value.translation.height
                         }
                     }
-            )
+                }
+                .onEnded { value in
+                    if self.isRearranging {
+                        let gridMovement = self.calculateGridMovement(value.translation)
+                        let newPosition = (
+                            x: (page.positionX ?? 0) + gridMovement.x,
+                            y: (page.positionY ?? 0) + gridMovement.y
+                        )
+                        if self.isValidMove(to: newPosition) {
+                            page.positionX = newPosition.x
+                            page.positionY = newPosition.y
+                            self.pageManager.updatePagePosition(page)
+                        }
+//                        self.pageManager.movePage(page, to: newPosition)
+                        self.draggedPage = nil
+                        self.draggedPageOffset = .zero
+                    } else if value.translation == .zero {
+                        self.onPageSelected(page)
+                        self.showMiniMap = false
+                    }
+                }
+        )
     }
 
     private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
-        let x = CGFloat(page.positionX - pagePositions.minX) * (thumbnailSize.width + spacing)
-        let y = CGFloat(pagePositions.maxY - page.positionY) * (thumbnailSize.height + spacing)
+        let x = CGFloat((page.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing)
+        let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (thumbnailSize.height + spacing)
         return CGPoint(x: x, y: y)
     }
 
@@ -165,14 +203,132 @@ struct MapView: View {
         let screenSize = UIScreen.main.bounds.size
 
         let currentPagePosition = CGPoint(
-            x: CGFloat(currentPage.positionX - pagePositions.minX) * (thumbnailSize.width + spacing),
-            y: CGFloat(pagePositions.maxY - currentPage.positionY) * (thumbnailSize.height + spacing)
+            x: CGFloat((currentPage.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing),
+            y: CGFloat(pagePositions.maxY - (currentPage.positionY ?? 0)) * (thumbnailSize.height + spacing)
         )
 
         panOffset = CGSize(
             width: screenSize.width / 2 - currentPagePosition.x - thumbnailSize.width / 2,
             height: screenSize.height / 2 - currentPagePosition.y - thumbnailSize.height / 2
         )
+    }
+    
+    private func getOverlappingPages(for page: Page) -> [Page] {
+        pages.filter { $0.positionX == page.positionX && $0.positionY == page.positionY }
+    }
+}
+
+struct ActivityViewController: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    let applicationActivities: [UIActivity]? = nil
+
+    func makeUIViewController(context: UIViewControllerRepresentableContext<ActivityViewController>) -> UIActivityViewController {
+        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
+}
+
+extension MapView {
+    func generateFullScaleThumbnail(for page: Page) -> UIImage {
+        guard let drawing = try? PKDrawing(data: page.drawingData!) else {
+            return UIImage() // Return an empty image if drawing can't be loaded
+        }
+        
+        let fullScaleThumbnailSize = pageManager.pageRect.size
+        let cornerRadius: CGFloat = 15
+        
+        let renderer = UIGraphicsImageRenderer(size: fullScaleThumbnailSize)
+        let thumbnailImage = renderer.image { context in
+            let rect = CGRect(origin: .zero, size: fullScaleThumbnailSize)
+            
+            // Create rounded rectangle path
+            let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
+            context.cgContext.addPath(path.cgPath)
+            context.cgContext.clip()
+            
+            // Set background color based on color scheme
+            let backgroundColor = UIColor { traitCollection in
+                traitCollection.userInterfaceStyle == .dark ? .black : .white
+            }
+            context.cgContext.setFillColor(backgroundColor.cgColor)
+            context.cgContext.fill(rect)
+            
+            // Draw the full-scale drawing
+            let fullScaleImage = drawing.image(from: pageManager.pageRect, scale: 1.0)
+            fullScaleImage.draw(in: rect)
+            
+            // Draw border
+            context.cgContext.setStrokeColor(UIColor.gray.cgColor)
+            context.cgContext.setLineWidth(4)
+            context.cgContext.addPath(path.cgPath)
+            context.cgContext.strokePath()
+            
+            // Draw page coordinates
+            let text = "\(page.positionX ?? 0), \(page.positionY ?? 0)"
+            let scaleFactor = fullScaleThumbnailSize.width / thumbnailSize.width
+            let fontSize = 5 * scaleFactor
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.systemFont(ofSize: fontSize),
+                .foregroundColor: UIColor.label.withAlphaComponent(0.87)
+            ]
+            let textSize = (text as NSString).size(withAttributes: attributes)
+            
+            let padding: CGFloat = 2 * scaleFactor
+            let textRect = CGRect(
+                x: (fullScaleThumbnailSize.width / 2) - textSize.width,
+                y: fullScaleThumbnailSize.height - textSize.height - padding - (3 * scaleFactor) - 8,
+                width: textSize.width + (padding * 2),
+                height: textSize.height + (padding * 2)
+            )
+            
+            let textBackgroundPath = UIBezierPath(roundedRect: textRect, cornerRadius: 2 * scaleFactor)
+            UIColor.systemGray6.setFill()
+            textBackgroundPath.fill()
+            
+            context.cgContext.setStrokeColor(UIColor.systemGray5.cgColor)
+            context.cgContext.setLineWidth(2 * scaleFactor)
+            textBackgroundPath.stroke()
+            
+            text.draw(in: textRect.insetBy(dx: padding, dy: padding), withAttributes: attributes)
+        }
+        
+        return thumbnailImage
+    }
+
+    func generateMapImage() -> UIImage {
+        let pagePositions = self.pagePositions
+        let horizontalPages = pagePositions.maxX - pagePositions.minX + 1
+        let verticalPages = pagePositions.maxY - pagePositions.minY + 1
+        
+        let fullScaleThumbnailSize = pageManager.pageRect.size
+        let spacing: CGFloat = 20 // Use the same spacing as in the live Map view
+        let fullSize = CGSize(
+            width: CGFloat(horizontalPages) * (fullScaleThumbnailSize.width + spacing) + spacing,
+            height: CGFloat(verticalPages) * (fullScaleThumbnailSize.height + spacing) + spacing
+        )
+        
+        let renderer = UIGraphicsImageRenderer(size: fullSize)
+        
+        return renderer.image { context in
+            // Fill background
+            if colorScheme == .dark {
+                UIColor.black.setFill()
+            } else {
+                UIColor.white.setFill()
+            }
+            context.fill(CGRect(origin: .zero, size: fullSize))
+            
+            // Draw thumbnails
+            for page in pages {
+                let x = spacing + CGFloat((page.positionX ?? 0) - pagePositions.minX) * (fullScaleThumbnailSize.width + spacing)
+                let y = spacing + CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (fullScaleThumbnailSize.height + spacing)
+                
+                let fullScaleThumbnail = generateFullScaleThumbnail(for: page)
+                fullScaleThumbnail.draw(in: CGRect(origin: CGPoint(x: x, y: y), size: fullScaleThumbnailSize))
+            }
+        }
     }
 }
 
@@ -197,7 +353,7 @@ struct ThumbnailContent: View {
             .frame(width: thumbnailSize.width, height: thumbnailSize.height)
             .clipped()
 
-            Text("\(page.positionX), \(page.positionY)")
+            Text("\(page.positionX ?? 0), \(page.positionY ?? 0)")
                 .font(.system(size: 10))
                 .padding(2)
                 .foregroundColor(Color.primary.opacity(0.87))
