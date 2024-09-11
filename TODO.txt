@@ -1,20 +1,47 @@
-# Bugs
+# Roadmap
 
-- [ ] Thumbnails in Map view don’t update when system light/dark mode changes
+Now
+- Add tests, particularly to the data model !!!
+- Fix bug: first rearrange takes ages, getting worse with more pages
+Next
+- Add labels (with an updated PageModel), working TDD
+Later
+
+──────────────────────────────────────────────────────────────────
+
+# Todo
+
+- [x] On branch experiment/icloud-sync the Thumbnail data isn’t always updated when opening the Map... which can result in the Thumbnail showing stale data even while the page itself shows the correct data
+	- Actually it is updated, but can end up with multiple pages in the same position, and the one which is shown depends on whether it’s selected from the Map or by swiping. I’ve added an indicator of when there are multiple pages in the same position so that they can be moved manually.
+
+- [ ] Bug: Thumbnails in Map view don’t update when system light/dark mode changes
 
 # Important tasks
 
-- [ ] Figure out whether iCloud sync is working as expected on experiments/icloud-sync. It seems to work intermittently and slowly, and potentially not at all if any content is modified on two devices at once
+- [/] Figure out whether iCloud sync is working as expected on experiments/icloud-sync. It seems to work intermittently and slowly, and potentially not at all if any content is modified on two devices at once
+	- It works between iPad and macOS if I quit and relaunch, but I’m not sure that it works just waiting for it to sync automatically with the apps both open at the same time... maybe it does but just takes ages? Not sure yet. 
+	- !!! Bug The macOS app crashed once when I was running the iPad app at the same time, made a new page on iPad, rebuilt macOS so that the new page showed up (bc waiting for auto-sync takes too long), and then clicked to view that page from the Map - said that the drawingData was malformed? 
 
 - [ ] Add tests for the data model
 - [ ] Add tests for page rearranging in the Map
 - [ ] Support all device orientations but prevent the page content from rotating (let buttons etc change position)
 
-# New features
+──────────────────────────────────────────────────────────────────
 
-- [ ] Consider adding page numbers to main view so that 
+# New feature ideas
+
+- [ ] Sketch through options for page markers - trying to replicate what I like about paper notebooks - colourful page markers with scribbles on them. See page 7,-3 and 7,-4
+
+- [ ] Consider adding page numbers to main view - y tho? The idea occurred to me once, and now I forget the context - which is a signal it isn’t important.
+
+- [ ] I want colourful sticky labels in the Map
+
+- [x] I want to flip back and forth between recent pages like having a finger holding my place in a book
 
 - Wait for iOS 18 because things are changing there
 	- [ ] Buttons (below undo/redo) to change the selected tool: https://developer.apple.com/documentation/pencilkit/pktoolpicker/selectedtoolitem
 	- [ ] Show only certain tools in the default tool picker: https://developer.apple.com/documentation/pencilkit/pktoolpicker/init(toolitems:)?changes=latest_minor
+
+- [ ] Sketch thru - what if I could rearrange pages in the Map and give areas section headings - like hypercard in the world? https://www.youtube.com/watch?v=uI7J3II59lc
+
 

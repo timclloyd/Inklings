@@ -51,6 +51,8 @@
 		155C1DD62C62BD6B00FC5882 /* MyiPadSketchbookUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyiPadSketchbookUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		155C1DDA2C62BD6B00FC5882 /* MyiPadSketchbookUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookUITests.swift; sourceTree = "<group>"; };
 		155C1DDC2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		158385952C83190000735249 /* MyiPadSketchbookDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MyiPadSketchbookDebug.entitlements; sourceTree = "<group>"; };
+		158385962C83237B00735249 /* MyiPadSketchbookRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MyiPadSketchbookRelease.entitlements; sourceTree = "<group>"; };
 		158F41B32C715D7A00FC886D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbook.swift; sourceTree = "<group>"; };
 		15B03BA52C71EA9A007589CB /* PageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageModel.swift; sourceTree = "<group>"; };
@@ -109,6 +111,8 @@
 		155C1DBC2C62BD6A00FC5882 /* MyiPadSketchbook */ = {
 			isa = PBXGroup;
 			children = (
+				158385962C83237B00735249 /* MyiPadSketchbookRelease.entitlements */,
+				158385952C83190000735249 /* MyiPadSketchbookDebug.entitlements */,
 				15B03BB42C71EF58007589CB /* Helpers */,
 				15B03BB32C71EE42007589CB /* ViewModels */,
 				15B03BB22C71EE32007589CB /* Models */,
@@ -482,6 +486,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = MyiPadSketchbook/MyiPadSketchbookDebug.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MyiPadSketchbook/Preview Content\"";
@@ -489,7 +494,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = GridNotes;
+				INFOPLIST_KEY_CFBundleDisplayName = GridNotes.Dev;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -501,7 +506,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.GridNotes;
+				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.GridNotes.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -519,6 +524,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = MyiPadSketchbook/MyiPadSketchbookRelease.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"MyiPadSketchbook/Preview Content\"";
@@ -526,7 +532,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = GridNotes;
+				INFOPLIST_KEY_CFBundleDisplayName = GridNotes.Dev;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -538,7 +544,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.GridNotes;
+				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.GridNotes.dev;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
