@@ -125,7 +125,7 @@ struct ContentView: View {
                             showMiniMap = true
                         }) {
                             Image(systemName: "rectangle.grid.3x2")
-                                .font(.system(size: 28))
+                                .font(.system(size: 28, weight: .light))
                                 .foregroundColor(.primary.opacity(0.87))
                                 .frame(width: buttonSize, height: buttonSize)
                         }
