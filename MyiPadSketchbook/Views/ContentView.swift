@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 import PencilKit
 
-struct UndoRedoButtonStyle: ButtonStyle {
+struct ToolbarButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) var colorScheme
     var isEnabled: Bool
 
@@ -23,28 +23,6 @@ struct UndoRedoButtonStyle: ButtonStyle {
     }
 }
 
-struct MapButtonStyle: ButtonStyle {
-    @Environment(\.colorScheme) var colorScheme
-    var isEnabled: Bool
-    
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(
-                Circle()
-                    .fill(configuration.isPressed ?
-                          (colorScheme == .dark ? Color(.systemGray5) : Color.white) :
-                          (colorScheme == .dark ? Color(.systemGray6) : Color.white)
-                    )
-            )
-            .overlay(
-                Circle()
-                    .stroke(Color(.systemGray5), lineWidth: 0.5)
-            )
-            .scaleEffect(configuration.isPressed ? 1.075 : 1.0)
-            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
-    }
-}
-
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
@@ -52,7 +30,7 @@ struct ContentView: View {
     @StateObject private var pageManager: PageManager
     @State private var canvasView = PKCanvasView()
     @State private var toolPicker = PKToolPicker()
-    @State private var showMiniMap = false
+    @State private var showMapView = false
     @State private var swipeProgress = SwipeProgress(direction: nil, progress: 0)
     @GestureState private var dragState = DragState.inactive
     @State private var canUndo = false
@@ -69,7 +47,7 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            if !showMiniMap {
+            if !showMapView {
                 DottedBackgroundView(pageRect: pageManager.pageRect, adjacentPages: getAdjacentPages(), swipeProgress: swipeProgress, dragState: dragState)
                     .ignoresSafeArea()
 
@@ -83,11 +61,43 @@ struct ContentView: View {
                     .allowsHitTesting(false)
                     .ignoresSafeArea()
 
-                // Undo and Redo buttons
+                // Toolbar buttons
                 VStack {
                     HStack {
                         Spacer()
                         HStack() {
+                            
+                            // Undo
+                            Button(action: {
+                                canvasView.undoManager?.undo()
+                                updateUndoRedoState()
+                            }) {
+                                Image(systemName: "arrow.uturn.left.circle")
+                                    .font(.system(size: undoRedoButtonSize))
+                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                                    .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
+                            }
+                            .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
+                            .disabled(!canUndo)
+                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
+                            
+                            // Redo
+                            Button(action: {
+                                canvasView.undoManager?.redo()
+                                updateUndoRedoState()
+                            }) {
+                                Image(systemName: "arrow.uturn.right.circle")
+                                    .font(.system(size: undoRedoButtonSize))
+                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                                    .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
+                            }
+                            .buttonStyle(ToolbarButtonStyle(isEnabled: canRedo))
+                            .disabled(!canRedo)
+                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
+                            
+                            // Switch pages
                             Button(action: {
                                 if let previousPage = pageManager.goToPreviousPage() {
                                     if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
@@ -105,60 +115,27 @@ struct ContentView: View {
                                     .background(Color.clear.contentShape(Circle()))
                                     .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                             }
-                            .buttonStyle(UndoRedoButtonStyle(isEnabled: canGoToPreviousPage))
+                            .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
                             .disabled(!canGoToPreviousPage)
-                            .padding(EdgeInsets(top: 32, leading: 20.5, bottom: 0, trailing: -8))
-                            
-                            Button(action: {
-                                canvasView.undoManager?.undo()
-                                updateUndoRedoState()
-                            }) {
-                                Image(systemName: "arrow.uturn.left.circle")
-                                    .font(.system(size: undoRedoButtonSize))
-                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
-                                    .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
-                            }
-                            .buttonStyle(UndoRedoButtonStyle(isEnabled: canUndo))
-                            .disabled(!canUndo)
                             .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
                             
+                            // Show Map
                             Button(action: {
-                                canvasView.undoManager?.redo()
-                                updateUndoRedoState()
+                                pageManager.updateAllThumbnails()
+                                showMapView = true
                             }) {
-                                Image(systemName: "arrow.uturn.right.circle")
+                                Image(systemName: "rectangle.portrait.on.rectangle.portrait")
                                     .font(.system(size: undoRedoButtonSize))
+                                    .symbolRenderingMode(.hierarchical)
                                     .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
-                                    .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
+                                    .background(Color.clear.contentShape(Circle()))
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                             }
-                            .buttonStyle(UndoRedoButtonStyle(isEnabled: canRedo))
-                            .disabled(!canRedo)
+                            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
                             .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
                         }
                     }
                     Spacer()
-
-                    // Map button
-                    HStack {
-                        Button(action: {
-                            pageManager.updateAllThumbnails()
-                            showMiniMap = true
-                        }) {
-                            Image(systemName: "rectangle.grid.3x2")
-                                .font(.system(size: 28, weight: .light))
-                                .foregroundColor(.primary.opacity(0.87))
-                                .frame(width: buttonSize, height: buttonSize)
-                        }
-                        .buttonStyle(MapButtonStyle(isEnabled: true))
-                        .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
-                                radius: shadowRadius, x: 0, y: 0)
-                        .padding(EdgeInsets(top: 0, leading: 30, bottom: 6, trailing: 0))
-
-                        Spacer()
-                    }
-                    .padding(.bottom, shadowRadius)
                 }
             } else {
                 MapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
@@ -168,8 +145,8 @@ struct ContentView: View {
                         updateUndoRedoState()
                     }
                     updateCanGoToPreviousPage()
-                    showMiniMap = false
-                }, showMiniMap: $showMiniMap)
+                    showMapView = false
+                }, showMiniMap: $showMapView)
             }
         }
         .onAppear {
