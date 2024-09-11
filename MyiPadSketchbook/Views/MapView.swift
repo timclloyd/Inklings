@@ -53,29 +53,31 @@ struct MapView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        Button(action: {
-                            isSharePresented = true
-                        }) {
-                            Text("Export Map Image")
-                                .padding(8)
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        
+
                         Button(action: {
                             isRearranging.toggle()
                         }) {
-                            Text(isRearranging ? "Done" : "Rearrange Pages")
-                                .padding(8)
-                                .background(isRearranging ? Color.blue : Color.red)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
+                            Image(systemName: isRearranging ? "checkmark.circle" : "arrow.up.and.down.and.arrow.left.and.right")
+                                .scaleEffect(isRearranging ? 1.75 : 1.0)
+                                .foregroundColor(isRearranging ? Color.blue : Color.primary)
+                                .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
+                                .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                .padding(EdgeInsets(top: 0, leading: 10, bottom: 10, trailing: 5))
                         }
-                        .padding()
+                        
+                        Button(action: {
+                            isSharePresented = true
+                        }) {
+                            Image(systemName: "square.and.arrow.up")
+                                .foregroundColor(Color.primary)
+                                .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
+                                .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                .padding(EdgeInsets(top: 0, leading: 5, bottom: 10, trailing: 10))
+                        }
                     }
                     Spacer()
                 }
+                .padding(20)
             }
             .gesture(
                 DragGesture()
