@@ -92,9 +92,9 @@ struct MapView: View {
                     }
             )
             .sheet(isPresented: $isSharePresented, content: {
-                let image = generateMapImage()
-                let fileName = getISODateString()
-                ActivityViewController(activityItems: [image, fileName])
+                if let (url, filename) = prepareImageForSharing() {
+                    ActivityViewController(activityItems: [url], applicationActivities: nil, filename: filename)
+                }
             })
         }
         .onAppear {
@@ -102,10 +102,32 @@ struct MapView: View {
         }
     }
 
-    func getISODateString() -> String {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate, .withTime]
-        return formatter.string(from: Date())
+    func prepareImageForSharing() -> (URL, String)? {
+        let image = generateMapImage()
+        let filename = getShareFileName()
+        
+        guard let data = image.jpegData(compressionQuality: 1.0) else { return nil }
+        
+        let tempDirectoryURL = FileManager.default.temporaryDirectory
+        let fileURL = tempDirectoryURL.appendingPathComponent(filename)
+        
+        do {
+            try data.write(to: fileURL)
+            return (fileURL, filename)
+        } catch {
+            print("Error saving file: \(error)")
+            return nil
+        }
+    }
+    
+    func getShareFileName() -> String {
+        let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [.withFullDate, .withTime, .withTimeZone]
+        let dateString = dateFormatter.string(from: Date())
+        
+        let appDisplayName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String ?? "MyiPadSketchbook"
+        
+        return "\(appDisplayName)_\(dateString).jpg"
     }
     
     private var backgroundColor: Color {
@@ -220,10 +242,18 @@ struct MapView: View {
 
 struct ActivityViewController: UIViewControllerRepresentable {
     let activityItems: [Any]
-    let applicationActivities: [UIActivity]? = nil
+    let applicationActivities: [UIActivity]?
+    let filename: String
 
     func makeUIViewController(context: UIViewControllerRepresentableContext<ActivityViewController>) -> UIActivityViewController {
         let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+        
+        controller.completionWithItemsHandler = { (activityType, completed, returnedItems, error) in
+            if let url = activityItems.first as? URL {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+        
         return controller
     }
 
