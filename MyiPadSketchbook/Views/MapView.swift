@@ -18,8 +18,6 @@ struct MapView: View {
     @GestureState private var dragGestureState: CGSize = .zero
     @State private var isSharePresented: Bool = false
 
-    var onCloseMap: () -> Void
-    
     private var thumbnailSize: CGSize {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
         return CGSize(width: 120, height: 120 / aspectRatio)
@@ -55,58 +53,33 @@ struct MapView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        HStack() {
-                            
-                            // Rearrange pages
-                            Button(action: {
-                                isRearranging.toggle()
-                            }) {
-                                Image(systemName: isRearranging ? "checkmark.circle" : "arrow.up.and.down.and.arrow.left.and.right")
-                                    .offset(y: -1)
-                                    .font(.system(size: toolbarButtonSize))
-                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                    .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                                    .foregroundColor(isRearranging ? Color.blue : Color.primary)
-                            }
-                            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
-                            
-                            // Export
-                            Button(action: {
-                                isSharePresented = true
-                            }) {
-                                Image(systemName: "square.and.arrow.up.on.square")
-                                    .offset(y: -3)
-                                    .font(.system(size: toolbarButtonSize))
-                                    .symbolRenderingMode(.hierarchical)
-                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                    .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                                    .foregroundColor(Color.primary)
-                            }
-                            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
-                            
-                            // Hide Map
-                            Button(action: {
-                                onCloseMap()
-                            }) {
-                                Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                                    .font(.system(size: toolbarButtonSize))
-                                    .symbolRenderingMode(.hierarchical)
-                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                    .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                            }
-                            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
-                            
+
+                        Button(action: {
+                            isRearranging.toggle()
+                        }) {
+                            Image(systemName: isRearranging ? "checkmark.circle" : "arrow.up.and.down.and.arrow.left.and.right")
+                                .scaleEffect(isRearranging ? 1.75 : 1.0)
+                                .foregroundColor(isRearranging ? Color.blue : Color.primary)
+                                .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
+                                .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                .padding(EdgeInsets(top: 0, leading: 11, bottom: 11, trailing: 0))
                         }
+//                        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
+                        
+                        Button(action: {
+                            isSharePresented = true
+                        }) {
+                            Image(systemName: "square.and.arrow.up.on.square")
+                                .foregroundColor(Color.primary)
+                                .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
+                                .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
+                                .padding(EdgeInsets(top: 0, leading: 11, bottom: 11, trailing: 11))
+                        }
+//                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: -8))
                     }
-                    .padding(.top, -22) // I don't want to do this. Will fix later
                     Spacer()
                 }
+                .padding(18)
             }
             .gesture(
                 DragGesture()
