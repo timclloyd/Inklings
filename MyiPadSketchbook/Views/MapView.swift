@@ -119,49 +119,65 @@ struct MapView: View {
         let appearance = isSelected && isRearranging ?
             ThumbnailAppearance.dragging(colorScheme: colorScheme) :
             ThumbnailAppearance.normal(colorScheme: colorScheme)
+        
+        let overlappingPages = getOverlappingPages(for: page)
+        let hasOverlap = overlappingPages.count > 1
 
-        return ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
-            .overlay(RoundedRectangle(cornerRadius: 5)
-                .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
-            .background(appearance.backgroundColor)
-            .scaleEffect(appearance.scale)
-            .opacity(appearance.opacity)
-            .position(thumbnailPosition(for: page, in: geometry))
-            .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
-            .zIndex(isSelected && isRearranging ? 1 : 0)
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { value in
-                        panDebouncer.debounce {
-                            if self.isRearranging {
-                                self.draggedPage = page
-                                self.draggedPageOffset = value.translation
-                            } else if value.translation != .zero {
-                                self.panOffset.width += value.translation.width
-                                self.panOffset.height += value.translation.height
-                            }
-                        }
-                    }
-                    .onEnded { value in
+        return ZStack {
+            ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
+                .overlay(RoundedRectangle(cornerRadius: 5)
+                    .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
+                .background(appearance.backgroundColor)
+                .scaleEffect(appearance.scale)
+                .opacity(appearance.opacity)
+            
+            if hasOverlap {
+                Text("\(overlappingPages.count)")
+                    .font(.system(size: 16))
+                    .foregroundColor(.white)
+                    .padding(6)
+                    .background(Color.red)
+                    .clipShape(Circle())
+                    .offset(x: thumbnailSize.width / 2 - 16, y: -thumbnailSize.height / 2 + 16)
+            }
+        }
+        .position(thumbnailPosition(for: page, in: geometry))
+        .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
+        .zIndex(isSelected && isRearranging ? 1 : 0)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    panDebouncer.debounce {
                         if self.isRearranging {
-                            let gridMovement = self.calculateGridMovement(value.translation)
-                            let newPosition = (
-                                x: (page.positionX ?? 0) + gridMovement.x,
-                                y: (page.positionY ?? 0) + gridMovement.y
-                            )
-                            if self.isValidMove(to: newPosition) {
-                                page.positionX = newPosition.x
-                                page.positionY = newPosition.y
-                                self.pageManager.updatePagePosition(page)
-                            }
-                            self.draggedPage = nil
-                            self.draggedPageOffset = .zero
-                        } else if value.translation == .zero {
-                            self.onPageSelected(page)
-                            self.showMiniMap = false
+                            self.draggedPage = page
+                            self.draggedPageOffset = value.translation
+                        } else if value.translation != .zero {
+                            self.panOffset.width += value.translation.width
+                            self.panOffset.height += value.translation.height
                         }
                     }
-            )
+                }
+                .onEnded { value in
+                    if self.isRearranging {
+                        let gridMovement = self.calculateGridMovement(value.translation)
+                        let newPosition = (
+                            x: (page.positionX ?? 0) + gridMovement.x,
+                            y: (page.positionY ?? 0) + gridMovement.y
+                        )
+                        if self.isValidMove(to: newPosition) {
+                            page.positionX = newPosition.x
+                            page.positionY = newPosition.y
+                            self.pageManager.updatePagePosition(page)
+                        }
+//                        self.pageManager.movePage(page, to: newPosition)
+                        self.draggedPage = nil
+                        self.draggedPageOffset = .zero
+                    } else if value.translation == .zero {
+                        self.onPageSelected(page)
+                        self.showMiniMap = false
+                    }
+                }
+        )
     }
 
     private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
@@ -193,6 +209,10 @@ struct MapView: View {
             width: screenSize.width / 2 - currentPagePosition.x - thumbnailSize.width / 2,
             height: screenSize.height / 2 - currentPagePosition.y - thumbnailSize.height / 2
         )
+    }
+    
+    private func getOverlappingPages(for page: Page) -> [Page] {
+        pages.filter { $0.positionX == page.positionX && $0.positionY == page.positionY }
     }
 }
 
