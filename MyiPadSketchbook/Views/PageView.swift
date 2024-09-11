@@ -28,10 +28,6 @@ struct PageView: View {
         _pageManager = StateObject(wrappedValue: PageManager(modelContext: modelContext))
     }
     
-    private let buttonSize: CGFloat = 70
-    private let shadowRadius: CGFloat = 15
-    private let undoRedoButtonSize: CGFloat = 20
-    
     var body: some View {
         ZStack {
             if !showMapView {
@@ -60,10 +56,10 @@ struct PageView: View {
                                 updateUndoRedoState()
                             }) {
                                 Image(systemName: "arrow.uturn.left.circle")
-                                    .font(.system(size: undoRedoButtonSize))
-                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
-                                    .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
+                                    .font(.system(size: toolbarButtonSize))
+                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                                    .background(Color.clear.contentShape(Circle()))
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                             }
                             .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
                             .disabled(!canUndo)
@@ -75,10 +71,10 @@ struct PageView: View {
                                 updateUndoRedoState()
                             }) {
                                 Image(systemName: "arrow.uturn.right.circle")
-                                    .font(.system(size: undoRedoButtonSize))
-                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
-                                    .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11)) // Adjust padding to expand the hit area
+                                    .font(.system(size: toolbarButtonSize))
+                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                                    .background(Color.clear.contentShape(Circle()))
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                             }
                             .buttonStyle(ToolbarButtonStyle(isEnabled: canRedo))
                             .disabled(!canRedo)
@@ -96,9 +92,9 @@ struct PageView: View {
                             }) {
                                 Image(systemName: "rectangle.2.swap")
                                     .rotationEffect(Angle(degrees: -90.0))
-                                    .font(.system(size: undoRedoButtonSize))
+                                    .font(.system(size: toolbarButtonSize))
                                     .symbolRenderingMode(.hierarchical)
-                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                                     .background(Color.clear.contentShape(Circle()))
                                     .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                             }
@@ -112,9 +108,9 @@ struct PageView: View {
                                 showMapView = true
                             }) {
                                 Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                                    .font(.system(size: undoRedoButtonSize))
+                                    .font(.system(size: toolbarButtonSize))
                                     .symbolRenderingMode(.hierarchical)
-                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                                     .background(Color.clear.contentShape(Circle()))
                                     .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                             }
@@ -133,7 +129,9 @@ struct PageView: View {
                     }
                     updateCanGoToPreviousPage()
                     showMapView = false
-                }, showMiniMap: $showMapView)
+                }, showMiniMap: $showMapView, onCloseMap: {
+                    showMapView = false
+                })
             }
         }
         .onAppear {
@@ -212,18 +210,5 @@ struct PageView: View {
             top: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == (currentPage.positionY ?? 0) + 1 }),
             bottom: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == (currentPage.positionY ?? 0) - 1 })
         )
-    }
-}
-
-struct ToolbarButtonStyle: ButtonStyle {
-    @Environment(\.colorScheme) var colorScheme
-    var isEnabled: Bool
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .background(Circle().fill((colorScheme == .dark ? Color.black : Color.white)))
-            .foregroundColor(isEnabled ? .primary.opacity(0.87) : .primary.opacity(0.2))
-            .scaleEffect(configuration.isPressed ? 1.2 : 1.0)
-            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
     }
 }
