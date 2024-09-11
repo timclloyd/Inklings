@@ -100,6 +100,7 @@ struct ContentView: View {
                                 Image(systemName: "rectangle.2.swap")
                                     .rotationEffect(Angle(degrees: -90.0))
                                     .font(.system(size: undoRedoButtonSize))
+                                    .symbolRenderingMode(.hierarchical)
                                     .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
                                     .background(Color.clear.contentShape(Circle()))
                                     .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
