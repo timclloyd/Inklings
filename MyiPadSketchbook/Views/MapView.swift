@@ -258,7 +258,7 @@ extension MapView {
             fullScaleImage.draw(in: rect)
             
             // Draw border
-            context.cgContext.setStrokeColor(UIColor.systemGray5.cgColor)
+            context.cgContext.setStrokeColor(UIColor.gray.cgColor)
             context.cgContext.setLineWidth(4)
             context.cgContext.addPath(path.cgPath)
             context.cgContext.strokePath()
@@ -276,7 +276,7 @@ extension MapView {
             let padding: CGFloat = 2 * scaleFactor
             let textRect = CGRect(
                 x: (fullScaleThumbnailSize.width / 2) - textSize.width,
-                y: fullScaleThumbnailSize.height - textSize.height - padding - (3 * scaleFactor),
+                y: fullScaleThumbnailSize.height - textSize.height - padding - (3 * scaleFactor) - 8,
                 width: textSize.width + (padding * 2),
                 height: textSize.height + (padding * 2)
             )
@@ -301,10 +301,10 @@ extension MapView {
         let verticalPages = pagePositions.maxY - pagePositions.minY + 1
         
         let fullScaleThumbnailSize = pageManager.pageRect.size
-        let spacing: CGFloat = 10 // Use the same spacing as in the live Map view
+        let spacing: CGFloat = 20 // Use the same spacing as in the live Map view
         let fullSize = CGSize(
-            width: CGFloat(horizontalPages) * (fullScaleThumbnailSize.width + spacing) - spacing,
-            height: CGFloat(verticalPages) * (fullScaleThumbnailSize.height + spacing) - spacing
+            width: CGFloat(horizontalPages) * (fullScaleThumbnailSize.width + spacing) + spacing,
+            height: CGFloat(verticalPages) * (fullScaleThumbnailSize.height + spacing) + spacing
         )
         
         let renderer = UIGraphicsImageRenderer(size: fullSize)
@@ -320,8 +320,8 @@ extension MapView {
             
             // Draw thumbnails
             for page in pages {
-                let x = CGFloat((page.positionX ?? 0) - pagePositions.minX) * (fullScaleThumbnailSize.width + spacing)
-                let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (fullScaleThumbnailSize.height + spacing)
+                let x = spacing + CGFloat((page.positionX ?? 0) - pagePositions.minX) * (fullScaleThumbnailSize.width + spacing)
+                let y = spacing + CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (fullScaleThumbnailSize.height + spacing)
                 
                 let fullScaleThumbnail = generateFullScaleThumbnail(for: page)
                 fullScaleThumbnail.draw(in: CGRect(origin: CGPoint(x: x, y: y), size: fullScaleThumbnailSize))
