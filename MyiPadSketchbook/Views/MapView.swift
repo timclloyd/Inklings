@@ -62,15 +62,12 @@ struct MapView: View {
                                 isRearranging.toggle()
                             }) {
                                 Image(systemName: isRearranging ? "checkmark.circle" : "arrow.up.and.down.and.arrow.left.and.right")
-                                    .offset(y: 5)
+                                    .offset(y: -1)
                                     .font(.system(size: toolbarButtonSize))
                                     .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                                     .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 0, leading: 11, bottom: 11, trailing: 11))
-                                
-                                    .scaleEffect(isRearranging ? 1.75 : 1.0)
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                                     .foregroundColor(isRearranging ? Color.blue : Color.primary)
-                                    .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
                             }
                             .buttonStyle(ToolbarButtonStyle(isEnabled: true))
                             .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
@@ -80,12 +77,12 @@ struct MapView: View {
                                 isSharePresented = true
                             }) {
                                 Image(systemName: "square.and.arrow.up.on.square")
-                                    .offset(y: 3)
+                                    .offset(y: -3)
                                     .font(.system(size: toolbarButtonSize))
                                     .symbolRenderingMode(.hierarchical)
                                     .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                                     .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 0, leading: 11, bottom: 11, trailing: 11))
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                                     .foregroundColor(Color.primary)
                             }
                             .buttonStyle(ToolbarButtonStyle(isEnabled: true))
