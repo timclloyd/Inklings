@@ -62,8 +62,9 @@ struct MapView: View {
                                 .foregroundColor(isRearranging ? Color.blue : Color.primary)
                                 .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
                                 .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
-                                .padding(EdgeInsets(top: 0, leading: 10, bottom: 10, trailing: 5))
+                                .padding(EdgeInsets(top: 0, leading: 11, bottom: 11, trailing: 0))
                         }
+//                        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
                         
                         Button(action: {
                             isSharePresented = true
@@ -72,12 +73,13 @@ struct MapView: View {
                                 .foregroundColor(Color.primary)
                                 .shadow(color: .black.opacity(0.4), radius: 8, x: 0, y: 0)
                                 .background(Color.clear.contentShape(Circle())) // Make the entire area tappable
-                                .padding(EdgeInsets(top: 0, leading: 5, bottom: 10, trailing: 10))
+                                .padding(EdgeInsets(top: 0, leading: 11, bottom: 11, trailing: 11))
                         }
+//                        .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: -8))
                     }
                     Spacer()
                 }
-                .padding(20)
+                .padding(18)
             }
             .gesture(
                 DragGesture()
