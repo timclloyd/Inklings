@@ -494,7 +494,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = GridNotes.Dev;
+				INFOPLIST_KEY_CFBundleDisplayName = GridNotes.DAFx;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -506,7 +506,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.GridNotes.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.GridNotes.DAFx24;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -532,7 +532,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MyiPadSketchbook/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = GridNotes.Dev;
+				INFOPLIST_KEY_CFBundleDisplayName = GridNotes.DAFx;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -544,7 +544,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.GridNotes.dev;
+				PRODUCT_BUNDLE_IDENTIFIER = timlloyd.GridNotes.DAFx24;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
