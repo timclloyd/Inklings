@@ -125,7 +125,7 @@ struct MapView: View {
         dateFormatter.formatOptions = [.withFullDate, .withTime, .withTimeZone]
         let dateString = dateFormatter.string(from: Date())
         
-        let appDisplayName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String ?? "MyiPadSketchbook"
+        let appDisplayName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String ?? "GridNotes"
         
         return "\(appDisplayName)_\(dateString).jpg"
     }
