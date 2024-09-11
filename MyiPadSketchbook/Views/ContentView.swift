@@ -57,6 +57,7 @@ struct ContentView: View {
     @GestureState private var dragState = DragState.inactive
     @State private var canUndo = false
     @State private var canRedo = false
+    @State private var canGoToPreviousPage = false
     
     init(modelContext: ModelContext) {
         _pageManager = StateObject(wrappedValue: PageManager(modelContext: modelContext))
@@ -87,6 +88,26 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                         HStack() {
+                            Button(action: {
+                                if let previousPage = pageManager.goToPreviousPage() {
+                                    if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
+                                        canvasView.drawing = drawing
+                                        updateUndoRedoState()
+                                    }
+                                    updateCanGoToPreviousPage()
+                                }
+                            }) {
+                                Image(systemName: "rectangle.2.swap")
+                                    .rotationEffect(Angle(degrees: -90.0))
+                                    .font(.system(size: undoRedoButtonSize))
+                                    .frame(width: undoRedoButtonSize, height: undoRedoButtonSize)
+                                    .background(Color.clear.contentShape(Circle()))
+                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                            }
+                            .buttonStyle(UndoRedoButtonStyle(isEnabled: canGoToPreviousPage))
+                            .disabled(!canGoToPreviousPage)
+                            .padding(EdgeInsets(top: 32, leading: 20.5, bottom: 0, trailing: -8))
+                            
                             Button(action: {
                                 canvasView.undoManager?.undo()
                                 updateUndoRedoState()
@@ -145,12 +166,14 @@ struct ContentView: View {
                         canvasView.drawing = drawing
                         updateUndoRedoState()
                     }
+                    updateCanGoToPreviousPage()
                     showMiniMap = false
                 }, showMiniMap: $showMiniMap)
             }
         }
         .onAppear {
             updateUndoRedoState()
+            updateCanGoToPreviousPage()
         }
     }
     
@@ -158,6 +181,12 @@ struct ContentView: View {
         DispatchQueue.main.async {
             self.canUndo = self.canvasView.undoManager?.canUndo ?? false
             self.canRedo = self.canvasView.undoManager?.canRedo ?? false
+        }
+    }
+    
+    private func updateCanGoToPreviousPage() {
+        DispatchQueue.main.async {
+            self.canGoToPreviousPage = self.pageManager.previousPageID != nil
         }
     }
     
@@ -196,6 +225,7 @@ struct ContentView: View {
                    let drawing = try? PKDrawing(data: currentPage.drawingData!) {
                     canvasView.drawing = drawing
                 }
+                updateCanGoToPreviousPage()
             }
             // Always reset the swipe progress when the gesture ends
             withAnimation(.linear(duration: 0)) {

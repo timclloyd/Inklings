@@ -13,6 +13,7 @@ import SwiftData
 @MainActor
 class PageManager: ObservableObject {
     @Published var currentPageID: UUID?
+    @Published var previousPageID: UUID?
     @Published var pages: [Page] = []
     let pageRect: CGRect
     
@@ -48,10 +49,28 @@ class PageManager: ObservableObject {
     }
     
     func setCurrentPage(_ page: Page) {
+        previousPageID = currentPageID
         currentPageID = page.id
         // Save current page position
         UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
         UserDefaults.standard.set(page.positionY, forKey: "CurrentPageY")
+    }
+    
+    func goToPreviousPage() -> Page? {
+        guard let previousPageID = previousPageID,
+              let previousPage = pages.first(where: { $0.id == previousPageID }) else {
+            return nil
+        }
+        
+        let currentPage = getCurrentPage()
+        self.currentPageID = previousPageID
+        self.previousPageID = currentPage?.id
+        
+        // Save current page position
+        UserDefaults.standard.set(previousPage.positionX, forKey: "CurrentPageX")
+        UserDefaults.standard.set(previousPage.positionY, forKey: "CurrentPageY")
+        
+        return previousPage
     }
     
     func addPage(translation: CGSize) {
