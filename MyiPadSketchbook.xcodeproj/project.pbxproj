@@ -17,7 +17,7 @@
 		15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */; };
 		15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA52C71EA9A007589CB /* PageModel.swift */; };
 		15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA72C71EAEF007589CB /* PageManager.swift */; };
-		15B03BAB2C71EB82007589CB /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAA2C71EB82007589CB /* ContentView.swift */; };
+		15B03BAB2C71EB82007589CB /* PageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAA2C71EB82007589CB /* PageView.swift */; };
 		15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAC2C71EBC9007589CB /* MapView.swift */; };
 		15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAE2C71EBF2007589CB /* PencilKitView.swift */; };
 		15B03BB12C71EC20007589CB /* DottedBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */; };
@@ -57,7 +57,7 @@
 		15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbook.swift; sourceTree = "<group>"; };
 		15B03BA52C71EA9A007589CB /* PageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageModel.swift; sourceTree = "<group>"; };
 		15B03BA72C71EAEF007589CB /* PageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageManager.swift; sourceTree = "<group>"; };
-		15B03BAA2C71EB82007589CB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		15B03BAA2C71EB82007589CB /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
 		15B03BAC2C71EBC9007589CB /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		15B03BAE2C71EBF2007589CB /* PencilKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilKitView.swift; sourceTree = "<group>"; };
 		15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DottedBackgroundView.swift; sourceTree = "<group>"; };
@@ -153,7 +153,7 @@
 		15B03BA92C71EB66007589CB /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				15B03BAA2C71EB82007589CB /* ContentView.swift */,
+				15B03BAA2C71EB82007589CB /* PageView.swift */,
 				15B03BAC2C71EBC9007589CB /* MapView.swift */,
 				15B03BAE2C71EBF2007589CB /* PencilKitView.swift */,
 				15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */,
@@ -318,7 +318,7 @@
 			files = (
 				155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */,
 				15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */,
-				15B03BAB2C71EB82007589CB /* ContentView.swift in Sources */,
+				15B03BAB2C71EB82007589CB /* PageView.swift in Sources */,
 				154A78AE2C7FB1DA00088B86 /* NavIndicatorView.swift in Sources */,
 				15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */,
 				15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */,
