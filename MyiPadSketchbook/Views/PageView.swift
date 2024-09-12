@@ -46,10 +46,49 @@ struct PageView: View {
 
                 // Toolbar buttons
                 VStack {
-                    HStack {
+                    HStack() {
                         Spacer()
-                        HStack() {
-                            
+                        // Switch pages
+                        Button(action: {
+                            if let previousPage = pageManager.goToPreviousPage() {
+                                if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
+                                    canvasView.drawing = drawing
+                                    updateUndoRedoState()
+                                }
+                                updateCanGoToPreviousPage()
+                            }
+                        }) {
+                            Image(systemName: "rectangle.2.swap")
+                                .rotationEffect(Angle(degrees: -90.0))
+                                .font(.system(size: toolbarButtonSize))
+                                .symbolRenderingMode(.hierarchical)
+                                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                                .background(Color.clear.contentShape(Circle()))
+                                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                        }
+                        .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
+                        .disabled(!canGoToPreviousPage)
+                        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
+                        
+                        // Show Map
+                        Button(action: {
+                            pageManager.updateAllThumbnails()
+                            showMapView = true
+                        }) {
+                            Image(systemName: "square.on.square")
+                                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
+                                .symbolRenderingMode(.hierarchical)
+                                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                                .background(Color.clear.contentShape(Circle()))
+                                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                        }
+                        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+                        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
+                    }
+                    
+                    HStack() {
+                        Spacer()
+                        VStack() {
                             // Undo
                             Button(action: {
                                 canvasView.undoManager?.undo()
@@ -63,7 +102,7 @@ struct PageView: View {
                             }
                             .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
                             .disabled(!canUndo)
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
+                            .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
                             
                             // Redo
                             Button(action: {
@@ -78,47 +117,11 @@ struct PageView: View {
                             }
                             .buttonStyle(ToolbarButtonStyle(isEnabled: canRedo))
                             .disabled(!canRedo)
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
+                            .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
                             
-                            // Switch pages
-                            Button(action: {
-                                if let previousPage = pageManager.goToPreviousPage() {
-                                    if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
-                                        canvasView.drawing = drawing
-                                        updateUndoRedoState()
-                                    }
-                                    updateCanGoToPreviousPage()
-                                }
-                            }) {
-                                Image(systemName: "rectangle.2.swap")
-                                    .rotationEffect(Angle(degrees: -90.0))
-                                    .font(.system(size: toolbarButtonSize))
-                                    .symbolRenderingMode(.hierarchical)
-                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                    .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                            }
-                            .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
-                            .disabled(!canGoToPreviousPage)
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
-                            
-                            // Show Map
-                            Button(action: {
-                                pageManager.updateAllThumbnails()
-                                showMapView = true
-                            }) {
-                                Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                                    .font(.system(size: toolbarButtonSize))
-                                    .symbolRenderingMode(.hierarchical)
-                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                    .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                            }
-                            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
+                            Spacer()
                         }
                     }
-                    Spacer()
                 }
             } else {
                 MapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
