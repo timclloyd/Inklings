@@ -139,13 +139,14 @@ struct MapView: View {
     // MARK: - Thumbnail View
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
         let isSelected = draggedPage?.id == page.id
-        let appearance = thumbnailAppearance(for: page, isSelected: isSelected)
+        let isCurrentPage = page.id == pageManager.getCurrentPage()?.id
+        let appearance = thumbnailAppearance(for: page, isSelected: isSelected, isCurrentPage: isCurrentPage)
         let overlappingPages = getOverlappingPages(for: page)
         let hasOverlap = overlappingPages.count > 1
 
         return ZStack {
             ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
-                .overlay(thumbnailBorder(appearance: appearance))
+                .overlay(thumbnailBorder(appearance: appearance, isCurrentPage: isCurrentPage))
                 .background(appearance.backgroundColor)
                 .scaleEffect(appearance.scale)
                 .opacity(appearance.opacity)
@@ -166,19 +167,24 @@ struct MapView: View {
         .gesture(dragGesture(for: page))
     }
 
-    private func thumbnailAppearance(for page: Page, isSelected: Bool) -> ThumbnailAppearance {
+    private func thumbnailAppearance(for page: Page, isSelected: Bool, isCurrentPage: Bool) -> ThumbnailAppearance {
         if isSelected && isRearranging {
             return .dragging(colorScheme: colorScheme)
+        } else if isCurrentPage {
+            return .current(colorScheme: colorScheme)
         } else {
             return .normal(colorScheme: colorScheme)
         }
     }
 
-    private func thumbnailBorder(appearance: ThumbnailAppearance) -> some View {
+    private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
         RoundedRectangle(cornerRadius: 5)
             .stroke(
                 isRearranging ? .blue : appearance.borderColor,
-                style: StrokeStyle(lineWidth: appearance.borderWidth, dash: isRearranging ? [5] : [])
+                style: StrokeStyle(
+                    lineWidth: appearance.borderWidth,
+                    dash: isRearranging ? [5] : []
+                )
             )
     }
 
@@ -480,6 +486,16 @@ struct ThumbnailAppearance {
             borderColor: .blue,
             borderWidth: 2,
             scale: 1.05,
+            opacity: 1.0
+        )
+    }
+
+    static func current(colorScheme: ColorScheme) -> ThumbnailAppearance {
+        ThumbnailAppearance(
+            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
+            borderColor: .blue,
+            borderWidth: 2,
+            scale: 1.0,
             opacity: 1.0
         )
     }
