@@ -119,7 +119,7 @@ struct PageView: View {
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
         .disabled(!canGoToPreviousPage)
-        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
+        .padding(EdgeInsets(top: 18, leading: 0, bottom: 0, trailing: 5))
     }
     
     private var showMapButton: some View {
@@ -129,10 +129,10 @@ struct PageView: View {
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                 .background(Color.clear.contentShape(Circle()))
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                .padding(EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24))
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
+        .padding(EdgeInsets(top: 20, leading: 0, bottom: 0, trailing: 8))
     }
     
     private var undoButton: some View {
@@ -145,7 +145,7 @@ struct PageView: View {
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
         .disabled(!canUndo)
-        .padding(EdgeInsets(top: -7, leading: 0, bottom: 0, trailing: 20.5))
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
     }
     
     private var redoButton: some View {

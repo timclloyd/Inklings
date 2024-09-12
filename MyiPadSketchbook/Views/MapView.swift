@@ -107,13 +107,13 @@ struct MapView: View {
                 .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
+        .padding(EdgeInsets(top: 18, leading: 0, bottom: 0, trailing: 5))
     }
 
     private var exportButton: some View {
         Button(action: { isSharePresented = true }) {
             Image(systemName: "square.and.arrow.up.on.square")
-                .offset(y: -3)
+                .offset(y: -1)
                 .font(.system(size: toolbarButtonSize))
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: toolbarButtonSize, height: toolbarButtonSize)
@@ -121,7 +121,7 @@ struct MapView: View {
                 .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
+        .padding(EdgeInsets(top: 18, leading: 0, bottom: 0, trailing: 5))
     }
 
     private var closeButton: some View {
@@ -130,10 +130,10 @@ struct MapView: View {
                 .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                .padding(EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24))
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
+        .padding(EdgeInsets(top: 20, leading: 0, bottom: 0, trailing: 8))
     }
 
     // MARK: - Thumbnail View
