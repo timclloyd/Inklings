@@ -30,7 +30,7 @@ struct PageView: View {
     @State private var canRedo = false
     @State private var canGoToPreviousPage = false
     
-    // MARK: - Initialization
+    // MARK: - Initialisation
     init(modelContext: ModelContext) {
         _pageManager = StateObject(wrappedValue: PageManager(modelContext: modelContext))
     }
