@@ -2,9 +2,7 @@ I felt inspired by seeing this [Quick Journal](https://apps.apple.com/gb/app/qui
 
 ![](./Images/raphael_shaad_figma_fieldnotes.png)
 
-Decided to finally try and create the simple pencil-first app that I’ve been wanting for ages.
-
-Inspired by Scapple, Muse, paper notebooks.
+Decided to finally try and create the simple notebook app that I’ve been wanting for ages.
 
 - 2D grid of fixed-size dot grid pages. Navigate between them by swiping.
 - A PencilKit experience without all the fiddly parts
