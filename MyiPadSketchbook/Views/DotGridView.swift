@@ -9,7 +9,9 @@ import Foundation
 import SwiftUI
 import PencilKit
 
-struct DottedBackgroundView: View {
+// MARK: - DotGridView
+struct DotGridView: View {
+    // MARK: - Properties
     @Environment(\.colorScheme) var colorScheme
     let pageRect: CGRect
     let dotSize: CGFloat = 2.5
@@ -21,6 +23,7 @@ struct DottedBackgroundView: View {
     let swipeProgress: SwipeProgress
     let dragState: DragState
     
+    // MARK: - Computed Properties
     var dotColor: Color {
         colorScheme == .dark ? .white : .black
     }
@@ -29,6 +32,7 @@ struct DottedBackgroundView: View {
         colorScheme == .dark ? .blue : .blue
     }
     
+    // MARK: - Body
     var body: some View {
         Canvas { context, size in
             let horizontalSpaces = max(2, Int((size.width / targetSpacing).rounded()))
