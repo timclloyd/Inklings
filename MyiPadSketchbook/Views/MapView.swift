@@ -62,7 +62,7 @@ struct MapView: View {
                                 isRearranging.toggle()
                             }) {
                                 Image(systemName: isRearranging ? "checkmark.circle" : "arrow.up.and.down.and.arrow.left.and.right")
-                                    .font(.system(size: isRearranging ? toolbarButtonSize * 1.5 : toolbarButtonSize))
+                                    .font(.system(size: isRearranging ? toolbarButtonSize * 1.25 : toolbarButtonSize))
                                     .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                                     .background(Color.clear.contentShape(Circle()))
                                     .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
@@ -159,11 +159,11 @@ struct MapView: View {
     }
     
     private var backgroundColor: Color {
-        if isRearranging {
-            return colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.075)
-        } else {
+//        if isRearranging {
+//            return colorScheme == .dark ? Color.blue.opacity(0.15) : Color.blue.opacity(0.075)
+//        } else {
             return colorScheme == .dark ? Color.black : Color.white
-        }
+//        }
     }
 
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
@@ -178,7 +178,10 @@ struct MapView: View {
         return ZStack {
             ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
                 .overlay(RoundedRectangle(cornerRadius: 5)
-                    .stroke(appearance.borderColor, lineWidth: appearance.borderWidth))
+                    .stroke(
+                        isRearranging ? .blue : appearance.borderColor,
+                        style: StrokeStyle(lineWidth: appearance.borderWidth, dash: isRearranging ? [5] : []))
+                    )
                 .background(appearance.backgroundColor)
                 .scaleEffect(appearance.scale)
                 .opacity(appearance.opacity)
@@ -446,7 +449,7 @@ struct ThumbnailAppearance {
         ThumbnailAppearance(
             backgroundColor: colorScheme == .dark ? Color.black : Color.white,
             borderColor: .blue,
-            borderWidth: 1.5,
+            borderWidth: 2,
             scale: 1.05,
             opacity: 1.0
         )
