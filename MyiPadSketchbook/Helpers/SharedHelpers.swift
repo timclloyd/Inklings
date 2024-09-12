@@ -23,12 +23,16 @@ struct SwipeProgress: Equatable {
     }
 }
 
+enum EdgeDirection: CaseIterable {
+    case left, right, top, bottom
+}
+
 enum DragState: Equatable {
     case inactive
     case dragging(translation: CGSize)
 }
 
-// Helper extension for color interpolation
+// MARK: - Color interpolation
 extension Color {
     static func interpolate(from: Color, to: Color, progress: CGFloat) -> Color {
         let fromComponents = from.components
@@ -56,6 +60,7 @@ extension Color {
     }
 }
 
+// MARK: - Debouncer
 class Debouncer {
     private var workItem: DispatchWorkItem?
     private let queue = DispatchQueue.main
