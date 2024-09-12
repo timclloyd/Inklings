@@ -48,7 +48,7 @@ struct PageView: View {
                 VStack {
                     HStack() {
                         Spacer()
-                        // Switch pages
+                        // Page Flip button
                         Button(action: {
                             if let previousPage = pageManager.goToPreviousPage() {
                                 if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
@@ -70,7 +70,7 @@ struct PageView: View {
                         .disabled(!canGoToPreviousPage)
                         .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
                         
-                        // Show Map
+                        // Show Map buttom
                         Button(action: {
                             pageManager.updateAllThumbnails()
                             showMapView = true
@@ -89,7 +89,7 @@ struct PageView: View {
                     HStack() {
                         Spacer()
                         VStack() {
-                            // Undo
+                            // Undo button
                             Button(action: {
                                 canvasView.undoManager?.undo()
                                 updateUndoRedoState()
@@ -104,7 +104,7 @@ struct PageView: View {
                             .disabled(!canUndo)
                             .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
                             
-                            // Redo
+                            // Redo button
                             Button(action: {
                                 canvasView.undoManager?.redo()
                                 updateUndoRedoState()
@@ -193,7 +193,7 @@ struct PageView: View {
                 }
                 updateCanGoToPreviousPage()
             }
-            // Always reset the swipe progress when the gesture ends
+            // Reset swipeProgress when the gesture ends
             withAnimation(.linear(duration: 0)) {
                 swipeProgress = SwipeProgress(direction: nil, progress: 0)
             }
