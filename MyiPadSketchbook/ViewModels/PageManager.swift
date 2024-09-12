@@ -10,6 +10,7 @@ import SwiftUI
 import PencilKit
 import SwiftData
 
+// MARK: - PageManager
 @MainActor
 class PageManager: ObservableObject {
     @Published var currentPageID: UUID?
@@ -19,6 +20,7 @@ class PageManager: ObservableObject {
     
     private var modelContext: ModelContext
     
+    // MARK: - Initialisation
     init(modelContext: ModelContext) {
         self.modelContext = modelContext
         let screenSize = UIScreen.main.bounds.size
@@ -41,6 +43,7 @@ class PageManager: ObservableObject {
         }
     }
     
+    // MARK: - Page handling
     func createPage(position: (x: Int, y: Int)) -> Page {
         let newPage = Page(positionX: position.x, positionY: position.y)
         modelContext.insert(newPage)
@@ -101,12 +104,24 @@ class PageManager: ObservableObject {
         return pages.first { $0.id == currentPageID }
     }
     
+    func updatePagePosition(_ page: Page) {
+        objectWillChange.send()
+        try? modelContext.save()
+        // Update saved position if this is the current page
+        if page.id == currentPageID {
+            UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
+            UserDefaults.standard.set(page.positionY, forKey: "CurrentPageY")
+        }
+    }
+    
+    // MARK: - Drawing
     func updateDrawing(_ drawing: PKDrawing) {
         guard let currentPage = getCurrentPage() else { return }
         currentPage.drawingData = drawing.dataRepresentation()
         updateThumbnail(for: currentPage)
     }
     
+    // MARK: - Thumbnail handling
     func updateThumbnail(for page: Page) {
         guard let drawing = try? PKDrawing(data: page.drawingData!) else { return }
         
@@ -136,23 +151,5 @@ class PageManager: ObservableObject {
         for page in pages {
             updateThumbnail(for: page)
         }
-    }
-    
-    func updatePagePosition(_ page: Page) {
-        objectWillChange.send()
-        try? modelContext.save()
-        // Update saved position if this is the current page
-        if page.id == currentPageID {
-            UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
-            UserDefaults.standard.set(page.positionY, forKey: "CurrentPageY")
-        }
-    }
-}
-
-extension PageManager {
-    func movePage(_ page: Page, to newPosition: (x: Int, y: Int)) {
-        page.positionX = newPosition.x
-        page.positionY = newPosition.y
-        try? modelContext.save()
     }
 }
