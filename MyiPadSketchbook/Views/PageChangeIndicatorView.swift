@@ -8,19 +8,25 @@
 import Foundation
 import SwiftUI
 
-struct NavIndicatorView: View {
+// MARK: - PageChangeIndicatorView
+struct PageChangeIndicatorView: View {
+    // MARK: - Environment
+    @Environment(\.colorScheme) var colorScheme
+    
+    // MARK: - Properties
     let direction: EdgeDirection?
     let progress: CGFloat
     let size: CGSize
     let threshold: CGFloat = 0.2
     let createThreshold: CGFloat = 1
     let adjacentPages: AdjacentPages
-    @Environment(\.colorScheme) var colorScheme
 
+    // MARK: - Constants
     private let arrowDiameter: CGFloat = 32
     private let shadowRadius: CGFloat = 15
     private let edgeDistance: CGFloat = 39.5
 
+    // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -30,9 +36,8 @@ struct NavIndicatorView: View {
                             .fill(colorScheme == .dark ? Color.black : Color.white)
                             .frame(width: arrowDiameter-1, height: arrowDiameter-1)
                             .overlay(
-                                Circle()
-                                    .stroke(Color(UIColor.systemBackground).opacity(0.3), lineWidth: 2)
-                            ) // add a border
+                                Circle().stroke(Color(UIColor.systemBackground).opacity(0.3), lineWidth: 2)
+                            )
                         
                         Image(systemName: arrowSystemName(for: edge))
                             .font(.system(size: arrowDiameter))
@@ -47,6 +52,7 @@ struct NavIndicatorView: View {
         }
     }
     
+    // MARK: - Helper Methods
     private func arrowSystemName(for edge: EdgeDirection) -> String {
         switch edge {
         case .left:
@@ -101,8 +107,7 @@ struct NavIndicatorView: View {
     }
 }
 
-extension EdgeDirection: CaseIterable {
-    static var allCases: [EdgeDirection] {
-        return [.left, .right, .top, .bottom]
-    }
+// MARK: - EdgeDirection
+enum EdgeDirection: CaseIterable {
+    case left, right, top, bottom
 }

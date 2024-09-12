@@ -61,7 +61,7 @@ struct PageView: View {
     }
     
     private var backgroundView: some View {
-        DottedBackgroundView(pageRect: pageManager.pageRect,
+        DotGridView(pageRect: pageManager.pageRect,
                              adjacentPages: getAdjacentPages(),
                              swipeProgress: swipeProgress,
                              dragState: dragState)
@@ -79,7 +79,7 @@ struct PageView: View {
     }
     
     private var navIndicatorView: some View {
-        NavIndicatorView(direction: swipeProgress.direction,
+        PageChangeIndicatorView(direction: swipeProgress.direction,
                          progress: swipeProgress.progress,
                          size: pageManager.pageRect.size,
                          adjacentPages: getAdjacentPages())
