@@ -10,11 +10,17 @@ import SwiftUI
 import SwiftData
 import PencilKit
 
+// MARK: - PageView
 struct PageView: View {
+    // MARK: - Environment
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
     @Query private var pages: [Page]
+    
+    // MARK: - State Objects
     @StateObject private var pageManager: PageManager
+    
+    // MARK: - State
     @State private var canvasView = PKCanvasView()
     @State private var toolPicker = PKToolPicker()
     @State private var showMapView = false
@@ -24,117 +30,18 @@ struct PageView: View {
     @State private var canRedo = false
     @State private var canGoToPreviousPage = false
     
+    // MARK: - Initialization
     init(modelContext: ModelContext) {
         _pageManager = StateObject(wrappedValue: PageManager(modelContext: modelContext))
     }
     
+    // MARK: - Body
     var body: some View {
         ZStack {
             if !showMapView {
-                DottedBackgroundView(pageRect: pageManager.pageRect, adjacentPages: getAdjacentPages(), swipeProgress: swipeProgress, dragState: dragState)
-                    .ignoresSafeArea()
-
-                PencilKitView(canvasView: $canvasView, toolPicker: $toolPicker, drawing: pageManager.getCurrentPage()?.drawingData ?? Data(), onDrawingChange: { drawing in
-                    pageManager.updateDrawing(drawing)
-                    updateUndoRedoState()
-                }, pageRect: pageManager.pageRect, onSwipe: handleSwipe)
-                    .ignoresSafeArea()
-
-                NavIndicatorView(direction: swipeProgress.direction, progress: swipeProgress.progress, size: pageManager.pageRect.size, adjacentPages: getAdjacentPages())
-                    .allowsHitTesting(false)
-                    .ignoresSafeArea()
-
-                // Toolbar buttons
-                VStack {
-                    HStack() {
-                        Spacer()
-                        // Page Flip button
-                        Button(action: {
-                            if let previousPage = pageManager.goToPreviousPage() {
-                                if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
-                                    canvasView.drawing = drawing
-                                    updateUndoRedoState()
-                                }
-                                updateCanGoToPreviousPage()
-                            }
-                        }) {
-                            Image(systemName: "rectangle.2.swap")
-                                .rotationEffect(Angle(degrees: -90.0))
-                                .font(.system(size: toolbarButtonSize))
-                                .symbolRenderingMode(.hierarchical)
-                                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                .background(Color.clear.contentShape(Circle()))
-                                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                        }
-                        .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
-                        .disabled(!canGoToPreviousPage)
-                        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
-                        
-                        // Show Map buttom
-                        Button(action: {
-                            pageManager.updateAllThumbnails()
-                            showMapView = true
-                        }) {
-                            Image(systemName: "square.on.square")
-                                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
-                                .symbolRenderingMode(.hierarchical)
-                                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                .background(Color.clear.contentShape(Circle()))
-                                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                        }
-                        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-                        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
-                    }
-                    
-                    HStack() {
-                        Spacer()
-                        VStack() {
-                            // Undo button
-                            Button(action: {
-                                canvasView.undoManager?.undo()
-                                updateUndoRedoState()
-                            }) {
-                                Image(systemName: "arrow.uturn.left.circle")
-                                    .font(.system(size: toolbarButtonSize))
-                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                    .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                            }
-                            .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
-                            .disabled(!canUndo)
-                            .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
-                            
-                            // Redo button
-                            Button(action: {
-                                canvasView.undoManager?.redo()
-                                updateUndoRedoState()
-                            }) {
-                                Image(systemName: "arrow.uturn.right.circle")
-                                    .font(.system(size: toolbarButtonSize))
-                                    .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                                    .background(Color.clear.contentShape(Circle()))
-                                    .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-                            }
-                            .buttonStyle(ToolbarButtonStyle(isEnabled: canRedo))
-                            .disabled(!canRedo)
-                            .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
-                            
-                            Spacer()
-                        }
-                    }
-                }
+                mainView
             } else {
-                MapView(pageManager: pageManager, pages: pages, onPageSelected: { selectedPage in
-                    pageManager.setCurrentPage(selectedPage)
-                    if let drawing = try? PKDrawing(data: selectedPage.drawingData!) {
-                        canvasView.drawing = drawing
-                        updateUndoRedoState()
-                    }
-                    updateCanGoToPreviousPage()
-                    showMapView = false
-                }, showMiniMap: $showMapView, onCloseMap: {
-                    showMapView = false
-                })
+                mapView
             }
         }
         .onAppear {
@@ -143,6 +50,126 @@ struct PageView: View {
         }
     }
     
+    // MARK: - Subviews
+    private var mainView: some View {
+        ZStack {
+            backgroundView
+            drawingView
+            navIndicatorView
+            toolbarView
+        }
+    }
+    
+    private var backgroundView: some View {
+        DottedBackgroundView(pageRect: pageManager.pageRect,
+                             adjacentPages: getAdjacentPages(),
+                             swipeProgress: swipeProgress,
+                             dragState: dragState)
+            .ignoresSafeArea()
+    }
+    
+    private var drawingView: some View {
+        PencilKitView(canvasView: $canvasView,
+                      toolPicker: $toolPicker,
+                      drawing: pageManager.getCurrentPage()?.drawingData ?? Data(),
+                      onDrawingChange: handleDrawingChange,
+                      pageRect: pageManager.pageRect,
+                      onSwipe: handleSwipe)
+            .ignoresSafeArea()
+    }
+    
+    private var navIndicatorView: some View {
+        NavIndicatorView(direction: swipeProgress.direction,
+                         progress: swipeProgress.progress,
+                         size: pageManager.pageRect.size,
+                         adjacentPages: getAdjacentPages())
+            .allowsHitTesting(false)
+            .ignoresSafeArea()
+    }
+    
+    private var toolbarView: some View {
+        VStack {
+            HStack {
+                Spacer()
+                pageFlipButton
+                showMapButton
+            }
+            
+            HStack {
+                Spacer()
+                VStack {
+                    undoButton
+                    redoButton
+                    Spacer()
+                }
+            }
+        }
+    }
+    
+    // MARK: - Buttons
+    private var pageFlipButton: some View {
+        Button(action: handlePageFlip) {
+            Image(systemName: "rectangle.2.swap")
+                .rotationEffect(Angle(degrees: -90.0))
+                .font(.system(size: toolbarButtonSize))
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .background(Color.clear.contentShape(Circle()))
+                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
+        .disabled(!canGoToPreviousPage)
+        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
+    }
+    
+    private var showMapButton: some View {
+        Button(action: showMap) {
+            Image(systemName: "square.on.square")
+                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .background(Color.clear.contentShape(Circle()))
+                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+        .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 20.5))
+    }
+    
+    private var undoButton: some View {
+        Button(action: handleUndo) {
+            Image(systemName: "arrow.uturn.left.circle")
+                .font(.system(size: toolbarButtonSize))
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .background(Color.clear.contentShape(Circle()))
+                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
+        .disabled(!canUndo)
+        .padding(EdgeInsets(top: -7, leading: 0, bottom: 0, trailing: 20.5))
+    }
+    
+    private var redoButton: some View {
+        Button(action: handleRedo) {
+            Image(systemName: "arrow.uturn.right.circle")
+                .font(.system(size: toolbarButtonSize))
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .background(Color.clear.contentShape(Circle()))
+                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: canRedo))
+        .disabled(!canRedo)
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
+    }
+    
+    private var mapView: some View {
+        MapView(pageManager: pageManager,
+                pages: pages,
+                onPageSelected: handlePageSelection,
+                showMiniMap: $showMapView,
+                onCloseMap: { showMapView = false })
+    }
+    
+    // MARK: - Helper Methods
     private func updateUndoRedoState() {
         DispatchQueue.main.async {
             self.canUndo = self.canvasView.undoManager?.canUndo ?? false
@@ -156,18 +183,44 @@ struct PageView: View {
         }
     }
     
-    private func updateSwipeProgress(for gesture: UIPanGestureRecognizer) {
-        let translation = gesture.translation(in: gesture.view)
-        let progress = min(1.0, max(abs(translation.x), abs(translation.y)) / (UIScreen.main.bounds.width / 4))
-        
-        let direction: EdgeDirection
-        if abs(translation.x) > abs(translation.y) {
-            direction = translation.x > 0 ? .left : .right
-        } else {
-            direction = translation.y > 0 ? .top : .bottom
+    private func handleDrawingChange(_ drawing: PKDrawing) {
+        pageManager.updateDrawing(drawing)
+        updateUndoRedoState()
+    }
+    
+    private func handlePageFlip() {
+        if let previousPage = pageManager.goToPreviousPage() {
+            if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
+                canvasView.drawing = drawing
+                updateUndoRedoState()
+            }
+            updateCanGoToPreviousPage()
         }
-        
-        swipeProgress = SwipeProgress(direction: direction, progress: progress)
+    }
+    
+    private func showMap() {
+        pageManager.updateAllThumbnails()
+        showMapView = true
+    }
+    
+    private func handleUndo() {
+        canvasView.undoManager?.undo()
+        updateUndoRedoState()
+    }
+    
+    private func handleRedo() {
+        canvasView.undoManager?.redo()
+        updateUndoRedoState()
+    }
+    
+    private func handlePageSelection(_ selectedPage: Page) {
+        pageManager.setCurrentPage(selectedPage)
+        if let drawing = try? PKDrawing(data: selectedPage.drawingData!) {
+            canvasView.drawing = drawing
+            updateUndoRedoState()
+        }
+        updateCanGoToPreviousPage()
+        showMapView = false
     }
     
     private func handleSwipe(_ gesture: UIPanGestureRecognizer) {
