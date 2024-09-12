@@ -59,3 +59,19 @@ extension Color {
         return (r, g, b, o)
     }
 }
+
+class Debouncer {
+    private var workItem: DispatchWorkItem?
+    private let queue = DispatchQueue.main
+    private let delay: TimeInterval
+
+    init(delay: TimeInterval) {
+        self.delay = delay
+    }
+
+    func debounce(_ callback: @escaping () -> Void) {
+        workItem?.cancel()
+        workItem = DispatchWorkItem(block: callback)
+        queue.asyncAfter(deadline: .now() + delay, execute: workItem!)
+    }
+}
