@@ -9,7 +9,9 @@ import Foundation
 import SwiftUI
 import PencilKit
 
+// MARK: - PencilKitView
 struct PencilKitView: UIViewRepresentable {
+    // MARK: - Properties
     @Binding var canvasView: PKCanvasView
     @Binding var toolPicker: PKToolPicker
     var drawing: Data
@@ -17,6 +19,7 @@ struct PencilKitView: UIViewRepresentable {
     var pageRect: CGRect
     var onSwipe: (UIPanGestureRecognizer) -> Void
 
+    // MARK: - Methods
     func makeUIView(context: Context) -> PKCanvasView {
         canvasView.delegate = context.coordinator
         canvasView.drawing = try! PKDrawing(data: drawing)
