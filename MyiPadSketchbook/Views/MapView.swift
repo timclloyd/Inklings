@@ -86,14 +86,14 @@ struct MapView: View {
                                     .foregroundColor(Color.primary)
                             }
                             .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
+                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
                             
                             // Hide Map
                             Button(action: {
                                 onCloseMap()
                             }) {
-                                Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                                    .font(.system(size: toolbarButtonSize))
+                                Image(systemName: "square.on.square")
+                                    .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
                                     .symbolRenderingMode(.hierarchical)
                                     .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                                     .background(Color.clear.contentShape(Circle()))
