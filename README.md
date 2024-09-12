@@ -1,23 +1,25 @@
-# Concept
+I felt inspired by seeing this [Quick Journal](https://apps.apple.com/gb/app/quick-journal-just-write/id6554003659) app and [Raphael Schaad’s Config 2024 talk](https://youtu.be/NCgGs3d2SF4?feature=shared&t=887) - particularly the image of a grid of scanned notebook pages in Figma:
 
-I felt inspired by seeing this [Quick Journal](https://apps.apple.com/gb/app/quick-journal-just-write/id6554003659) app. Decided to finally try and create a simple pencil-first app I’ve been wanting for ages.
+![](./Images/raphael_shaad_figma_fieldnotes.png)
+
+Decided to finally try and create the simple pencil-first app that I’ve been wanting for ages.
 
 Inspired by Scapple, Muse, paper notebooks.
 
-- Apple Notes paper but in a good...
 - 2D grid of fixed-size dot grid pages. Navigate between them by swiping.
-- Map view accessible via pinch-to-zoom gesture.
-- Only pencil input - no text, nothing else.
-- Nothing gets in the way of writing & sketching - no zooming, content ignores device rotation.
+- A PencilKit experience without all the fiddly parts
+- Only pencil input
+- Map view which shows all pages
+- No page zooming, content ignores device rotation 
 
 The first sketch in Apple Notes:
+
 ![](./Images/gridnotes-first-sketch.jpeg)
 
 # Branches
 
 - main: personal notes and sketches
-- work-notes: work notes and sketches
+- notebooks/work-notes: work notes and sketches
 - dev: stuff for dev and testing which I don’t mind losing
 
-Each branch has a custom Bundle ID and Display Name to keep their data separate on iPadOS.
-
+Each branch has a custom Bundle ID and Display Name to keep their data separate on iPadOS. This is good enough until I have time to add simple enough in-app notebook selection.
