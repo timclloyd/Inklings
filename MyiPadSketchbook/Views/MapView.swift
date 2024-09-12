@@ -100,7 +100,7 @@ struct MapView: View {
 
     private var rearrangeButton: some View {
         Button(action: { isRearranging.toggle() }) {
-            Image(systemName: isRearranging ? "checkmark.circle" : "arrow.up.and.down.and.arrow.left.and.right")
+            Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
                 .font(.system(size: isRearranging ? toolbarButtonSize * 1.25 : toolbarButtonSize))
                 .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                 .foregroundColor(isRearranging ? Color.blue : Color.primary)
