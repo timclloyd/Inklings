@@ -57,22 +57,21 @@ struct MapView: View {
                         Spacer()
                         HStack() {
                             
-                            // Rearrange pages
+                            // Rearrange Pages button
                             Button(action: {
                                 isRearranging.toggle()
                             }) {
                                 Image(systemName: isRearranging ? "checkmark.circle" : "arrow.up.and.down.and.arrow.left.and.right")
-                                    .offset(y: -1)
-                                    .font(.system(size: toolbarButtonSize))
+                                    .font(.system(size: isRearranging ? toolbarButtonSize * 1.5 : toolbarButtonSize))
                                     .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                                     .background(Color.clear.contentShape(Circle()))
                                     .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
                                     .foregroundColor(isRearranging ? Color.blue : Color.primary)
                             }
                             .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: -8))
+                            .padding(EdgeInsets(top: 32, leading: 0, bottom: 0, trailing: 5))
                             
-                            // Export
+                            // Export Map button
                             Button(action: {
                                 isSharePresented = true
                             }) {
