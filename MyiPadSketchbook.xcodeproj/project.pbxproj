@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		154A78AE2C7FB1DA00088B86 /* NavIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154A78AD2C7FB1DA00088B86 /* NavIndicatorView.swift */; };
+		154A78AE2C7FB1DA00088B86 /* PageChangeIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154A78AD2C7FB1DA00088B86 /* PageChangeIndicatorView.swift */; };
 		155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* Helpers.swift */; };
 		155C1DC42C62BD6B00FC5882 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC32C62BD6B00FC5882 /* Assets.xcassets */; };
 		155C1DC72C62BD6B00FC5882 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */; };
@@ -20,7 +20,7 @@
 		15B03BAB2C71EB82007589CB /* PageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAA2C71EB82007589CB /* PageView.swift */; };
 		15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAC2C71EBC9007589CB /* MapView.swift */; };
 		15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAE2C71EBF2007589CB /* PencilKitView.swift */; };
-		15B03BB12C71EC20007589CB /* DottedBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */; };
+		15B03BB12C71EC20007589CB /* DotGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BB02C71EC20007589CB /* DotGridView.swift */; };
 		15CEF9492C9222ED00B33DB6 /* Styles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CEF9482C9222ED00B33DB6 /* Styles.swift */; };
 /* End PBXBuildFile section */
 
@@ -42,7 +42,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		154A78AD2C7FB1DA00088B86 /* NavIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavIndicatorView.swift; sourceTree = "<group>"; };
+		154A78AD2C7FB1DA00088B86 /* PageChangeIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageChangeIndicatorView.swift; sourceTree = "<group>"; };
 		155C1DBA2C62BD6A00FC5882 /* MyiPadSketchbook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyiPadSketchbook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		155C1DBF2C62BD6A00FC5882 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		155C1DC32C62BD6B00FC5882 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -61,7 +61,7 @@
 		15B03BAA2C71EB82007589CB /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
 		15B03BAC2C71EBC9007589CB /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
 		15B03BAE2C71EBF2007589CB /* PencilKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilKitView.swift; sourceTree = "<group>"; };
-		15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DottedBackgroundView.swift; sourceTree = "<group>"; };
+		15B03BB02C71EC20007589CB /* DotGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DotGridView.swift; sourceTree = "<group>"; };
 		15CEF9482C9222ED00B33DB6 /* Styles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Styles.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -158,8 +158,8 @@
 				15B03BAA2C71EB82007589CB /* PageView.swift */,
 				15B03BAC2C71EBC9007589CB /* MapView.swift */,
 				15B03BAE2C71EBF2007589CB /* PencilKitView.swift */,
-				15B03BB02C71EC20007589CB /* DottedBackgroundView.swift */,
-				154A78AD2C7FB1DA00088B86 /* NavIndicatorView.swift */,
+				15B03BB02C71EC20007589CB /* DotGridView.swift */,
+				154A78AD2C7FB1DA00088B86 /* PageChangeIndicatorView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -323,11 +323,11 @@
 				15CEF9492C9222ED00B33DB6 /* Styles.swift in Sources */,
 				15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */,
 				15B03BAB2C71EB82007589CB /* PageView.swift in Sources */,
-				154A78AE2C7FB1DA00088B86 /* NavIndicatorView.swift in Sources */,
+				154A78AE2C7FB1DA00088B86 /* PageChangeIndicatorView.swift in Sources */,
 				15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */,
 				15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */,
 				15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */,
-				15B03BB12C71EC20007589CB /* DottedBackgroundView.swift in Sources */,
+				15B03BB12C71EC20007589CB /* DotGridView.swift in Sources */,
 				15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
