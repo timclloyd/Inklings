@@ -23,10 +23,6 @@ struct SwipeProgress: Equatable {
     }
 }
 
-enum EdgeDirection: Equatable {
-    case left, right, top, bottom
-}
-
 enum DragState: Equatable {
     case inactive
     case dragging(translation: CGSize)
