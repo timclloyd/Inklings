@@ -142,6 +142,12 @@ struct MapView: View {
                 .background(appearance.backgroundColor)
                 .scaleEffect(appearance.scale)
                 .opacity(appearance.opacity)
+                .shadow(
+                    color: isSelected && isRearranging ? Color.black.opacity(0.1) : Color.clear,
+                    radius: isSelected && isRearranging ? 12 : 0,
+                    x: 0,
+                    y: 0
+                )
             
             if hasOverlap {
                 overlapIndicator(count: overlappingPages.count)
