@@ -107,7 +107,3 @@ struct PageChangeIndicatorView: View {
     }
 }
 
-// MARK: - EdgeDirection
-enum EdgeDirection: CaseIterable {
-    case left, right, top, bottom
-}
