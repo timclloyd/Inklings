@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		154A78AE2C7FB1DA00088B86 /* PageChangeIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154A78AD2C7FB1DA00088B86 /* PageChangeIndicatorView.swift */; };
-		155C1DC02C62BD6A00FC5882 /* SharedHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* SharedHelpers.swift */; };
+		155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* Helpers.swift */; };
 		155C1DC42C62BD6B00FC5882 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC32C62BD6B00FC5882 /* Assets.xcassets */; };
 		155C1DC72C62BD6B00FC5882 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */; };
 		155C1DD12C62BD6B00FC5882 /* MyiPadSketchbookTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DD02C62BD6B00FC5882 /* MyiPadSketchbookTests.swift */; };
@@ -44,7 +44,7 @@
 /* Begin PBXFileReference section */
 		154A78AD2C7FB1DA00088B86 /* PageChangeIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageChangeIndicatorView.swift; sourceTree = "<group>"; };
 		155C1DBA2C62BD6A00FC5882 /* MyiPadSketchbook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyiPadSketchbook.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		155C1DBF2C62BD6A00FC5882 /* SharedHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedHelpers.swift; sourceTree = "<group>"; };
+		155C1DBF2C62BD6A00FC5882 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		155C1DC32C62BD6B00FC5882 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		155C1DCC2C62BD6B00FC5882 /* MyiPadSketchbookTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyiPadSketchbookTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -115,7 +115,7 @@
 			children = (
 				158385962C83237B00735249 /* MyiPadSketchbookRelease.entitlements */,
 				158385952C83190000735249 /* MyiPadSketchbookDebug.entitlements */,
-				15B03BB42C71EF58007589CB /* Helpers */,
+				15B03BB42C71EF58007589CB /* Shared */,
 				15B03BB32C71EE42007589CB /* ViewModels */,
 				15B03BB22C71EE32007589CB /* Models */,
 				15B03BA92C71EB66007589CB /* Views */,
@@ -180,13 +180,13 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		15B03BB42C71EF58007589CB /* Helpers */ = {
+		15B03BB42C71EF58007589CB /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				155C1DBF2C62BD6A00FC5882 /* SharedHelpers.swift */,
+				155C1DBF2C62BD6A00FC5882 /* Helpers.swift */,
 				15CEF9482C9222ED00B33DB6 /* ToolbarButtonStyle.swift */,
 			);
-			path = Helpers;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -319,7 +319,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				155C1DC02C62BD6A00FC5882 /* SharedHelpers.swift in Sources */,
+				155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */,
 				15CEF9492C9222ED00B33DB6 /* ToolbarButtonStyle.swift in Sources */,
 				15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */,
 				15B03BAB2C71EB82007589CB /* PageView.swift in Sources */,
