@@ -54,15 +54,22 @@ struct PageChangeIndicatorView: View {
     
     // MARK: - Helper Methods
     private func arrowSystemName(for edge: EdgeDirection) -> String {
-        switch edge {
-        case .left:
-            return "arrow.left.circle.fill"
-        case .right:
-            return "arrow.right.circle.fill"
-        case .top:
-            return "arrow.up.circle.fill"
-        case .bottom:
-            return "arrow.down.circle.fill"
+        let hasAdjacentPage = hasAdjacentPage(for: edge)
+        
+        if hasAdjacentPage {
+            switch edge {
+            case .left:
+                return "arrow.left.circle.fill"
+            case .right:
+                return "arrow.right.circle.fill"
+            case .top:
+                return "arrow.up.circle.fill"
+            case .bottom:
+                return "arrow.down.circle.fill"
+            }
+        }
+        else {
+            return "plus.circle.fill"
         }
     }
 
@@ -82,12 +89,12 @@ struct PageChangeIndicatorView: View {
     
     private func arrowColor(for edge: EdgeDirection) -> Color {
         guard let direction = direction, direction == edge else {
-            return .blue
+            return .primary
         }
 
         let hasAdjacentPage = hasAdjacentPage(for: edge)
         if hasAdjacentPage {
-            return .blue
+            return .primary
         } else {
             return .green
         }
