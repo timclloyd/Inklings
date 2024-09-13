@@ -86,18 +86,42 @@ struct MapView: View {
         VStack {
             HStack {
                 Spacer()
-                HStack {
-                    rearrangeButton
-                    exportButton
+                VStack {
                     closeButton
+                    exportButton
+                    rearrangeButton
                 }
             }
-            .padding(.top, -22)
             Spacer()
         }
     }
 
     // MARK: - Buttons
+    private var closeButton: some View {
+        Button(action: onCloseMap) {
+            Image(systemName: "rectangle.portrait.on.rectangle.portrait")
+                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .padding(EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+        .padding(EdgeInsets(top: -2, leading: 0, bottom: 0, trailing: 8))
+    }
+
+    private var exportButton: some View {
+        Button(action: { isSharePresented = true }) {
+            Image(systemName: "square.and.arrow.up")
+                .font(.system(size: toolbarButtonSize))
+                .symbolRenderingMode(.hierarchical)
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .foregroundColor(Color.primary)
+                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 9))
+    }
+
     private var rearrangeButton: some View {
         Button(action: { isRearranging.toggle() }) {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
@@ -107,33 +131,7 @@ struct MapView: View {
                 .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 18, leading: 0, bottom: 0, trailing: 5))
-    }
-
-    private var exportButton: some View {
-        Button(action: { isSharePresented = true }) {
-            Image(systemName: "square.and.arrow.up.on.square")
-                .offset(y: -1)
-                .font(.system(size: toolbarButtonSize))
-                .symbolRenderingMode(.hierarchical)
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .foregroundColor(Color.primary)
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-        }
-        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 18, leading: 0, bottom: 0, trailing: 5))
-    }
-
-    private var closeButton: some View {
-        Button(action: onCloseMap) {
-            Image(systemName: "square.on.square")
-                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
-                .symbolRenderingMode(.hierarchical)
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .padding(EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24))
-        }
-        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 20, leading: 0, bottom: 0, trailing: 8))
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 9))
     }
 
     // MARK: - Thumbnail View
