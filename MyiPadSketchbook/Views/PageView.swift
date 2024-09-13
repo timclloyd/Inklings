@@ -29,6 +29,7 @@ struct PageView: View {
     @State private var canUndo = false
     @State private var canRedo = false
     @State private var canGoToPreviousPage = false
+    @State private var pageChangedFromMap = false
     
     // MARK: - Initialisation
     init(modelContext: ModelContext) {
@@ -124,6 +125,7 @@ struct PageView: View {
         Button(action: handlePageFlip) {
             Image(systemName: "rectangle.2.swap")
                 .rotationEffect(Angle(degrees: -90.0))
+                .symbolRenderingMode(.palette)
                 .font(.system(size: toolbarButtonSize))
                 .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                 .background(Color.clear.contentShape(Circle()))
@@ -213,7 +215,7 @@ struct PageView: View {
     }
     
     private func handlePageSelection(_ selectedPage: Page) {
-        pageManager.setCurrentPage(selectedPage)
+        pageManager.setCurrentPage(selectedPage, updatePrevious: true)
         if let drawing = try? PKDrawing(data: selectedPage.drawingData!) {
             canvasView.drawing = drawing
             updateUndoRedoState()
@@ -243,7 +245,7 @@ struct PageView: View {
                    let drawing = try? PKDrawing(data: currentPage.drawingData!) {
                     canvasView.drawing = drawing
                 }
-                updateCanGoToPreviousPage()
+                // Do not update canGoToPreviousPage here
             }
             // Reset swipeProgress when the gesture ends
             withAnimation(.linear(duration: 0)) {
@@ -251,6 +253,13 @@ struct PageView: View {
             }
         default:
             break
+        }
+    }
+    
+    private func checkAndUpdatePreviousPage() {
+        if pageChangedFromMap {
+            updateCanGoToPreviousPage()
+            pageChangedFromMap = false
         }
     }
     
