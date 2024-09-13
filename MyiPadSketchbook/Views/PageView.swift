@@ -91,13 +91,13 @@ struct PageView: View {
         VStack {
             HStack {
                 Spacer()
-                pageFlipButton
                 showMapButton
             }
             
             HStack {
                 Spacer()
                 VStack {
+                    pageFlipButton
                     undoButton
                     redoButton
                     Spacer()
@@ -107,24 +107,9 @@ struct PageView: View {
     }
     
     // MARK: - Buttons
-    private var pageFlipButton: some View {
-        Button(action: handlePageFlip) {
-            Image(systemName: "rectangle.2.swap")
-                .rotationEffect(Angle(degrees: -90.0))
-                .font(.system(size: toolbarButtonSize))
-                .symbolRenderingMode(.hierarchical)
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .background(Color.clear.contentShape(Circle()))
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-        }
-        .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
-        .disabled(!canGoToPreviousPage)
-        .padding(EdgeInsets(top: 18, leading: 0, bottom: 0, trailing: 5))
-    }
-    
     private var showMapButton: some View {
         Button(action: showMap) {
-            Image(systemName: "square.on.square")
+            Image(systemName: "rectangle.portrait.on.rectangle.portrait")
                 .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
                 .symbolRenderingMode(.hierarchical)
                 .frame(width: toolbarButtonSize, height: toolbarButtonSize)
@@ -133,6 +118,20 @@ struct PageView: View {
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
         .padding(EdgeInsets(top: 20, leading: 0, bottom: 0, trailing: 8))
+    }
+    
+    private var pageFlipButton: some View {
+        Button(action: handlePageFlip) {
+            Image(systemName: "rectangle.2.swap")
+                .rotationEffect(Angle(degrees: -90.0))
+                .font(.system(size: toolbarButtonSize))
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .background(Color.clear.contentShape(Circle()))
+                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
+        .disabled(!canGoToPreviousPage)
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
     }
     
     private var undoButton: some View {
