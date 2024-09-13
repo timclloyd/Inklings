@@ -30,7 +30,6 @@ struct MapView: View {
     
     // MARK: - Constants
     private let spacing: CGFloat = 10
-    private let panDebouncer = Debouncer(delay: 0.001)
     
     // MARK: - Computed Properties
     private var thumbnailSize: CGSize {
@@ -215,9 +214,7 @@ struct MapView: View {
     private func dragGesture(for page: Page) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
-                panDebouncer.debounce {
-                    handleDragChange(value, for: page)
-                }
+                handleDragChange(value, for: page)
             }
             .onEnded { value in
                 handleDragEnd(value, for: page)
