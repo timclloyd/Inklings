@@ -97,6 +97,7 @@ struct MapView: View {
         }
     }
 
+    // MARK: - Buttons
     private var rearrangeButton: some View {
         Button(action: { isRearranging.toggle() }) {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
