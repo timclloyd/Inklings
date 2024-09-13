@@ -51,8 +51,10 @@ class PageManager: ObservableObject {
         return newPage
     }
     
-    func setCurrentPage(_ page: Page) {
-        previousPageID = currentPageID
+    func setCurrentPage(_ page: Page, updatePrevious: Bool = true) {
+        if updatePrevious {
+            previousPageID = currentPageID
+        }
         currentPageID = page.id
         // Save current page position
         UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
@@ -92,10 +94,10 @@ class PageManager: ObservableObject {
         let existingPage = pages.first { $0.positionX == newPosition.x && $0.positionY == newPosition.y }
         
         if let existingPage = existingPage {
-            setCurrentPage(existingPage)
+            setCurrentPage(existingPage, updatePrevious: false)
         } else {
             let newPage = createPage(position: (newPosition.x!, newPosition.y!))
-            setCurrentPage(newPage)
+            setCurrentPage(newPage, updatePrevious: false)
         }
     }
     
