@@ -33,32 +33,32 @@ enum DragState: Equatable {
 }
 
 // MARK: - Color interpolation
-extension Color {
-    static func interpolate(from: Color, to: Color, progress: CGFloat) -> Color {
-        let fromComponents = from.components
-        let toComponents = to.components
-        
-        let r = fromComponents.red + (toComponents.red - fromComponents.red) * progress
-        let g = fromComponents.green + (toComponents.green - fromComponents.green) * progress
-        let b = fromComponents.blue + (toComponents.blue - fromComponents.blue) * progress
-        let a = fromComponents.opacity + (toComponents.opacity - fromComponents.opacity) * progress
-        
-        return Color(.displayP3, red: r, green: g, blue: b, opacity: a)
-    }
-    
-    var components: (red: CGFloat, green: CGFloat, blue: CGFloat, opacity: CGFloat) {
-        var r: CGFloat = 0
-        var g: CGFloat = 0
-        var b: CGFloat = 0
-        var o: CGFloat = 0
-        
-        guard UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &o) else {
-            return (0, 0, 0, 0)
-        }
-        
-        return (r, g, b, o)
-    }
-}
+//extension Color {
+//    static func interpolate(from: Color, to: Color, progress: CGFloat) -> Color {
+//        let fromComponents = from.components
+//        let toComponents = to.components
+//        
+//        let r = fromComponents.red + (toComponents.red - fromComponents.red) * progress
+//        let g = fromComponents.green + (toComponents.green - fromComponents.green) * progress
+//        let b = fromComponents.blue + (toComponents.blue - fromComponents.blue) * progress
+//        let a = fromComponents.opacity + (toComponents.opacity - fromComponents.opacity) * progress
+//        
+//        return Color(.displayP3, red: r, green: g, blue: b, opacity: a)
+//    }
+//    
+//    var components: (red: CGFloat, green: CGFloat, blue: CGFloat, opacity: CGFloat) {
+//        var r: CGFloat = 0
+//        var g: CGFloat = 0
+//        var b: CGFloat = 0
+//        var o: CGFloat = 0
+//        
+//        guard UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &o) else {
+//            return (0, 0, 0, 0)
+//        }
+//        
+//        return (r, g, b, o)
+//    }
+//}
 
 // MARK: - Debouncer
 class Debouncer {
