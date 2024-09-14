@@ -29,7 +29,7 @@ struct DotGridView: View {
     }
     
     var largeDotColor: Color {
-        colorScheme == .dark ? .blue : .blue
+        colorScheme == .dark ? .accentColor : .accentColor
     }
     
     // MARK: - Body
