@@ -456,10 +456,10 @@ struct ThumbnailContent: View {
         Text("\(page.positionX ?? 0), \(page.positionY ?? 0)")
             .font(.system(size: 10))
             .padding(2)
+            .padding(.horizontal, 3)
             .foregroundColor(Color.primary.opacity(0.87))
-            .border(Color(.systemGray5), width: 0.5)
-            .background(Color(.systemGray6))
-            .cornerRadius(2)
+            .background(Color(.systemGray5))
+            .cornerRadius(5)
             .padding(.bottom, 3)
     }
 }
