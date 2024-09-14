@@ -92,18 +92,19 @@ struct PageView: View {
         VStack {
             HStack {
                 Spacer()
-                showMapButton
-            }
-            
-            HStack {
-                Spacer()
-                VStack {
-                    pageFlipButton
-                    undoButton
-                    redoButton
-                    Spacer()
+                VStack() {
+                    showMapButton
+                    
+                    VStack() {
+                        pageFlipButton
+                        undoButton
+                        redoButton
+                    }
                 }
+                .background(Color(.systemBackground))
+                .fixedSize()
             }
+            Spacer()
         }
     }
     
@@ -133,7 +134,7 @@ struct PageView: View {
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
         .disabled(!canGoToPreviousPage)
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 8))
     }
     
     private var undoButton: some View {
@@ -146,7 +147,7 @@ struct PageView: View {
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
         .disabled(!canUndo)
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 8))
     }
     
     private var redoButton: some View {
@@ -159,7 +160,7 @@ struct PageView: View {
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: canRedo))
         .disabled(!canRedo)
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 20.5))
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 8))
     }
     
     private var mapView: some View {
