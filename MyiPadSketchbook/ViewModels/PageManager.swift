@@ -138,7 +138,7 @@ class PageManager: ObservableObject {
         let thumbnailImage = renderer.image { context in
             // Set background color based on color scheme
             let backgroundColor = UIColor { traitCollection in
-                traitCollection.userInterfaceStyle == .dark ? .black : .white
+                traitCollection.userInterfaceStyle == .dark ? UIColor.systemGray6 : .white
             }
             context.cgContext.setFillColor(backgroundColor.cgColor)
             context.cgContext.fill(CGRect(origin: .zero, size: thumbnailSize))

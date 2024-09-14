@@ -29,7 +29,7 @@ struct MapView: View {
     @GestureState private var dragGestureState: CGSize = .zero
     
     // MARK: - Constants
-    private let spacing: CGFloat = 10
+    private let spacing: CGFloat = 6
     
     // MARK: - Computed Properties
     private var thumbnailSize: CGSize {
@@ -49,7 +49,7 @@ struct MapView: View {
     }
     
     private var backgroundColor: Color {
-        colorScheme == .dark ? Color.black : Color.white
+        colorScheme == .dark ? Color.black : Color(.systemGray6)
     }
 
     // MARK: - Body
@@ -127,7 +127,7 @@ struct MapView: View {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
                 .font(.system(size: isRearranging ? toolbarButtonSize * 1.25 : toolbarButtonSize))
                 .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .foregroundColor(isRearranging ? Color.blue : Color.primary)
+                .foregroundColor(isRearranging ? Color.accentColor : Color.primary)
                 .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
@@ -176,9 +176,9 @@ struct MapView: View {
     }
 
     private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
-        RoundedRectangle(cornerRadius: 5)
+        RoundedRectangle(cornerRadius: 10)
             .stroke(
-                isRearranging ? .blue : appearance.borderColor,
+                isRearranging ? .accentColor : appearance.borderColor,
                 style: StrokeStyle(
                     lineWidth: appearance.borderWidth,
                     dash: isRearranging ? [5] : []
@@ -422,6 +422,7 @@ struct ThumbnailContent: View {
     let page: Page
     let thumbnailSize: CGSize
     let colorScheme: ColorScheme
+    let cornerRadius: CGFloat = 10
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -429,6 +430,11 @@ struct ThumbnailContent: View {
             coordinateLabel
         }
         .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(Color(colorScheme == .dark ? .systemGray3 : .systemGray4), lineWidth: 0.5)
+        )
     }
 
     private var thumbnailImage: some View {
@@ -438,8 +444,8 @@ struct ThumbnailContent: View {
                     .resizable()
                     .scaledToFit()
             } else {
-                RoundedRectangle(cornerRadius: 5)
-                    .fill(Color.gray)
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(Color.clear)
             }
         }
         .frame(width: thumbnailSize.width, height: thumbnailSize.height)
@@ -468,8 +474,8 @@ struct ThumbnailAppearance {
 
     static func normal(colorScheme: ColorScheme) -> ThumbnailAppearance {
         ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
-            borderColor: colorScheme == .dark ? Color(.systemGray5) : Color(.systemGray2),
+            backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+            borderColor: colorScheme == .dark ? Color.clear : Color.clear,
             borderWidth: 1,
             scale: 1.0,
             opacity: 1.0
@@ -478,8 +484,8 @@ struct ThumbnailAppearance {
 
     static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
         ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
-            borderColor: .blue,
+            backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+            borderColor: .accentColor,
             borderWidth: 2,
             scale: 1.05,
             opacity: 1.0
@@ -488,8 +494,8 @@ struct ThumbnailAppearance {
 
     static func current(colorScheme: ColorScheme) -> ThumbnailAppearance {
         ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.black : Color.white,
-            borderColor: .blue,
+            backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+            borderColor: .accentColor,
             borderWidth: 2,
             scale: 1.0,
             opacity: 1.0
