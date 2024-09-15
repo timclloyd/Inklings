@@ -174,7 +174,13 @@ struct MapView: View {
         .position(thumbnailPosition(for: page))
         .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
         .zIndex(isSelected && isRearranging ? 1 : 0)
-        .gesture(dragGesture(for: page))
+        .simultaneousGesture(isRearranging ? dragGesture(for: page) : nil, including: .all)
+        .onTapGesture {
+            if !isRearranging {
+                onPageSelected(page)
+                showMiniMap = false
+            }
+        }
     }
 
     private func thumbnailAppearance(for page: Page, isSelected: Bool, isCurrentPage: Bool) -> ThumbnailAppearance {
