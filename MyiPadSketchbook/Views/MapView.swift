@@ -24,10 +24,8 @@ struct MapView: View {
     @State private var panOffset: CGSize = .zero
     @State private var draggedPage: Page?
     @State private var draggedPageOffset: CGSize = .zero
-    @State private var isRearranging: Bool = false
     @State private var isSharePresented: Bool = false
     @GestureState private var dragGestureState: CGSize = .zero
-    
     @State private var contentOffset: CGPoint = .zero
     
     // MARK: - Constants
@@ -109,11 +107,10 @@ struct MapView: View {
     private var toolbarView: some View {
         VStack(spacing: 0) {
             closeButton
-            exportButton
-            rearrangeButton
         }
         .background(Color(.systemBackground))
         .cornerRadius(10)
+        .padding(.trailing, 10)
         .shadow(radius: 10)
     }
 
@@ -127,32 +124,7 @@ struct MapView: View {
                 .padding(EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24))
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: -2, leading: 0, bottom: 0, trailing: 8))
-    }
-
-    private var exportButton: some View {
-        Button(action: { isSharePresented = true }) {
-            Image(systemName: "square.and.arrow.up")
-                .font(.system(size: toolbarButtonSize))
-                .symbolRenderingMode(.hierarchical)
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .foregroundColor(Color.primary)
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-        }
-        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 9))
-    }
-
-    private var rearrangeButton: some View {
-        Button(action: { isRearranging.toggle() }) {
-            Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
-                .font(.system(size: isRearranging ? toolbarButtonSize * 1.25 : toolbarButtonSize))
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .foregroundColor(isRearranging ? Color.accentColor : Color.primary)
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
-        }
-        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 9))
+        .padding(EdgeInsets(top: -2, leading: -2, bottom: -2, trailing: -2))
     }
 
     // MARK: - Thumbnail View
@@ -169,33 +141,20 @@ struct MapView: View {
                 .background(appearance.backgroundColor)
                 .scaleEffect(appearance.scale)
                 .opacity(appearance.opacity)
-                .shadow(
-                    color: isSelected && isRearranging ? Color.black.opacity(0.1) : Color.clear,
-                    radius: isSelected && isRearranging ? 12 : 0,
-                    x: 0,
-                    y: 0
-                )
             
             if hasOverlap {
                 overlapIndicator(count: overlappingPages.count)
             }
         }
         .position(thumbnailPosition(for: page))
-        .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
-        .zIndex(isSelected && isRearranging ? 1 : 0)
-        .simultaneousGesture(isRearranging ? dragGesture(for: page) : nil, including: .all)
         .onTapGesture {
-            if !isRearranging {
-                onPageSelected(page)
-                showMiniMap = false
-            }
+            onPageSelected(page)
+            showMiniMap = false
         }
     }
 
     private func thumbnailAppearance(for page: Page, isSelected: Bool, isCurrentPage: Bool) -> ThumbnailAppearance {
-        if isSelected && isRearranging {
-            return .dragging(colorScheme: colorScheme)
-        } else if isCurrentPage {
+        if isCurrentPage {
             return .current(colorScheme: colorScheme)
         } else {
             return .normal(colorScheme: colorScheme)
@@ -204,13 +163,7 @@ struct MapView: View {
 
     private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
         RoundedRectangle(cornerRadius: 10)
-            .stroke(
-                isRearranging ? .accentColor : appearance.borderColor,
-                style: StrokeStyle(
-                    lineWidth: appearance.borderWidth,
-                    dash: isRearranging ? [5] : []
-                )
-            )
+            .stroke(appearance.borderColor, style: StrokeStyle(lineWidth: appearance.borderWidth))
     }
 
     private func overlapIndicator(count: Int) -> some View {
@@ -249,30 +202,14 @@ struct MapView: View {
 
     // MARK: - Gesture Handlers
     private func handleDragChange(_ value: DragGesture.Value, for page: Page) {
-        if isRearranging {
-            draggedPage = page
-            draggedPageOffset = value.translation
-        } else if value.translation != .zero {
+        if value.translation != .zero {
             panOffset.width += value.translation.width
             panOffset.height += value.translation.height
         }
     }
 
     private func handleDragEnd(_ value: DragGesture.Value, for page: Page) {
-        if isRearranging {
-            let gridMovement = calculateGridMovement(value.translation)
-            let newPosition = (
-                x: (page.positionX ?? 0) + gridMovement.x,
-                y: (page.positionY ?? 0) + gridMovement.y
-            )
-            if isValidMove(to: newPosition) {
-                page.positionX = newPosition.x
-                page.positionY = newPosition.y
-                pageManager.updatePagePosition(page)
-            }
-            draggedPage = nil
-            draggedPageOffset = .zero
-        } else if value.translation == .zero {
+        if value.translation == .zero {
             onPageSelected(page)
             showMiniMap = false
         }
@@ -505,16 +442,6 @@ struct ThumbnailAppearance {
             borderColor: colorScheme == .dark ? Color.clear : Color.clear,
             borderWidth: 1,
             scale: 1.0,
-            opacity: 1.0
-        )
-    }
-
-    static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
-        ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
-            borderColor: .accentColor,
-            borderWidth: 2,
-            scale: 1.05,
             opacity: 1.0
         )
     }
