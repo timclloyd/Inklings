@@ -141,7 +141,7 @@ struct MapView: View {
                 .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 9))
+        .padding(EdgeInsets(top: 2, leading: 8, bottom: 10, trailing: 9))
     }
     
     // MARK: - Thumbnail View
