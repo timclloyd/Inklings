@@ -60,12 +60,12 @@ struct MapView: View {
         let pageCountX = pagePositions.maxX - pagePositions.minX + 1 + (2 * mapViewEdgePadding)
         return CGFloat(pageCountX) * (thumbnailSize.width + spacing) + spacing
     }
-
+    
     private var contentHeight: CGFloat {
         let pageCountY = pagePositions.maxY - pagePositions.minY + 1 + (2 * mapViewEdgePadding)
         return CGFloat(pageCountY) * (thumbnailSize.height + spacing) + spacing
     }
-
+    
     // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
@@ -97,7 +97,7 @@ struct MapView: View {
         }
         .onAppear(perform: centreOnCurrentPage)
     }
-
+    
     // MARK: - Subviews
     private func thumbnailsView(in geometry: GeometryProxy) -> some View {
         ZStack {
@@ -107,7 +107,7 @@ struct MapView: View {
         }
         .frame(width: contentWidth, height: contentHeight)
     }
-
+    
     private var toolbarView: some View {
         VStack(spacing: 0) {
             closeButton
@@ -118,7 +118,7 @@ struct MapView: View {
         .padding(.trailing, 10)
         .shadow(radius: 10)
     }
-
+    
     // MARK: - Buttons
     private var closeButton: some View {
         Button(action: onCloseMap) {
@@ -143,7 +143,7 @@ struct MapView: View {
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
         .padding(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 9))
     }
-
+    
     // MARK: - Thumbnail View
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
         let isSelected = draggedPage?.id == page.id
@@ -151,7 +151,7 @@ struct MapView: View {
         let appearance = thumbnailAppearance(for: page, isSelected: isSelected && isRearranging, isCurrentPage: isCurrentPage)
         let overlappingPages = getOverlappingPages(for: page)
         let hasOverlap = overlappingPages.count > 1
-
+        
         return ZStack {
             ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
                 .overlay(thumbnailBorder(appearance: appearance, isCurrentPage: isCurrentPage))
@@ -181,7 +181,7 @@ struct MapView: View {
             }
         }
     }
-
+    
     private func thumbnailAppearance(for page: Page, isSelected: Bool, isCurrentPage: Bool) -> ThumbnailAppearance {
         if isSelected && isRearranging {
             return .dragging(colorScheme: colorScheme)
@@ -191,7 +191,7 @@ struct MapView: View {
             return .normal(colorScheme: colorScheme)
         }
     }
-
+    
     private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
         RoundedRectangle(cornerRadius: 10)
             .stroke(
@@ -212,7 +212,7 @@ struct MapView: View {
             .clipShape(Circle())
             .offset(x: thumbnailSize.width / 2 - 16, y: -thumbnailSize.height / 2 + 16)
     }
-
+    
     // MARK: - Gestures
     private var panGesture: some Gesture {
         DragGesture()
@@ -223,7 +223,7 @@ struct MapView: View {
                 }
             }
     }
-
+    
     private func dragGesture(for page: Page) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .updating($dragLocation) { value, state, _ in
@@ -255,7 +255,7 @@ struct MapView: View {
                 }
             }
     }
-
+    
     // MARK: - Gesture Handlers
     private func handleDragChange(_ value: DragGesture.Value, for page: Page) {
         if isRearranging {
@@ -267,7 +267,7 @@ struct MapView: View {
             contentOffset.y -= value.translation.height
         }
     }
-
+    
     private func handleDragEnd(_ value: DragGesture.Value, for page: Page) {
         if isRearranging {
             let gridMovement = calculateGridMovement(value.translation)
@@ -287,20 +287,20 @@ struct MapView: View {
             showMiniMap = false
         }
     }
-
+    
     // MARK: - Helper Methods
     private func thumbnailPosition(for page: Page) -> CGPoint {
         let x = CGFloat((page.positionX ?? 0) - pagePositions.minX + mapViewEdgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
         let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0) + mapViewEdgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
         return CGPoint(x: x, y: y)
     }
-
+    
     private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
         let xMovement = Int(round(translation.width / (thumbnailSize.width + spacing)))
         let yMovement = -Int(round(translation.height / (thumbnailSize.height + spacing)))
         return (x: xMovement, y: yMovement)
     }
-
+    
     private func isValidMove(to position: (x: Int, y: Int)) -> Bool {
         let minX = pagePositions.minX - mapViewEdgePadding
         let maxX = pagePositions.maxX + mapViewEdgePadding
@@ -312,14 +312,11 @@ struct MapView: View {
         
         return isWithinBounds && isNotOccupied
     }
-
+    
     private func centreOnCurrentPage() {
         guard let currentPage = pageManager.getCurrentPage(),
               let scrollViewProxy = scrollViewProxy else { return }
-
-        let x = CGFloat((currentPage.positionX ?? 0) - pagePositions.minX + mapViewEdgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
-        let y = CGFloat(pagePositions.maxY - (currentPage.positionY ?? 0) + mapViewEdgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
-
+        
         let id = "page_\(currentPage.id?.uuidString ?? "")"
         
         withAnimation(nil) {
@@ -330,239 +327,110 @@ struct MapView: View {
     private func getOverlappingPages(for page: Page) -> [Page] {
         pages.filter { $0.positionX == page.positionX && $0.positionY == page.positionY }
     }
-
-    // MARK: - Image sharing methods
-    private func generateFullScaleThumbnail(for page: Page) -> UIImage {
-        guard let drawing = try? PKDrawing(data: page.drawingData!) else {
-            return UIImage() // Return an empty image if drawing can't be loaded
-        }
-        
-        let fullScaleThumbnailSize = pageManager.pageRect.size
-        let cornerRadius: CGFloat = 15
-        
-        let renderer = UIGraphicsImageRenderer(size: fullScaleThumbnailSize)
-        let thumbnailImage = renderer.image { context in
-            let rect = CGRect(origin: .zero, size: fullScaleThumbnailSize)
-            
-            // Create rounded rectangle path
-            let path = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
-            context.cgContext.addPath(path.cgPath)
-            context.cgContext.clip()
-            
-            // Set background color based on color scheme
-            let backgroundColor = UIColor { traitCollection in
-                traitCollection.userInterfaceStyle == .dark ? .black : .white
-            }
-            context.cgContext.setFillColor(backgroundColor.cgColor)
-            context.cgContext.fill(rect)
-            
-            // Draw the full-scale drawing
-            let fullScaleImage = drawing.image(from: pageManager.pageRect, scale: 1.0)
-            fullScaleImage.draw(in: rect)
-            
-            // Draw border
-            context.cgContext.setStrokeColor(UIColor.gray.cgColor)
-            context.cgContext.setLineWidth(4)
-            context.cgContext.addPath(path.cgPath)
-            context.cgContext.strokePath()
-            
-            // Draw page coordinates
-            let text = "\(page.positionX ?? 0), \(page.positionY ?? 0)"
-            let scaleFactor = fullScaleThumbnailSize.width / thumbnailSize.width
-            let fontSize = 5 * scaleFactor
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: UIFont.systemFont(ofSize: fontSize),
-                .foregroundColor: UIColor.label.withAlphaComponent(0.87)
-            ]
-            let textSize = (text as NSString).size(withAttributes: attributes)
-            
-            let padding: CGFloat = 2 * scaleFactor
-            let textRect = CGRect(
-                x: (fullScaleThumbnailSize.width / 2) - textSize.width,
-                y: fullScaleThumbnailSize.height - textSize.height - padding - (3 * scaleFactor) - 8,
-                width: textSize.width + (padding * 2),
-                height: textSize.height + (padding * 2)
-            )
-            
-            let textBackgroundPath = UIBezierPath(roundedRect: textRect, cornerRadius: 2 * scaleFactor)
-            UIColor.systemGray6.setFill()
-            textBackgroundPath.fill()
-            
-            context.cgContext.setStrokeColor(UIColor.systemGray5.cgColor)
-            context.cgContext.setLineWidth(2 * scaleFactor)
-            textBackgroundPath.stroke()
-            
-            text.draw(in: textRect.insetBy(dx: padding, dy: padding), withAttributes: attributes)
-        }
-        
-        return thumbnailImage
-    }
     
-    private func generateMapImage() -> UIImage {
-        let pagePositions = self.pagePositions
-        let horizontalPages = pagePositions.maxX - pagePositions.minX + 1
-        let verticalPages = pagePositions.maxY - pagePositions.minY + 1
+    // MARK: - ThumbnailContent
+    struct ThumbnailContent: View {
+        let page: Page
+        let thumbnailSize: CGSize
+        let colorScheme: ColorScheme
+        let cornerRadius: CGFloat = 10
         
-        let fullScaleThumbnailSize = pageManager.pageRect.size
-        let spacing: CGFloat = 20 // Use the same spacing as in the live Map view
-        let fullSize = CGSize(
-            width: CGFloat(horizontalPages) * (fullScaleThumbnailSize.width + spacing) + spacing,
-            height: CGFloat(verticalPages) * (fullScaleThumbnailSize.height + spacing) + spacing
-        )
-        
-        let renderer = UIGraphicsImageRenderer(size: fullSize)
-        
-        return renderer.image { context in
-            // Fill background
-            if colorScheme == .dark {
-                UIColor.black.setFill()
-            } else {
-                UIColor.white.setFill()
+        var body: some View {
+            ZStack(alignment: .bottom) {
+                thumbnailImage
+                coordinateLabel
             }
-            context.fill(CGRect(origin: .zero, size: fullSize))
-            
-            // Draw thumbnails
-            for page in pages {
-                let x = spacing + CGFloat((page.positionX ?? 0) - pagePositions.minX) * (fullScaleThumbnailSize.width + spacing)
-                let y = spacing + CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (fullScaleThumbnailSize.height + spacing)
-                
-                let fullScaleThumbnail = generateFullScaleThumbnail(for: page)
-                fullScaleThumbnail.draw(in: CGRect(origin: CGPoint(x: x, y: y), size: fullScaleThumbnailSize))
-            }
-        }
-    }
-    
-    private func getShareFileName() -> String {
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withFullDate, .withTime, .withTimeZone]
-        let dateString = dateFormatter.string(from: Date())
-        
-        let appDisplayName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String ?? "GridNotes"
-        
-        return "\(appDisplayName)_\(dateString).jpg"
-    }
-    
-    private func prepareImageForSharing() -> (URL, String)? {
-        let image = generateMapImage()
-        let filename = getShareFileName()
-        
-        guard let data = image.jpegData(compressionQuality: 1.0) else { return nil }
-        
-        let tempDirectoryURL = FileManager.default.temporaryDirectory
-        let fileURL = tempDirectoryURL.appendingPathComponent(filename)
-        
-        do {
-            try data.write(to: fileURL)
-            return (fileURL, filename)
-        } catch {
-            print("Error saving file: \(error)")
-            return nil
-        }
-    }
-}
-
-// MARK: - ThumbnailContent
-struct ThumbnailContent: View {
-    let page: Page
-    let thumbnailSize: CGSize
-    let colorScheme: ColorScheme
-    let cornerRadius: CGFloat = 10
-
-    var body: some View {
-        ZStack(alignment: .bottom) {
-            thumbnailImage
-            coordinateLabel
-        }
-        .frame(width: thumbnailSize.width, height: thumbnailSize.height)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: cornerRadius)
-                .stroke(Color(colorScheme == .dark ? .systemGray3 : .systemGray4), lineWidth: 0.5)
-        )
-    }
-
-    private var thumbnailImage: some View {
-        Group {
-            if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFit()
-            } else {
+            .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(Color.clear)
-            }
-        }
-        .frame(width: thumbnailSize.width, height: thumbnailSize.height)
-        .clipped()
-    }
-
-    private var coordinateLabel: some View {
-        Text("\(page.positionX ?? 0), \(page.positionY ?? 0)")
-            .font(.system(size: 10))
-            .padding(2)
-            .padding(.horizontal, 3)
-            .foregroundColor(Color.primary.opacity(0.87))
-            .background(Color(.systemGray5))
-            .cornerRadius(5)
-            .padding(.bottom, 3)
-    }
-}
-
-// MARK: - ThumbnailAppearance
-struct ThumbnailAppearance {
-    let backgroundColor: Color
-    let borderColor: Color
-    let borderWidth: CGFloat
-    let scale: CGFloat
-    let opacity: Double
-
-    static func normal(colorScheme: ColorScheme) -> ThumbnailAppearance {
-        ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
-            borderColor: colorScheme == .dark ? Color.clear : Color.clear,
-            borderWidth: 1,
-            scale: 1.0,
-            opacity: 1.0
-        )
-    }
-
-    static func current(colorScheme: ColorScheme) -> ThumbnailAppearance {
-        ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
-            borderColor: .accentColor,
-            borderWidth: 2,
-            scale: 1.0,
-            opacity: 1.0
-        )
-    }
-
-    static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
-        ThumbnailAppearance(
-            backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
-            borderColor: .accentColor,
-            borderWidth: 2,
-            scale: 1.05,
-            opacity: 1.0
-        )
-    }
-}
-
-struct ActivityViewController: UIViewControllerRepresentable {
-    let activityItems: [Any]
-    let applicationActivities: [UIActivity]?
-    let filename: String
-
-    func makeUIViewController(context: UIViewControllerRepresentableContext<ActivityViewController>) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
-        
-        controller.completionWithItemsHandler = { (activityType, completed, returnedItems, error) in
-            if let url = activityItems.first as? URL {
-                try? FileManager.default.removeItem(at: url)
-            }
+                    .stroke(Color(colorScheme == .dark ? .systemGray3 : .systemGray4), lineWidth: 0.5)
+            )
         }
         
-        return controller
+        private var thumbnailImage: some View {
+            Group {
+                if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                } else {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(Color.clear)
+                }
+            }
+            .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+            .clipped()
+        }
+        
+        private var coordinateLabel: some View {
+            Text("\(page.positionX ?? 0), \(page.positionY ?? 0)")
+                .font(.system(size: 10))
+                .padding(2)
+                .padding(.horizontal, 3)
+                .foregroundColor(Color.primary.opacity(0.87))
+                .background(Color(.systemGray5))
+                .cornerRadius(5)
+                .padding(.bottom, 3)
+        }
     }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
+    
+    // MARK: - ThumbnailAppearance
+    struct ThumbnailAppearance {
+        let backgroundColor: Color
+        let borderColor: Color
+        let borderWidth: CGFloat
+        let scale: CGFloat
+        let opacity: Double
+        
+        static func normal(colorScheme: ColorScheme) -> ThumbnailAppearance {
+            ThumbnailAppearance(
+                backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+                borderColor: colorScheme == .dark ? Color.clear : Color.clear,
+                borderWidth: 1,
+                scale: 1.0,
+                opacity: 1.0
+            )
+        }
+        
+        static func current(colorScheme: ColorScheme) -> ThumbnailAppearance {
+            ThumbnailAppearance(
+                backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+                borderColor: .accentColor,
+                borderWidth: 2,
+                scale: 1.0,
+                opacity: 1.0
+            )
+        }
+        
+        static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
+            ThumbnailAppearance(
+                backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+                borderColor: .accentColor,
+                borderWidth: 2,
+                scale: 1.05,
+                opacity: 1.0
+            )
+        }
+    }
+    
+    struct ActivityViewController: UIViewControllerRepresentable {
+        let activityItems: [Any]
+        let applicationActivities: [UIActivity]?
+        let filename: String
+        
+        func makeUIViewController(context: UIViewControllerRepresentableContext<ActivityViewController>) -> UIActivityViewController {
+            let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+            
+            controller.completionWithItemsHandler = { (activityType, completed, returnedItems, error) in
+                if let url = activityItems.first as? URL {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+            
+            return controller
+        }
+        
+        func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
+    }
 }
