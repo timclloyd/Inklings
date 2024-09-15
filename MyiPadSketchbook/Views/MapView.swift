@@ -79,7 +79,9 @@ struct MapView: View {
             }
         }
         .sheet(isPresented: $isSharePresented) {
-            // Sharing code
+            if let (url, filename) = prepareImageForSharing() {
+                ActivityViewController(activityItems: [url], applicationActivities: nil, filename: filename)
+            }
         }
         .onAppear(perform: centerOnCurrentPage)
     }
