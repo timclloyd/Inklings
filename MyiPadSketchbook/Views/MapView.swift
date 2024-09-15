@@ -28,6 +28,9 @@ struct MapView: View {
     @GestureState private var dragGestureState: CGSize = .zero
     @State private var contentOffset: CGPoint = .zero
     
+    @State private var isRearranging: Bool = false
+    @GestureState private var dragLocation: CGPoint = .zero
+    
     // MARK: - Constants
     private let spacing: CGFloat = 6
     
@@ -73,14 +76,15 @@ struct MapView: View {
             ZStack {
                 backgroundColor.edgesIgnoringSafeArea(.all)
                 
-                // Place the ScrollView inside its own layer
-                ScrollViewWrapper(contentSize: CGSize(width: contentWidth + scrollAreaEmptySpace.width, height: contentHeight + scrollAreaEmptySpace.height), contentOffset: $contentOffset) {
-                    thumbnailsView(in: geometry)
+                ScrollViewReader { scrollProxy in
+                    ScrollView([.horizontal, .vertical], showsIndicators: false) {
+                        thumbnailsView(in: geometry)
+                    }
+                    .gesture(panGesture)
                 }
                 .edgesIgnoringSafeArea(.all)
                 .zIndex(0)
                 
-                // Place the toolbar above the ScrollView
                 VStack {
                     HStack {
                         Spacer()
@@ -88,7 +92,7 @@ struct MapView: View {
                     }
                     Spacer()
                 }
-                .zIndex(1) // Bring toolbar to the front
+                .zIndex(1)
             }
         }
         .sheet(isPresented: $isSharePresented) {
@@ -112,6 +116,7 @@ struct MapView: View {
     private var toolbarView: some View {
         VStack(spacing: 0) {
             closeButton
+            rearrangeButton
         }
         .background(Color(.systemBackground))
         .cornerRadius(10)
@@ -131,12 +136,24 @@ struct MapView: View {
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
         .padding(EdgeInsets(top: -2, leading: -2, bottom: -2, trailing: -2))
     }
+    
+    private var rearrangeButton: some View {
+        Button(action: { isRearranging.toggle() }) {
+            Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
+                .font(.system(size: isRearranging ? toolbarButtonSize * 1.25 : toolbarButtonSize))
+                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .foregroundColor(isRearranging ? Color.accentColor : Color.primary)
+                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+        .padding(EdgeInsets(top: 2, leading: 8, bottom: 0, trailing: 9))
+    }
 
     // MARK: - Thumbnail View
     private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
         let isSelected = draggedPage?.id == page.id
         let isCurrentPage = page.id == pageManager.getCurrentPage()?.id
-        let appearance = thumbnailAppearance(for: page, isSelected: isSelected, isCurrentPage: isCurrentPage)
+        let appearance = thumbnailAppearance(for: page, isSelected: isSelected && isRearranging, isCurrentPage: isCurrentPage)
         let overlappingPages = getOverlappingPages(for: page)
         let hasOverlap = overlappingPages.count > 1
 
@@ -146,20 +163,33 @@ struct MapView: View {
                 .background(appearance.backgroundColor)
                 .scaleEffect(appearance.scale)
                 .opacity(appearance.opacity)
+                .shadow(
+                    color: isSelected && isRearranging ? Color.black.opacity(0.3) : Color.clear,
+                    radius: isSelected && isRearranging ? 10 : 0,
+                    x: 0,
+                    y: 5
+                )
             
             if hasOverlap {
                 overlapIndicator(count: overlappingPages.count)
             }
         }
         .position(thumbnailPosition(for: page))
+        .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
+        .zIndex(isSelected && isRearranging ? 1 : 0)
+        .gesture(isRearranging ? dragGesture(for: page) : nil)
         .onTapGesture {
-            onPageSelected(page)
-            showMiniMap = false
+            if !isRearranging {
+                onPageSelected(page)
+                showMiniMap = false
+            }
         }
     }
 
     private func thumbnailAppearance(for page: Page, isSelected: Bool, isCurrentPage: Bool) -> ThumbnailAppearance {
-        if isCurrentPage {
+        if isSelected && isRearranging {
+            return .dragging(colorScheme: colorScheme)
+        } else if isCurrentPage {
             return .current(colorScheme: colorScheme)
         } else {
             return .normal(colorScheme: colorScheme)
@@ -168,9 +198,15 @@ struct MapView: View {
 
     private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
         RoundedRectangle(cornerRadius: 10)
-            .stroke(appearance.borderColor, style: StrokeStyle(lineWidth: appearance.borderWidth))
+            .stroke(
+                isRearranging ? .accentColor : appearance.borderColor,
+                style: StrokeStyle(
+                    lineWidth: appearance.borderWidth,
+                    dash: isRearranging ? [5] : []
+                )
+            )
     }
-
+    
     private func overlapIndicator(count: Int) -> some View {
         Text("\(count)")
             .font(.system(size: 16))
@@ -184,37 +220,73 @@ struct MapView: View {
     // MARK: - Gestures
     private var panGesture: some Gesture {
         DragGesture()
-            .updating($dragGestureState) { value, state, _ in
-                state = value.translation
-            }
-            .onEnded { value in
-                self.panOffset = CGSize(
-                    width: self.panOffset.width + value.translation.width,
-                    height: self.panOffset.height + value.translation.height
-                )
+            .onChanged { value in
+                if !isRearranging {
+                    contentOffset.x -= value.translation.width
+                    contentOffset.y -= value.translation.height
+                }
             }
     }
 
     private func dragGesture(for page: Page) -> some Gesture {
         DragGesture(minimumDistance: 0)
+            .updating($dragLocation) { value, state, _ in
+                state = value.location
+            }
             .onChanged { value in
-                handleDragChange(value, for: page)
+                if isRearranging {
+                    draggedPage = page
+                    draggedPageOffset = value.translation
+                }
             }
             .onEnded { value in
-                handleDragEnd(value, for: page)
+                if isRearranging {
+                    let gridMovement = calculateGridMovement(value.translation)
+                    let newPosition = (
+                        x: (page.positionX ?? 0) + gridMovement.x,
+                        y: (page.positionY ?? 0) + gridMovement.y
+                    )
+                    if isValidMove(to: newPosition) {
+                        page.positionX = newPosition.x
+                        page.positionY = newPosition.y
+                        pageManager.updatePagePosition(page)
+                    }
+                    draggedPage = nil
+                    draggedPageOffset = .zero
+                } else if value.translation == .zero {
+                    onPageSelected(page)
+                    showMiniMap = false
+                }
             }
     }
 
     // MARK: - Gesture Handlers
     private func handleDragChange(_ value: DragGesture.Value, for page: Page) {
-        if value.translation != .zero {
-            panOffset.width += value.translation.width
-            panOffset.height += value.translation.height
+        if isRearranging {
+            draggedPage = page
+            draggedPageOffset = value.translation
+        } else if value.translation != .zero {
+            // Pan the view
+            contentOffset.x -= value.translation.width
+            contentOffset.y -= value.translation.height
         }
     }
 
     private func handleDragEnd(_ value: DragGesture.Value, for page: Page) {
-        if value.translation == .zero {
+        if isRearranging {
+            let gridMovement = calculateGridMovement(value.translation)
+            let newPosition = (
+                x: (page.positionX ?? 0) + gridMovement.x,
+                y: (page.positionY ?? 0) + gridMovement.y
+            )
+            if isValidMove(to: newPosition) {
+                page.positionX = newPosition.x
+                page.positionY = newPosition.y
+                pageManager.updatePagePosition(page)
+            }
+            draggedPage = nil
+            draggedPageOffset = .zero
+        } else if value.translation == .zero {
             onPageSelected(page)
             showMiniMap = false
         }
@@ -457,6 +529,16 @@ struct ThumbnailAppearance {
             borderColor: .accentColor,
             borderWidth: 2,
             scale: 1.0,
+            opacity: 1.0
+        )
+    }
+
+    static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
+        ThumbnailAppearance(
+            backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+            borderColor: .accentColor,
+            borderWidth: 2,
+            scale: 1.05,
             opacity: 1.0
         )
     }
