@@ -30,6 +30,7 @@ struct MapView: View {
     
     @State private var isRearranging: Bool = false
     @GestureState private var dragLocation: CGPoint = .zero
+    @State private var scrollViewProxy: ScrollViewProxy?
     
     // MARK: - Constants
     private let spacing: CGFloat = 6
@@ -71,11 +72,15 @@ struct MapView: View {
             ZStack {
                 backgroundColor.edgesIgnoringSafeArea(.all)
                 
-                ScrollViewReader { scrollProxy in
+                ScrollViewReader { proxy in
                     ScrollView([.horizontal, .vertical], showsIndicators: false) {
                         thumbnailsView(in: geometry)
                     }
                     .gesture(panGesture)
+                    .onAppear {
+                        self.scrollViewProxy = proxy
+                        self.centreOnCurrentPage()
+                    }
                 }
                 .edgesIgnoringSafeArea(.all)
                 .zIndex(0)
@@ -164,6 +169,7 @@ struct MapView: View {
                     x: 0,
                     y: 5
                 )
+                .id("page_\(page.id?.uuidString ?? "")")
             
             if hasOverlap {
                 overlapIndicator(count: overlappingPages.count)
@@ -305,18 +311,14 @@ struct MapView: View {
     }
 
     private func centreOnCurrentPage() {
-        guard let currentPage = pageManager.getCurrentPage() else { return }
+        guard let currentPage = pageManager.getCurrentPage(),
+              let scrollViewProxy = scrollViewProxy else { return }
+
+        let id = "page_\(currentPage.id?.uuidString ?? "")"
         
-        let x = CGFloat((currentPage.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
-        let y = CGFloat(pagePositions.maxY - (currentPage.positionY ?? 0)) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
-        
-        let screenWidth = UIScreen.main.bounds.width
-        let screenHeight = UIScreen.main.bounds.height
-        
-        let offsetX = max(0, min(contentWidth - screenWidth, x - screenWidth / 2))
-        let offsetY = max(0, min(contentHeight - screenHeight, y - screenHeight / 2))
-        
-        contentOffset = CGPoint(x: offsetX + 2, y: offsetY + 2)
+        withAnimation(nil) {
+            scrollViewProxy.scrollTo(id, anchor: .center)
+        }
     }
     
     private func getOverlappingPages(for page: Page) -> [Page] {
