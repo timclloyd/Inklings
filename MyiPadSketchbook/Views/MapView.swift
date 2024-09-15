@@ -40,11 +40,6 @@ struct MapView: View {
         return CGSize(width: 120, height: 120 / aspectRatio)
     }
     
-    private var scrollAreaEmptySpace: CGSize {
-        let numberOfPages: CGFloat = 10
-        return CGSize(width: thumbnailSize.width * numberOfPages, height: thumbnailSize.height * numberOfPages)
-    }
-    
     private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
         let xPositions = pages.map { $0.positionX ?? 0 }
         let yPositions = pages.map { $0.positionY ?? 0 }
@@ -321,7 +316,7 @@ struct MapView: View {
         let offsetX = max(0, min(contentWidth - screenWidth, x - screenWidth / 2))
         let offsetY = max(0, min(contentHeight - screenHeight, y - screenHeight / 2))
         
-        contentOffset = CGPoint(x: offsetX + scrollAreaEmptySpace.width / 2, y: offsetY + scrollAreaEmptySpace.height / 2)
+        contentOffset = CGPoint(x: offsetX + 2, y: offsetY + 2)
     }
     
     private func getOverlappingPages(for page: Page) -> [Page] {
