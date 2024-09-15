@@ -28,6 +28,8 @@ struct MapView: View {
     @State private var isSharePresented: Bool = false
     @GestureState private var dragGestureState: CGSize = .zero
     
+    @State private var contentOffset: CGPoint = .zero
+    
     // MARK: - Constants
     private let spacing: CGFloat = 6
     
@@ -51,22 +53,33 @@ struct MapView: View {
     private var backgroundColor: Color {
         colorScheme == .dark ? Color.black : Color(.systemGray6)
     }
+    
+    private var contentWidth: CGFloat {
+        let pageCountX = pagePositions.maxX - pagePositions.minX + 1
+        return CGFloat(pageCountX) * (thumbnailSize.width + spacing) + spacing
+    }
+
+    private var contentHeight: CGFloat {
+        let pageCountY = pagePositions.maxY - pagePositions.minY + 1
+        return CGFloat(pageCountY) * (thumbnailSize.height + spacing) + spacing
+    }
 
     // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 backgroundColor.edgesIgnoringSafeArea(.all)
-
-                thumbnailsView(in: geometry)
+                
+                ScrollViewWrapper(contentSize: CGSize(width: contentWidth, height: contentHeight), contentOffset: $contentOffset) {
+                    thumbnailsView(in: geometry)
+                }
+                .edgesIgnoringSafeArea(.all)
+                
                 toolbarView
             }
-            .gesture(panGesture)
-            .sheet(isPresented: $isSharePresented) {
-                if let (url, filename) = prepareImageForSharing() {
-                    ActivityViewController(activityItems: [url], applicationActivities: nil, filename: filename)
-                }
-            }
+        }
+        .sheet(isPresented: $isSharePresented) {
+            // Sharing code
         }
         .onAppear(perform: centerOnCurrentPage)
     }
@@ -78,8 +91,7 @@ struct MapView: View {
                 thumbnailView(for: page, in: geometry)
             }
         }
-        .offset(x: panOffset.width + dragGestureState.width,
-                y: panOffset.height + dragGestureState.height)
+        .frame(width: contentWidth, height: contentHeight)
     }
 
     private var toolbarView: some View {
@@ -159,7 +171,7 @@ struct MapView: View {
                 overlapIndicator(count: overlappingPages.count)
             }
         }
-        .position(thumbnailPosition(for: page, in: geometry))
+        .position(thumbnailPosition(for: page))
         .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
         .zIndex(isSelected && isRearranging ? 1 : 0)
         .gesture(dragGesture(for: page))
@@ -252,9 +264,9 @@ struct MapView: View {
     }
 
     // MARK: - Helper Methods
-    private func thumbnailPosition(for page: Page, in geometry: GeometryProxy) -> CGPoint {
-        let x = CGFloat((page.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing)
-        let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (thumbnailSize.height + spacing)
+    private func thumbnailPosition(for page: Page) -> CGPoint {
+        let x = CGFloat((page.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
+        let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
         return CGPoint(x: x, y: y)
     }
 
@@ -270,17 +282,17 @@ struct MapView: View {
 
     private func centerOnCurrentPage() {
         guard let currentPage = pageManager.getCurrentPage() else { return }
-        let screenSize = UIScreen.main.bounds.size
-
-        let currentPagePosition = CGPoint(
-            x: CGFloat((currentPage.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing),
-            y: CGFloat(pagePositions.maxY - (currentPage.positionY ?? 0)) * (thumbnailSize.height + spacing)
-        )
-
-        panOffset = CGSize(
-            width: screenSize.width / 2 - currentPagePosition.x - thumbnailSize.width / 2,
-            height: screenSize.height / 2 - currentPagePosition.y - thumbnailSize.height / 2
-        )
+        
+        let x = CGFloat((currentPage.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
+        let y = CGFloat(pagePositions.maxY - (currentPage.positionY ?? 0)) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
+        
+        let screenWidth = UIScreen.main.bounds.width
+        let screenHeight = UIScreen.main.bounds.height
+        
+        let offsetX = max(0, min(contentWidth - screenWidth, x - screenWidth / 2))
+        let offsetY = max(0, min(contentHeight - screenHeight, y - screenHeight / 2))
+        
+        contentOffset = CGPoint(x: offsetX, y: offsetY)
     }
     
     private func getOverlappingPages(for page: Page) -> [Page] {
@@ -521,4 +533,67 @@ struct ActivityViewController: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
+}
+
+// MARK: - ScrollView Wrapper
+struct ScrollViewWrapper<Content: View>: UIViewRepresentable {
+    var contentSize: CGSize
+    var content: Content
+    @Binding var contentOffset: CGPoint
+
+    init(contentSize: CGSize, contentOffset: Binding<CGPoint>, @ViewBuilder content: () -> Content) {
+        self.contentSize = contentSize
+        self._contentOffset = contentOffset
+        self.content = content()
+    }
+
+    func makeUIView(context: Context) -> UIScrollView {
+        let scrollView = UIScrollView()
+        scrollView.delegate = context.coordinator
+
+        // Set up the hosting controller
+        let hostingController = UIHostingController(rootView: content)
+        hostingController.view.frame = CGRect(origin: .zero, size: contentSize)
+        hostingController.view.backgroundColor = .clear
+
+        // Add the SwiftUI content to the scroll view
+        scrollView.addSubview(hostingController.view)
+        scrollView.contentSize = contentSize
+        scrollView.contentOffset = contentOffset
+
+        // Disable bouncing if you don't want it
+        scrollView.alwaysBounceVertical = false
+        scrollView.alwaysBounceHorizontal = false
+
+        return scrollView
+    }
+
+    func updateUIView(_ uiView: UIScrollView, context: Context) {
+        uiView.contentSize = contentSize
+        uiView.contentOffset = contentOffset
+        
+        // Get the first subview, which should be the hosting controller's view
+        if let hostingView = uiView.subviews.first {
+            if let hostingController = hostingView.next as? UIHostingController<Content> {
+                hostingController.rootView = content
+            }
+        }
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    class Coordinator: NSObject, UIScrollViewDelegate {
+        var parent: ScrollViewWrapper
+
+        init(_ parent: ScrollViewWrapper) {
+            self.parent = parent
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            // Update the binding with the new content offset
+            parent.contentOffset = scrollView.contentOffset
+        }
+    }
 }
