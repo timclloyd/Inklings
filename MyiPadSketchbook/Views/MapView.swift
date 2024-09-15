@@ -34,6 +34,7 @@ struct MapView: View {
     
     // MARK: - Constants
     private let spacing: CGFloat = 6
+    private let mapViewEdgePadding = 4
     
     // MARK: - Computed Properties
     private var thumbnailSize: CGSize {
@@ -57,12 +58,12 @@ struct MapView: View {
     }
     
     private var contentWidth: CGFloat {
-        let pageCountX = pagePositions.maxX - pagePositions.minX + 1
+        let pageCountX = pagePositions.maxX - pagePositions.minX + 1 + (2 * mapViewEdgePadding)
         return CGFloat(pageCountX) * (thumbnailSize.width + spacing) + spacing
     }
 
     private var contentHeight: CGFloat {
-        let pageCountY = pagePositions.maxY - pagePositions.minY + 1
+        let pageCountY = pagePositions.maxY - pagePositions.minY + 1 + (2 * mapViewEdgePadding)
         return CGFloat(pageCountY) * (thumbnailSize.height + spacing) + spacing
     }
 
@@ -295,8 +296,8 @@ struct MapView: View {
 
     // MARK: - Helper Methods
     private func thumbnailPosition(for page: Page) -> CGPoint {
-        let x = CGFloat((page.positionX ?? 0) - pagePositions.minX) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
-        let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
+        let x = CGFloat((page.positionX ?? 0) - pagePositions.minX + mapViewEdgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
+        let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0) + mapViewEdgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
         return CGPoint(x: x, y: y)
     }
 
@@ -307,12 +308,23 @@ struct MapView: View {
     }
 
     private func isValidMove(to position: (x: Int, y: Int)) -> Bool {
-        !pages.contains { $0.id != draggedPage?.id && $0.positionX == position.x && $0.positionY == position.y }
+        let minX = pagePositions.minX - mapViewEdgePadding
+        let maxX = pagePositions.maxX + mapViewEdgePadding
+        let minY = pagePositions.minY - mapViewEdgePadding
+        let maxY = pagePositions.maxY + mapViewEdgePadding
+        
+        let isWithinBounds = position.x >= minX && position.x <= maxX && position.y >= minY && position.y <= maxY
+        let isNotOccupied = !pages.contains { $0.id != draggedPage?.id && $0.positionX == position.x && $0.positionY == position.y }
+        
+        return isWithinBounds && isNotOccupied
     }
 
     private func centreOnCurrentPage() {
         guard let currentPage = pageManager.getCurrentPage(),
               let scrollViewProxy = scrollViewProxy else { return }
+
+        let x = CGFloat((currentPage.positionX ?? 0) - pagePositions.minX + mapViewEdgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
+        let y = CGFloat(pagePositions.maxY - (currentPage.positionY ?? 0) + mapViewEdgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
 
         let id = "page_\(currentPage.id?.uuidString ?? "")"
         
