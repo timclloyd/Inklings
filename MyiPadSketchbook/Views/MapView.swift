@@ -70,12 +70,22 @@ struct MapView: View {
             ZStack {
                 backgroundColor.edgesIgnoringSafeArea(.all)
                 
+                // Place the ScrollView inside its own layer
                 ScrollViewWrapper(contentSize: CGSize(width: contentWidth, height: contentHeight), contentOffset: $contentOffset) {
                     thumbnailsView(in: geometry)
                 }
                 .edgesIgnoringSafeArea(.all)
+                .zIndex(0)
                 
-                toolbarView
+                // Place the toolbar above the ScrollView
+                VStack {
+                    HStack {
+                        Spacer()
+                        toolbarView
+                    }
+                    Spacer()
+                }
+                .zIndex(1) // Bring toolbar to the front
             }
         }
         .sheet(isPresented: $isSharePresented) {
@@ -97,17 +107,14 @@ struct MapView: View {
     }
 
     private var toolbarView: some View {
-        VStack {
-            HStack {
-                Spacer()
-                VStack {
-                    closeButton
-                    exportButton
-                    rearrangeButton
-                }
-            }
-            Spacer()
+        VStack(spacing: 0) {
+            closeButton
+            exportButton
+            rearrangeButton
         }
+        .background(Color(.systemBackground))
+        .cornerRadius(10)
+        .shadow(radius: 10)
     }
 
     // MARK: - Buttons
