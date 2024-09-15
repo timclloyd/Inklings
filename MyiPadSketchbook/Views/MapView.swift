@@ -24,7 +24,6 @@ struct MapView: View {
     @State private var panOffset: CGSize = .zero
     @State private var draggedPage: Page?
     @State private var draggedPageOffset: CGSize = .zero
-    @State private var isSharePresented: Bool = false
     @GestureState private var dragGestureState: CGSize = .zero
     @State private var contentOffset: CGPoint = .zero
     
@@ -94,11 +93,6 @@ struct MapView: View {
                     Spacer()
                 }
                 .zIndex(1)
-            }
-        }
-        .sheet(isPresented: $isSharePresented) {
-            if let (url, filename) = prepareImageForSharing() {
-                ActivityViewController(activityItems: [url], applicationActivities: nil, filename: filename)
             }
         }
         .onAppear(perform: centreOnCurrentPage)
@@ -571,67 +565,4 @@ struct ActivityViewController: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
-}
-
-// MARK: - ScrollView Wrapper
-struct ScrollViewWrapper<Content: View>: UIViewRepresentable {
-    var contentSize: CGSize
-    var content: Content
-    @Binding var contentOffset: CGPoint
-
-    init(contentSize: CGSize, contentOffset: Binding<CGPoint>, @ViewBuilder content: () -> Content) {
-        self.contentSize = contentSize
-        self._contentOffset = contentOffset
-        self.content = content()
-    }
-
-    func makeUIView(context: Context) -> UIScrollView {
-        let scrollView = UIScrollView()
-        scrollView.delegate = context.coordinator
-
-        // Set up the hosting controller
-        let hostingController = UIHostingController(rootView: content)
-        hostingController.view.frame = CGRect(origin: .zero, size: contentSize)
-        hostingController.view.backgroundColor = .clear
-
-        // Add the SwiftUI content to the scroll view
-        scrollView.addSubview(hostingController.view)
-        scrollView.contentSize = contentSize
-        scrollView.contentOffset = contentOffset
-
-        // Disable bouncing if you don't want it
-        scrollView.alwaysBounceVertical = false
-        scrollView.alwaysBounceHorizontal = false
-
-        return scrollView
-    }
-
-    func updateUIView(_ uiView: UIScrollView, context: Context) {
-        uiView.contentSize = contentSize
-        uiView.contentOffset = contentOffset
-        
-        // Get the first subview, which should be the hosting controller's view
-        if let hostingView = uiView.subviews.first {
-            if let hostingController = hostingView.next as? UIHostingController<Content> {
-                hostingController.rootView = content
-            }
-        }
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
-    class Coordinator: NSObject, UIScrollViewDelegate {
-        var parent: ScrollViewWrapper
-
-        init(_ parent: ScrollViewWrapper) {
-            self.parent = parent
-        }
-
-        func scrollViewDidScroll(_ scrollView: UIScrollView) {
-            // Update the binding with the new content offset
-            parent.contentOffset = scrollView.contentOffset
-        }
-    }
 }
