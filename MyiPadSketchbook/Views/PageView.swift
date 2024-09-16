@@ -202,6 +202,8 @@ struct PageView: View {
     }
     
     private func handlePageFlip() {
+        canvasView.undoManager?.removeAllActions()
+        
         if let previousPage = pageManager.goToPreviousPage() {
             if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
                 canvasView.drawing = drawing
@@ -212,6 +214,7 @@ struct PageView: View {
     }
     
     private func showMap() {
+        canvasView.undoManager?.removeAllActions()
         pageManager.updateAllThumbnails()
         showMapView = true
     }
@@ -227,6 +230,8 @@ struct PageView: View {
     }
     
     private func handlePageSelection(_ selectedPage: Page) {
+        canvasView.undoManager?.removeAllActions()
+        
         pageManager.setCurrentPage(selectedPage, updatePrevious: true)
         if let drawing = try? PKDrawing(data: selectedPage.drawingData!) {
             canvasView.drawing = drawing
@@ -256,6 +261,7 @@ struct PageView: View {
                 if let currentPage = pageManager.getCurrentPage(),
                    let drawing = try? PKDrawing(data: currentPage.drawingData!) {
                     canvasView.drawing = drawing
+                    canvasView.undoManager?.removeAllActions()
                 }
                 // Do not update canGoToPreviousPage here
             }
