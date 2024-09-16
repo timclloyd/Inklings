@@ -114,8 +114,8 @@ struct MapView: View {
             rearrangeButton
         }
         .background(Color(.systemBackground))
-        .cornerRadius(10)
-        .padding(.trailing, 8)
+        .cornerRadius(14)
+        .padding(.trailing, 10)
         .shadow(radius: 10)
     }
     
@@ -133,7 +133,7 @@ struct MapView: View {
         }
         .contentShape(Circle()) // Ensure the tappable area is circular
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: -1, leading: 0, bottom: -2, trailing: 2)) // Layout padding
+        .padding(EdgeInsets(top: -1, leading: 0, bottom: -2, trailing: 0)) // Layout padding
     }
     
     private var rearrangeButton: some View {
@@ -149,7 +149,7 @@ struct MapView: View {
         }
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 2, leading: 8, bottom: 10, trailing: 9))
+        .padding(EdgeInsets(top: 2, leading: 8, bottom: 10, trailing: 7))
     }
     
     // MARK: - Thumbnail View
