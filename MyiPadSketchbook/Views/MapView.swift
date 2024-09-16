@@ -96,6 +96,9 @@ struct MapView: View {
             }
         }
         .onAppear(perform: centreOnCurrentPage)
+        .onChange(of: colorScheme) {
+            pageManager.updateAllThumbnails()
+        }
     }
     
     // MARK: - Subviews
