@@ -101,7 +101,7 @@ struct PageView: View {
                         redoButton
                     }
                 }
-                .background(Color(.systemBackground))
+                .background(Color(UIColor.systemBackground).cornerRadius(10))
                 .fixedSize()
             }
             Spacer()
@@ -112,52 +112,63 @@ struct PageView: View {
     private var showMapButton: some View {
         Button(action: showMap) {
             Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
                 .symbolRenderingMode(.hierarchical)
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .background(Color.clear.contentShape(Circle()))
-                .padding(EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24))
+                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
+                .padding(13) // Expand tappable area
+                .background(
+                    Circle()
+                        .fill(Color(UIColor.systemBackground))
+                )
         }
+        .contentShape(Circle()) // Ensure the tappable area is circular
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 20, leading: 0, bottom: 0, trailing: 8))
+        .padding(EdgeInsets(top: 21, leading: 0, bottom: 0, trailing: 10)) // Layout padding
     }
     
     private var pageFlipButton: some View {
         Button(action: handlePageFlip) {
             Image(systemName: "rectangle.2.swap")
                 .rotationEffect(Angle(degrees: -90.0))
-                .symbolRenderingMode(.palette)
                 .font(.system(size: toolbarButtonSize))
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .background(Color.clear.contentShape(Circle()))
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                .padding(9)
+                .background(
+                    Circle()
+                        .fill(Color(UIColor.systemBackground))
+                )
         }
+        .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
         .disabled(!canGoToPreviousPage)
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 8))
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 10))
     }
     
     private var undoButton: some View {
         Button(action: handleUndo) {
             Image(systemName: "arrow.uturn.left.circle")
                 .font(.system(size: toolbarButtonSize))
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .background(Color.clear.contentShape(Circle()))
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                .padding(9)
+                .background(
+                    Circle()
+                        .fill(Color(UIColor.systemBackground))
+                )
         }
+        .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
         .disabled(!canUndo)
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 8))
+        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 9))
     }
     
     private var redoButton: some View {
         Button(action: handleRedo) {
             Image(systemName: "arrow.uturn.right.circle")
                 .font(.system(size: toolbarButtonSize))
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .background(Color.clear.contentShape(Circle()))
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                .padding(9)
+                .background(
+                    Circle()
+                        .fill(Color(UIColor.systemBackground))
+                )
         }
+        .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: canRedo))
         .disabled(!canRedo)
         .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 8))

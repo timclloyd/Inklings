@@ -17,7 +17,10 @@ struct ToolbarButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundColor(
-                isEnabled ? .primary.opacity(configuration.isPressed ? 0.57 : 0.87) : .primary.opacity(0.2)
+                isEnabled
+                    ? .primary.opacity(configuration.isPressed ? 0.57 : 0.87) // Enabled
+                    : .primary.opacity(0.2) // Disabled
             )
+            .animation(.easeInOut, value: isEnabled)
     }
 }
