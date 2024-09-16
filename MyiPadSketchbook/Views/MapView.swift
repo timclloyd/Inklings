@@ -115,31 +115,39 @@ struct MapView: View {
         }
         .background(Color(.systemBackground))
         .cornerRadius(10)
-        .padding(.trailing, 10)
+        .padding(.trailing, 8)
         .shadow(radius: 10)
     }
     
-    // MARK: - Buttons
+    // MARK: - Buttons    
     private var closeButton: some View {
         Button(action: onCloseMap) {
             Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
                 .symbolRenderingMode(.hierarchical)
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
-                .padding(EdgeInsets(top: 24, leading: 24, bottom: 24, trailing: 24))
+                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
+                .padding(13) // Expand tappable area
+                .background(
+                    Circle()
+                        .fill(Color(UIColor.systemBackground))
+                )
         }
+        .contentShape(Circle()) // Ensure the tappable area is circular
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: -2, leading: -2, bottom: -2, trailing: -2))
+        .padding(EdgeInsets(top: -1, leading: 0, bottom: -2, trailing: 2)) // Layout padding
     }
     
     private var rearrangeButton: some View {
         Button(action: { isRearranging.toggle() }) {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
-                .font(.system(size: isRearranging ? toolbarButtonSize * 1.25 : toolbarButtonSize))
-                .frame(width: toolbarButtonSize, height: toolbarButtonSize)
+                .font(.system(size: isRearranging ? toolbarButtonSize * 1.15 : toolbarButtonSize))
                 .foregroundColor(isRearranging ? Color.accentColor : Color.primary)
-                .padding(EdgeInsets(top: 11, leading: 11, bottom: 11, trailing: 11))
+                .padding(9)
+                .background(
+                    Circle()
+                        .fill(Color(UIColor.systemBackground))
+                )
         }
+        .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
         .padding(EdgeInsets(top: 2, leading: 8, bottom: 10, trailing: 9))
     }
