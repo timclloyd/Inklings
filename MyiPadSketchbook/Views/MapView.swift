@@ -204,7 +204,7 @@ struct MapView: View {
     }
     
     private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
-        RoundedRectangle(cornerRadius: 10)
+        RoundedRectangle(cornerRadius: 14)
             .stroke(
                 isRearranging ? .accentColor : appearance.borderColor,
                 style: StrokeStyle(
