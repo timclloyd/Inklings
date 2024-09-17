@@ -116,10 +116,10 @@ struct MapView: View {
             closeButton
             rearrangeButton
         }
-        .background(Color(.systemGray6))
+        .background(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
         .cornerRadius(14)
         .padding(.trailing, 10)
-        .shadow(radius: 10)
+        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.4 : 0.15), radius: 14)
     }
     
     // MARK: - Buttons    
@@ -131,7 +131,7 @@ struct MapView: View {
                 .padding(13) // Expand tappable area
                 .background(
                     Circle()
-                        .fill(Color(UIColor.systemGray6))
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
                 )
         }
         .contentShape(Circle()) // Ensure the tappable area is circular
@@ -147,7 +147,7 @@ struct MapView: View {
                 .padding(9)
                 .background(
                     Circle()
-                        .fill(Color(UIColor.systemGray6))
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
                 )
         }
         .contentShape(Circle())
@@ -344,7 +344,7 @@ struct MapView: View {
         let page: Page
         let thumbnailSize: CGSize
         let colorScheme: ColorScheme
-        let cornerRadius: CGFloat = 10
+        let cornerRadius: CGFloat = 14
         
         var body: some View {
             ZStack(alignment: .bottom) {
@@ -352,10 +352,10 @@ struct MapView: View {
                 coordinateLabel
             }
             .frame(width: thumbnailSize.width, height: thumbnailSize.height)
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color(colorScheme == .dark ? .systemGray3 : .systemGray4), lineWidth: 0.5)
+                    .stroke(.clear)
             )
         }
         
@@ -407,7 +407,7 @@ struct MapView: View {
         static func current(colorScheme: ColorScheme) -> ThumbnailAppearance {
             ThumbnailAppearance(
                 backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
-                borderColor: .accentColor,
+                borderColor: .primary,
                 borderWidth: 2,
                 scale: 1.0,
                 opacity: 1.0
