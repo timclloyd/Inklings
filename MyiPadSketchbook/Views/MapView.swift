@@ -116,7 +116,7 @@ struct MapView: View {
             closeButton
             rearrangeButton
         }
-        .background(Color(.systemBackground))
+        .background(Color(.systemGray6))
         .cornerRadius(14)
         .padding(.trailing, 10)
         .shadow(radius: 10)
@@ -131,7 +131,7 @@ struct MapView: View {
                 .padding(13) // Expand tappable area
                 .background(
                     Circle()
-                        .fill(Color(UIColor.systemBackground))
+                        .fill(Color(UIColor.systemGray6))
                 )
         }
         .contentShape(Circle()) // Ensure the tappable area is circular
@@ -147,7 +147,7 @@ struct MapView: View {
                 .padding(9)
                 .background(
                     Circle()
-                        .fill(Color(UIColor.systemBackground))
+                        .fill(Color(UIColor.systemGray6))
                 )
         }
         .contentShape(Circle())
