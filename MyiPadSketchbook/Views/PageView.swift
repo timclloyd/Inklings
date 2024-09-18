@@ -49,6 +49,9 @@ struct PageView: View {
             updateUndoRedoState()
             updateCanGoToPreviousPage()
         }
+        .onChange(of: colorScheme) {
+            pageManager.updateAllThumbnails()
+        }
     }
     
     // MARK: - Subviews
