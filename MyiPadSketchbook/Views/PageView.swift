@@ -215,7 +215,6 @@ struct PageView: View {
     
     private func showMap() {
         canvasView.undoManager?.removeAllActions()
-        pageManager.updateAllThumbnails()
         showMapView = true
     }
     
