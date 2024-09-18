@@ -48,6 +48,7 @@ class PageManager: ObservableObject {
         let newPage = Page(positionX: position.x, positionY: position.y)
         modelContext.insert(newPage)
         pages.append(newPage)
+        updateThumbnail(for: newPage)
         return newPage
     }
     
