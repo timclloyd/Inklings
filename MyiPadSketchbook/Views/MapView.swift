@@ -118,6 +118,7 @@ struct MapView: View {
         }
         .background(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
         .cornerRadius(14)
+        .padding(.top, -2.5)
         .padding(.trailing, 10)
         .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.4 : 0.15), radius: 14)
     }
