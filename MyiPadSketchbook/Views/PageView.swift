@@ -40,7 +40,10 @@ struct PageView: View {
     var body: some View {
         ZStack {
             if !showMapView {
-                mainView
+                ZStack(alignment: .bottom) {
+                    mainView
+                    coordinateLabel
+                }
             } else {
                 mapView
             }
@@ -109,6 +112,17 @@ struct PageView: View {
             }
             Spacer()
         }
+    }
+    
+    private var coordinateLabel: some View {
+        Text("\(pageManager.getCurrentPage()?.positionX ?? 0), \(pageManager.getCurrentPage()?.positionY ?? 0)")
+            .font(.system(size: 14))
+            .padding(2)
+            .padding(.horizontal, 4)
+            .foregroundColor(Color.primary.opacity(0.87))
+            .background(Color(.systemGray5))
+            .cornerRadius(7)
+            .padding(.bottom, 18)
     }
     
     // MARK: - Buttons
