@@ -355,13 +355,13 @@ struct PageView: View {
     //MARK: - Pencil tool stuff
     private func selectPen() {
         selectedTool = "pen"
-        let inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.87), width: 2.5)
+        let inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.9), width: 3)
         toolPicker.selectedTool = inkTool
     }
 
     private func selectPencil() {
         selectedTool = "pencil"
-        let inkTool = PKInkingTool(.pencil, color: UIColor.black.withAlphaComponent(0.75), width: 2.5)
+        let inkTool = PKInkingTool(.pencil, color: UIColor.black.withAlphaComponent(0.5), width: 3)
         toolPicker.selectedTool = inkTool
     }
 
