@@ -53,6 +53,7 @@ struct PageView: View {
             updateUndoRedoState()
             updateCanGoToPreviousPage()
             setupToolPicker()
+            selectPen()
         }
         .onChange(of: colorScheme) {
             pageManager.updateAllThumbnails()
@@ -388,6 +389,7 @@ struct PageView: View {
         toolPicker.setVisible(false, forFirstResponder: canvasView)
         toolPicker.addObserver(canvasView)
         canvasView.becomeFirstResponder()
+        selectPen()
     }
 }
 
