@@ -30,6 +30,7 @@ struct PageView: View {
     @State private var canRedo = false
     @State private var canGoToPreviousPage = false
     @State private var pageChangedFromMap = false
+    @State private var selectedTool: PKInkingTool.InkType = .pen
     
     // MARK: - Initialisation
     init(modelContext: ModelContext) {
@@ -51,6 +52,7 @@ struct PageView: View {
         .onAppear {
             updateUndoRedoState()
             updateCanGoToPreviousPage()
+            setupToolPicker()
         }
         .onChange(of: colorScheme) {
             pageManager.updateAllThumbnails()
@@ -106,6 +108,7 @@ struct PageView: View {
                         undoButton
                         redoButton
                     }
+                    toolSelectionButtons
                 }
                 .background(Color(UIColor.systemBackground).cornerRadius(10))
                 .fixedSize()
@@ -308,5 +311,72 @@ struct PageView: View {
             top: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == (currentPage.positionY ?? 0) + 1 }),
             bottom: pageManager.pages.contains(where: { $0.positionX == currentPage.positionX && $0.positionY == (currentPage.positionY ?? 0) - 1 })
         )
+    }
+    
+    //MARK: - Pencil tool stuff
+    private var toolSelectionButtons: some View {
+        VStack(spacing: 8) {
+            toolButton(type: .pen, systemName: "pencil.line")
+            toolButton(type: .pencil, systemName: "pencil")
+            toolButton(type: .marker, systemName: "highlighter", color: .blue)
+            toolButton(type: .marker, systemName: "highlighter", color: .yellow)
+            toolButton(type: .marker, systemName: "highlighter", color: .green)
+            Button(action: selectEraser) {
+                Image(systemName: "eraser")
+                    .font(.system(size: toolbarButtonSize))
+                    .padding(9)
+                    .background(Circle().fill(Color(UIColor.systemBackground)))
+            }
+            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+            Button(action: selectLasso) {
+                Image(systemName: "lasso")
+                    .font(.system(size: toolbarButtonSize))
+                    .padding(9)
+                    .background(Circle().fill(Color(UIColor.systemBackground)))
+            }
+            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+        }
+        .padding(.top, 8)
+    }
+    
+    private func toolButton(type: PKInkingTool.InkType, systemName: String, color: Color? = nil) -> some View {
+        Button(action: { selectTool(type: type, color: color) }) {
+            Image(systemName: systemName)
+                .font(.system(size: toolbarButtonSize))
+                .foregroundColor(color ?? .primary)
+                .padding(9)
+                .background(Circle().fill(Color(UIColor.systemBackground)))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: selectedTool == type))
+    }
+
+    private func selectTool(type: PKInkingTool.InkType, color: Color? = nil) {
+        selectedTool = type
+        let inkTool: PKInkingTool
+        switch type {
+        case .pen:
+            inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.87), width: 2.5)
+        case .pencil:
+            inkTool = PKInkingTool(.pencil, color: UIColor.black.withAlphaComponent(0.75), width: 2.5)
+        case .marker:
+            inkTool = PKInkingTool(.marker, color: UIColor(color?.opacity(0.5) ?? .blue.opacity(0.5)), width: 20)
+        @unknown default:
+            inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.87), width: 2.5)
+        }
+        toolPicker.selectedTool = inkTool
+    }
+
+    private func selectEraser() {
+        toolPicker.selectedTool = PKEraserTool(.vector)
+    }
+
+    private func selectLasso() {
+        toolPicker.selectedTool = PKLassoTool()
+    }
+
+    private func setupToolPicker() {
+        toolPicker.setVisible(true, forFirstResponder: canvasView)
+        toolPicker.addObserver(canvasView)
+        canvasView.becomeFirstResponder()
     }
 }
