@@ -21,7 +21,7 @@ struct ToolbarButtonStyle: ButtonStyle {
                 (color ?? .primary).opacity(
                     isEnabled
                         ? (configuration.isPressed ? 0.57 : 0.87) // Enabled
-                        : 0.2 // Disabled
+                        : 0.3 // Disabled
                 )
             )
             .animation(.easeInOut, value: isEnabled)
