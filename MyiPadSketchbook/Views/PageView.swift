@@ -118,6 +118,44 @@ struct PageView: View {
         }
     }
     
+    private var toolSelectionButtons: some View {
+        VStack() {
+            toolButton(toolName: "pen", action: selectPen, systemName: "pencil.line")
+                .padding(EdgeInsets(top: -3, leading: 0, bottom: 0, trailing: 10))
+            
+            toolButton(toolName: "pencil", action: selectPencil, systemName: "pencil")
+                .padding(EdgeInsets(top: -2, leading: 0, bottom: 0, trailing: 10))
+            
+            toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "highlighter", color: .blue)
+                .padding(EdgeInsets(top: -4.5, leading: 0, bottom: 0, trailing: 10))
+            
+            toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "highlighter", color: .green)
+                .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
+            
+            toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "highlighter", color: .yellow)
+                .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
+            
+            toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
+                .padding(EdgeInsets(top: -4, leading: 0, bottom: 0, trailing: 10))
+            
+            toolButton(toolName: "lasso", action: selectLasso, systemName: "lasso")
+                .padding(EdgeInsets(top: -4.5, leading: 0, bottom: 0, trailing: 10))
+        }
+    }
+    
+    private func toolButton(toolName: String, action: @escaping () -> Void, systemName: String, color: Color? = nil) -> some View {
+        Button(action: {
+            action()
+            selectedTool = toolName
+        }) {
+            Image(systemName: systemName)
+                .font(.system(size: toolbarButtonSize * 0.9))
+                .padding(9)
+                .background(Circle().fill(Color(UIColor.systemBackground)))
+        }
+        .buttonStyle(ToolbarButtonStyle(isEnabled: selectedTool == toolName, color: color))
+    }
+    
     private var coordinateLabel: some View {
         Text("\(pageManager.getCurrentPage()?.positionX ?? 0), \(pageManager.getCurrentPage()?.positionY ?? 0)")
             .font(.system(size: 14))
@@ -176,7 +214,7 @@ struct PageView: View {
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
         .disabled(!canUndo)
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 9))
+        .padding(EdgeInsets(top: -7, leading: 0, bottom: 0, trailing: 9))
     }
     
     private var redoButton: some View {
@@ -315,32 +353,6 @@ struct PageView: View {
     }
     
     //MARK: - Pencil tool stuff
-    private var toolSelectionButtons: some View {
-        VStack(spacing: 8) {
-            toolButton(toolName: "pen", action: selectPen, systemName: "pencil.line")
-            toolButton(toolName: "pencil", action: selectPencil, systemName: "pencil")
-            toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "highlighter", color: .blue)
-            toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "highlighter", color: .yellow)
-            toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "highlighter", color: .green)
-            toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
-            toolButton(toolName: "lasso", action: selectLasso, systemName: "lasso")
-        }
-        .padding(.top, 8)
-    }
-    
-    private func toolButton(toolName: String, action: @escaping () -> Void, systemName: String, color: Color? = nil) -> some View {
-        Button(action: {
-            action()
-            selectedTool = toolName
-        }) {
-            Image(systemName: systemName)
-                .font(.system(size: toolbarButtonSize))
-                .padding(9)
-                .background(Circle().fill(Color(UIColor.systemBackground)))
-        }
-        .buttonStyle(ToolbarButtonStyle(isEnabled: selectedTool == toolName, color: color))
-    }
-
     private func selectPen() {
         selectedTool = "pen"
         let inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.87), width: 2.5)
