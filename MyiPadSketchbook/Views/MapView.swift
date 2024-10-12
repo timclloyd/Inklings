@@ -144,7 +144,7 @@ struct MapView: View {
         Button(action: { isRearranging.toggle() }) {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
                 .font(.system(size: isRearranging ? toolbarButtonSize * 1.15 : toolbarButtonSize))
-                .foregroundColor(isRearranging ? Color.pink : Color.primary)
+                .foregroundColor(isRearranging ? Color.orange : Color.primary)
                 .padding(9)
                 .background(
                     Circle()
@@ -207,7 +207,7 @@ struct MapView: View {
     private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
         RoundedRectangle(cornerRadius: 14)
             .stroke(
-                isRearranging ? .pink : appearance.borderColor,
+                isRearranging ? .orange : appearance.borderColor,
                 style: StrokeStyle(
                     lineWidth: appearance.borderWidth,
                     dash: isRearranging ? [5] : []
@@ -418,7 +418,7 @@ struct MapView: View {
         static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
             ThumbnailAppearance(
                 backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
-                borderColor: .pink,
+                borderColor: .orange,
                 borderWidth: 2,
                 scale: 1.05,
                 opacity: 1.0
