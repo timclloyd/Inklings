@@ -144,7 +144,7 @@ struct MapView: View {
         Button(action: { isRearranging.toggle() }) {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
                 .font(.system(size: isRearranging ? toolbarButtonSize * 1.15 : toolbarButtonSize))
-                .foregroundColor(isRearranging ? Color.accentColor : Color.primary)
+                .foregroundColor(isRearranging ? Color.pink : Color.primary)
                 .padding(9)
                 .background(
                     Circle()
@@ -207,7 +207,7 @@ struct MapView: View {
     private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
         RoundedRectangle(cornerRadius: 14)
             .stroke(
-                isRearranging ? .accentColor : appearance.borderColor,
+                isRearranging ? .pink : appearance.borderColor,
                 style: StrokeStyle(
                     lineWidth: appearance.borderWidth,
                     dash: isRearranging ? [5] : []
@@ -399,7 +399,7 @@ struct MapView: View {
             ThumbnailAppearance(
                 backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
                 borderColor: colorScheme == .dark ? Color.clear : Color.clear,
-                borderWidth: 1,
+                borderWidth: 1.5,
                 scale: 1.0,
                 opacity: 1.0
             )
@@ -409,7 +409,7 @@ struct MapView: View {
             ThumbnailAppearance(
                 backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
                 borderColor: .primary,
-                borderWidth: 2,
+                borderWidth: 1.5,
                 scale: 1.0,
                 opacity: 1.0
             )
@@ -418,7 +418,7 @@ struct MapView: View {
         static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
             ThumbnailAppearance(
                 backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
-                borderColor: .accentColor,
+                borderColor: .pink,
                 borderWidth: 2,
                 scale: 1.05,
                 opacity: 1.0
