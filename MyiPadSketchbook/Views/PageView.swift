@@ -30,7 +30,7 @@ struct PageView: View {
     @State private var canRedo = false
     @State private var canGoToPreviousPage = false
     @State private var pageChangedFromMap = false
-    @State private var selectedTool: PKInkingTool.InkType = .pen
+    @State private var selectedTool: String = "pen"
     
     // MARK: - Initialisation
     init(modelContext: ModelContext) {
@@ -316,67 +316,91 @@ struct PageView: View {
     //MARK: - Pencil tool stuff
     private var toolSelectionButtons: some View {
         VStack(spacing: 8) {
-            toolButton(type: .pen, systemName: "pencil.line")
-            toolButton(type: .pencil, systemName: "pencil")
-            toolButton(type: .marker, systemName: "highlighter", color: .blue)
-            toolButton(type: .marker, systemName: "highlighter", color: .yellow)
-            toolButton(type: .marker, systemName: "highlighter", color: .green)
-            Button(action: selectEraser) {
-                Image(systemName: "eraser")
-                    .font(.system(size: toolbarButtonSize))
-                    .padding(9)
-                    .background(Circle().fill(Color(UIColor.systemBackground)))
-            }
-            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-            Button(action: selectLasso) {
-                Image(systemName: "lasso")
-                    .font(.system(size: toolbarButtonSize))
-                    .padding(9)
-                    .background(Circle().fill(Color(UIColor.systemBackground)))
-            }
-            .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+            toolButton(toolName: "pen", action: selectPen, systemName: "pencil.line")
+            toolButton(toolName: "pencil", action: selectPencil, systemName: "pencil")
+            toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "highlighter", color: .blue)
+            toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "highlighter", color: .yellow)
+            toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "highlighter", color: .green)
+            toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
+            toolButton(toolName: "lasso", action: selectLasso, systemName: "lasso")
         }
         .padding(.top, 8)
     }
     
-    private func toolButton(type: PKInkingTool.InkType, systemName: String, color: Color? = nil) -> some View {
-        Button(action: { selectTool(type: type, color: color) }) {
+    private func toolButton(toolName: String, action: @escaping () -> Void, systemName: String, color: Color? = nil) -> some View {
+        Button(action: {
+            action()
+            selectedTool = toolName
+        }) {
             Image(systemName: systemName)
                 .font(.system(size: toolbarButtonSize))
-                .foregroundColor(color ?? .primary)
                 .padding(9)
                 .background(Circle().fill(Color(UIColor.systemBackground)))
         }
-        .buttonStyle(ToolbarButtonStyle(isEnabled: selectedTool == type))
+        .buttonStyle(ToolbarButtonStyle(isEnabled: selectedTool == toolName, color: color))
     }
 
-    private func selectTool(type: PKInkingTool.InkType, color: Color? = nil) {
-        selectedTool = type
-        let inkTool: PKInkingTool
-        switch type {
-        case .pen:
-            inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.87), width: 2.5)
-        case .pencil:
-            inkTool = PKInkingTool(.pencil, color: UIColor.black.withAlphaComponent(0.75), width: 2.5)
-        case .marker:
-            inkTool = PKInkingTool(.marker, color: UIColor(color?.opacity(0.5) ?? .blue.opacity(0.5)), width: 20)
-        @unknown default:
-            inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.87), width: 2.5)
+    private func selectPen() {
+        selectedTool = "pen"
+        let inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.87), width: 2.5)
+        toolPicker.selectedTool = inkTool
+    }
+
+    private func selectPencil() {
+        selectedTool = "pencil"
+        let inkTool = PKInkingTool(.pencil, color: UIColor.black.withAlphaComponent(0.75), width: 2.5)
+        toolPicker.selectedTool = inkTool
+    }
+
+    private func selectMarker(color: Color) {
+        let toolName: String
+        let uiColor: UIColor
+        switch color {
+        case .blue:
+            toolName = "marker_blue"
+            uiColor = UIColor.systemBlue.withAlphaComponent(0.5)
+        case .yellow:
+            toolName = "marker_yellow"
+            uiColor = UIColor.systemYellow.withAlphaComponent(0.5)
+        case .green:
+            toolName = "marker_green"
+            uiColor = UIColor.systemGreen.withAlphaComponent(0.5)
+        default:
+            toolName = "marker"
+            uiColor = UIColor.systemBlue.withAlphaComponent(0.5)
         }
+        selectedTool = toolName
+        let inkTool = PKInkingTool(.marker, color: uiColor, width: 20)
         toolPicker.selectedTool = inkTool
     }
 
     private func selectEraser() {
+        selectedTool = "eraser"
         toolPicker.selectedTool = PKEraserTool(.vector)
     }
 
     private func selectLasso() {
+        selectedTool = "lasso"
         toolPicker.selectedTool = PKLassoTool()
     }
 
     private func setupToolPicker() {
-        toolPicker.setVisible(true, forFirstResponder: canvasView)
+        toolPicker.setVisible(false, forFirstResponder: canvasView)
         toolPicker.addObserver(canvasView)
         canvasView.becomeFirstResponder()
     }
+}
+
+enum MarkerColor: String, Equatable {
+    case blue
+    case yellow
+    case green
+}
+
+enum DrawingTool: Equatable {
+    case pen
+    case pencil
+    case marker(MarkerColor)
+    case eraser
+    case lasso
 }
