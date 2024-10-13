@@ -15,7 +15,7 @@ struct DotGridView: View {
     @Environment(\.colorScheme) var colorScheme
     let pageRect: CGRect
     let dotSize: CGFloat = 2.5
-    let largeDotSize: CGFloat = 4
+    let largeDotSize: CGFloat = 3
     let dotOpacity: CGFloat = 0.2
     let largeDotOpacity: CGFloat = 0.55
     let targetSpacing: CGFloat = 28
@@ -29,7 +29,7 @@ struct DotGridView: View {
     }
     
     var largeDotColor: Color {
-        colorScheme == .dark ? .mint : .mint
+        colorScheme == .dark ? .primary : .primary
     }
     
     // MARK: - Body
@@ -105,7 +105,7 @@ struct DotGridView: View {
                             
                             if animationProgress >= 1.0 {
                                 currentDotSize *= 1.5
-                                currentColor = .mint
+                                currentColor = .primary
                             }
                         }
                     }
