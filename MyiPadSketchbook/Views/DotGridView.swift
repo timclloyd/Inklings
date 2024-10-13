@@ -29,7 +29,7 @@ struct DotGridView: View {
     }
     
     var largeDotColor: Color {
-        colorScheme == .dark ? .teal : .teal
+        colorScheme == .dark ? .mint : .mint
     }
     
     // MARK: - Body
@@ -105,7 +105,7 @@ struct DotGridView: View {
                             
                             if animationProgress >= 1.0 {
                                 currentDotSize *= 1.5
-                                currentColor = .teal
+                                currentColor = .mint
                             }
                         }
                     }
