@@ -96,7 +96,7 @@ struct PageChangeIndicatorView: View {
         if hasAdjacentPage {
             return .primary
         } else {
-            return .teal
+            return .mint
         }
     }
     
