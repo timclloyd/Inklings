@@ -17,6 +17,7 @@ class ExportManager: ObservableObject {
     
     private let pageManager: PageManager
     private let colorScheme: ColorScheme
+    private let canvasGenerator = CanvasFileGenerator()
     
     init(pageManager: PageManager, colorScheme: ColorScheme) {
         self.pageManager = pageManager
@@ -54,6 +55,11 @@ class ExportManager: ObservableObject {
             // Update progress
             progress = Double(index + 1) / Double(totalPages)
         }
+        
+        // Generate and save canvas file
+        let canvasContent = try canvasGenerator.generateCanvasFile(pages: pageManager.pages, appName: appName)
+        let canvasURL = exportURL.appendingPathComponent("\(appName).canvas")
+        try canvasContent.write(to: canvasURL, atomically: true, encoding: .utf8)
         
         isExporting = false
         progress = 1
