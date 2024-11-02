@@ -115,6 +115,7 @@ struct MapView: View {
         VStack(spacing: 0) {
             closeButton
             rearrangeButton
+            ShareButton(pageManager: pageManager)
         }
         .background(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
         .cornerRadius(14)
