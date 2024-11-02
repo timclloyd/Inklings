@@ -135,6 +135,9 @@ struct PageView: View {
             toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "highlighter", color: .green)
                 .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
             
+            toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "highlighter", color: .yellow)
+                .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
+            
             toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
                 .padding(EdgeInsets(top: -4, leading: 0, bottom: 0, trailing: 10))
             
@@ -385,12 +388,12 @@ struct PageView: View {
         case .blue:
             toolName = "marker_blue"
             uiColor = UIColor.systemBlue.withAlphaComponent(0.45)
-        case .orange:
-            toolName = "marker_orange"
-            uiColor = UIColor.systemOrange.withAlphaComponent(0.45)
         case .green:
             toolName = "marker_green"
             uiColor = UIColor.systemGreen.withAlphaComponent(0.45)
+        case .yellow:
+            toolName = "marker_yellow"
+            uiColor = UIColor.systemYellow.withAlphaComponent(0.45)
         default:
             toolName = "marker"
             uiColor = UIColor.systemBlue.withAlphaComponent(0.45)
