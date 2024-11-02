@@ -25,6 +25,7 @@
 		15C4A9152CD6954400D2FF74 /* ShareButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A9142CD6954200D2FF74 /* ShareButton.swift */; };
 		15C4A9172CD6956300D2FF74 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A9162CD6956100D2FF74 /* ShareSheet.swift */; };
 		15C4A9192CD6985800D2FF74 /* ExportPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A9182CD6985500D2FF74 /* ExportPageView.swift */; };
+		15C4A91B2CD69E0D00D2FF74 /* CanvasFileGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A91A2CD69E0900D2FF74 /* CanvasFileGenerator.swift */; };
 		15CEF9492C9222ED00B33DB6 /* ToolbarButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CEF9482C9222ED00B33DB6 /* ToolbarButtonStyle.swift */; };
 /* End PBXBuildFile section */
 
@@ -70,6 +71,7 @@
 		15C4A9142CD6954200D2FF74 /* ShareButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareButton.swift; sourceTree = "<group>"; };
 		15C4A9162CD6956100D2FF74 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		15C4A9182CD6985500D2FF74 /* ExportPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportPageView.swift; sourceTree = "<group>"; };
+		15C4A91A2CD69E0900D2FF74 /* CanvasFileGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasFileGenerator.swift; sourceTree = "<group>"; };
 		15CEF9482C9222ED00B33DB6 /* ToolbarButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarButtonStyle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -183,6 +185,7 @@
 		15B03BB32C71EE42007589CB /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				15C4A91A2CD69E0900D2FF74 /* CanvasFileGenerator.swift */,
 				15C4A9182CD6985500D2FF74 /* ExportPageView.swift */,
 				15C4A9162CD6956100D2FF74 /* ShareSheet.swift */,
 				15C4A9142CD6954200D2FF74 /* ShareButton.swift */,
@@ -340,6 +343,7 @@
 				15C4A9172CD6956300D2FF74 /* ShareSheet.swift in Sources */,
 				154A78AE2C7FB1DA00088B86 /* PageChangeIndicatorView.swift in Sources */,
 				15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */,
+				15C4A91B2CD69E0D00D2FF74 /* CanvasFileGenerator.swift in Sources */,
 				15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */,
 				15C4A9132CD6952700D2FF74 /* ExportManager.swift in Sources */,
 				15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */,
