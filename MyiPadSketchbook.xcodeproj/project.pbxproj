@@ -3,11 +3,10 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		154A78AE2C7FB1DA00088B86 /* PageChangeIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 154A78AD2C7FB1DA00088B86 /* PageChangeIndicatorView.swift */; };
 		155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* Helpers.swift */; };
 		155C1DC42C62BD6B00FC5882 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC32C62BD6B00FC5882 /* Assets.xcassets */; };
 		155C1DC72C62BD6B00FC5882 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */; };
@@ -17,16 +16,9 @@
 		15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */; };
 		15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA52C71EA9A007589CB /* PageModel.swift */; };
 		15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA72C71EAEF007589CB /* PageManager.swift */; };
-		15B03BAB2C71EB82007589CB /* PageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAA2C71EB82007589CB /* PageView.swift */; };
-		15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAC2C71EBC9007589CB /* MapView.swift */; };
-		15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BAE2C71EBF2007589CB /* PencilKitView.swift */; };
-		15B03BB12C71EC20007589CB /* DotGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BB02C71EC20007589CB /* DotGridView.swift */; };
 		15C4A9132CD6952700D2FF74 /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A9122CD6952200D2FF74 /* ExportManager.swift */; };
-		15C4A9152CD6954400D2FF74 /* ShareButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A9142CD6954200D2FF74 /* ShareButton.swift */; };
 		15C4A9172CD6956300D2FF74 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A9162CD6956100D2FF74 /* ShareSheet.swift */; };
-		15C4A9192CD6985800D2FF74 /* ExportPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A9182CD6985500D2FF74 /* ExportPageView.swift */; };
 		15C4A91B2CD69E0D00D2FF74 /* CanvasFileGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A91A2CD69E0900D2FF74 /* CanvasFileGenerator.swift */; };
-		15CEF9492C9222ED00B33DB6 /* ToolbarButtonStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15CEF9482C9222ED00B33DB6 /* ToolbarButtonStyle.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -47,7 +39,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		154A78AD2C7FB1DA00088B86 /* PageChangeIndicatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageChangeIndicatorView.swift; sourceTree = "<group>"; };
 		155C1DBA2C62BD6A00FC5882 /* MyiPadSketchbook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyiPadSketchbook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		155C1DBF2C62BD6A00FC5882 /* Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Helpers.swift; sourceTree = "<group>"; };
 		155C1DC32C62BD6B00FC5882 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -63,17 +54,17 @@
 		15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbook.swift; sourceTree = "<group>"; };
 		15B03BA52C71EA9A007589CB /* PageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageModel.swift; sourceTree = "<group>"; };
 		15B03BA72C71EAEF007589CB /* PageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageManager.swift; sourceTree = "<group>"; };
-		15B03BAA2C71EB82007589CB /* PageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageView.swift; sourceTree = "<group>"; };
-		15B03BAC2C71EBC9007589CB /* MapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapView.swift; sourceTree = "<group>"; };
-		15B03BAE2C71EBF2007589CB /* PencilKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PencilKitView.swift; sourceTree = "<group>"; };
-		15B03BB02C71EC20007589CB /* DotGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DotGridView.swift; sourceTree = "<group>"; };
 		15C4A9122CD6952200D2FF74 /* ExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
-		15C4A9142CD6954200D2FF74 /* ShareButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareButton.swift; sourceTree = "<group>"; };
 		15C4A9162CD6956100D2FF74 /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
-		15C4A9182CD6985500D2FF74 /* ExportPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportPageView.swift; sourceTree = "<group>"; };
 		15C4A91A2CD69E0900D2FF74 /* CanvasFileGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasFileGenerator.swift; sourceTree = "<group>"; };
-		15CEF9482C9222ED00B33DB6 /* ToolbarButtonStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarButtonStyle.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		15C4A91C2CD6A32900D2FF74 /* Buttons */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Buttons; sourceTree = "<group>"; };
+		15C4A91D2CD6A36100D2FF74 /* Components */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Components; sourceTree = "<group>"; };
+		15C4A91E2CD6A38C00D2FF74 /* Screens */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Screens; sourceTree = "<group>"; };
+		15C4A91F2CD6A44400D2FF74 /* Styles */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Styles; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		155C1DB72C62BD6A00FC5882 /* Frameworks */ = {
@@ -125,10 +116,11 @@
 			children = (
 				158385962C83237B00735249 /* MyiPadSketchbookRelease.entitlements */,
 				158385952C83190000735249 /* MyiPadSketchbookDebug.entitlements */,
-				15B03BB42C71EF58007589CB /* Shared */,
-				15B03BB32C71EE42007589CB /* ViewModels */,
 				15B03BB22C71EE32007589CB /* Models */,
 				15B03BA92C71EB66007589CB /* Views */,
+				15B03BB32C71EE42007589CB /* Managers */,
+				15B03BB42C71EF58007589CB /* Utils */,
+				15C4A91F2CD6A44400D2FF74 /* Styles */,
 				158F41B32C715D7A00FC886D /* Info.plist */,
 				155C1DC32C62BD6B00FC5882 /* Assets.xcassets */,
 				155C1DC52C62BD6B00FC5882 /* Preview Content */,
@@ -165,11 +157,9 @@
 		15B03BA92C71EB66007589CB /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				15B03BAA2C71EB82007589CB /* PageView.swift */,
-				15B03BAC2C71EBC9007589CB /* MapView.swift */,
-				15B03BAE2C71EBF2007589CB /* PencilKitView.swift */,
-				15B03BB02C71EC20007589CB /* DotGridView.swift */,
-				154A78AD2C7FB1DA00088B86 /* PageChangeIndicatorView.swift */,
+				15C4A91E2CD6A38C00D2FF74 /* Screens */,
+				15C4A91D2CD6A36100D2FF74 /* Components */,
+				15C4A91C2CD6A32900D2FF74 /* Buttons */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -182,26 +172,23 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		15B03BB32C71EE42007589CB /* ViewModels */ = {
+		15B03BB32C71EE42007589CB /* Managers */ = {
 			isa = PBXGroup;
 			children = (
 				15C4A91A2CD69E0900D2FF74 /* CanvasFileGenerator.swift */,
-				15C4A9182CD6985500D2FF74 /* ExportPageView.swift */,
 				15C4A9162CD6956100D2FF74 /* ShareSheet.swift */,
-				15C4A9142CD6954200D2FF74 /* ShareButton.swift */,
 				15C4A9122CD6952200D2FF74 /* ExportManager.swift */,
 				15B03BA72C71EAEF007589CB /* PageManager.swift */,
 			);
-			path = ViewModels;
+			path = Managers;
 			sourceTree = "<group>";
 		};
-		15B03BB42C71EF58007589CB /* Shared */ = {
+		15B03BB42C71EF58007589CB /* Utils */ = {
 			isa = PBXGroup;
 			children = (
 				155C1DBF2C62BD6A00FC5882 /* Helpers.swift */,
-				15CEF9482C9222ED00B33DB6 /* ToolbarButtonStyle.swift */,
 			);
-			path = Shared;
+			path = Utils;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -218,6 +205,12 @@
 			buildRules = (
 			);
 			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				15C4A91C2CD6A32900D2FF74 /* Buttons */,
+				15C4A91D2CD6A36100D2FF74 /* Components */,
+				15C4A91E2CD6A38C00D2FF74 /* Screens */,
+				15C4A91F2CD6A44400D2FF74 /* Styles */,
 			);
 			name = MyiPadSketchbook;
 			productName = MyiPadSketchbook;
@@ -335,19 +328,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */,
-				15CEF9492C9222ED00B33DB6 /* ToolbarButtonStyle.swift in Sources */,
 				15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */,
-				15C4A9192CD6985800D2FF74 /* ExportPageView.swift in Sources */,
-				15C4A9152CD6954400D2FF74 /* ShareButton.swift in Sources */,
-				15B03BAB2C71EB82007589CB /* PageView.swift in Sources */,
 				15C4A9172CD6956300D2FF74 /* ShareSheet.swift in Sources */,
-				154A78AE2C7FB1DA00088B86 /* PageChangeIndicatorView.swift in Sources */,
 				15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */,
 				15C4A91B2CD69E0D00D2FF74 /* CanvasFileGenerator.swift in Sources */,
-				15B03BAF2C71EBF2007589CB /* PencilKitView.swift in Sources */,
 				15C4A9132CD6952700D2FF74 /* ExportManager.swift in Sources */,
-				15B03BAD2C71EBC9007589CB /* MapView.swift in Sources */,
-				15B03BB12C71EC20007589CB /* DotGridView.swift in Sources */,
 				15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
