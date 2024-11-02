@@ -53,7 +53,7 @@ struct PageView: View {
             updateUndoRedoState()
             updateCanGoToPreviousPage()
             setupToolPicker()
-            selectPen()
+            selectPen(color: .black)
         }
         .onChange(of: colorScheme) {
             pageManager.updateAllThumbnails()
@@ -120,7 +120,10 @@ struct PageView: View {
     
     private var toolSelectionButtons: some View {
         VStack() {
-            toolButton(toolName: "pen", action: selectPen, systemName: "pencil.line")
+            toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "pencil.line", color: .black)
+                .padding(EdgeInsets(top: -3, leading: 0, bottom: 0, trailing: 10))
+            
+            toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "pencil.line", color: .red)
                 .padding(EdgeInsets(top: -3, leading: 0, bottom: 0, trailing: 10))
             
             toolButton(toolName: "pencil", action: selectPencil, systemName: "pencil")
@@ -129,10 +132,7 @@ struct PageView: View {
             toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "highlighter", color: .blue)
                 .padding(EdgeInsets(top: -4.5, leading: 0, bottom: 0, trailing: 10))
             
-            toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "highlighter", color: .mint)
-                .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
-            
-            toolButton(toolName: "marker_orange", action: { selectMarker(color: .orange) }, systemName: "highlighter", color: .orange)
+            toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "highlighter", color: .green)
                 .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
             
             toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
@@ -353,9 +353,22 @@ struct PageView: View {
     }
     
     //MARK: - Pencil tool stuff
-    private func selectPen() {
-        selectedTool = "pen"
-        let inkTool = PKInkingTool(.pen, color: UIColor.black.withAlphaComponent(0.9), width: 3)
+    private func selectPen(color: Color) {
+        let toolName: String
+        let uiColor: UIColor
+        switch color {
+        case .black:
+            toolName = "pen_black"
+            uiColor = UIColor.black.withAlphaComponent(0.9)
+        case .red:
+            toolName = "pen_red"
+            uiColor = UIColor.systemRed.withAlphaComponent(0.9)
+        default:
+            toolName = "pen_black"
+            uiColor = UIColor.black.withAlphaComponent(0.9)
+        }
+        selectedTool = toolName
+        let inkTool = PKInkingTool(.pen, color: uiColor, width: 3)
         toolPicker.selectedTool = inkTool
     }
 
@@ -377,7 +390,7 @@ struct PageView: View {
             uiColor = UIColor.systemOrange.withAlphaComponent(0.45)
         case .green:
             toolName = "marker_green"
-            uiColor = UIColor.systemMint.withAlphaComponent(0.45)
+            uiColor = UIColor.systemGreen.withAlphaComponent(0.45)
         default:
             toolName = "marker"
             uiColor = UIColor.systemBlue.withAlphaComponent(0.45)
@@ -401,7 +414,7 @@ struct PageView: View {
         toolPicker.setVisible(false, forFirstResponder: canvasView)
         toolPicker.addObserver(canvasView)
         canvasView.becomeFirstResponder()
-        selectPen()
+        selectPen(color: .black)
     }
 }
 
