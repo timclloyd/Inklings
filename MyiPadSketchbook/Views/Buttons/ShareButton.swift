@@ -10,6 +10,7 @@ import SwiftUI
 import PencilKit
 import UIKit
 
+// MARK: - ShareButton
 struct ShareButton: View {
     @StateObject private var exportManager: ExportManager
     @State private var showingShareSheet = false
@@ -56,4 +57,27 @@ struct ShareButton: View {
             }
         }
     }
+}
+
+// MARK: - ShareSheet
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: items,
+            applicationActivities: nil
+        )
+        
+        controller.completionWithItemsHandler = { _, _, _, _ in
+            // Clean up temp files after sharing
+            if let url = items.first as? URL {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+        
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
