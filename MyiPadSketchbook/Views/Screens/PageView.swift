@@ -120,7 +120,7 @@ struct PageView: View {
     
     private var toolSelectionButtons: some View {
         VStack() {
-            toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "pencil.line", color: .black)
+            toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "pencil.line")
                 .padding(EdgeInsets(top: -3, leading: 0, bottom: 0, trailing: 10))
             
             toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "pencil.line", color: .red)
