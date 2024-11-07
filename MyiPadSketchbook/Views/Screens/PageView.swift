@@ -144,6 +144,7 @@ struct PageView: View {
                 }
                 .background(Color(UIColor.systemBackground).cornerRadius(10))
                 .fixedSize()
+                .padding(.trailing, 7)
             }
             Spacer()
         }
@@ -224,7 +225,7 @@ struct PageView: View {
         MapView(pageManager: pageManager,
                 pages: pages,
                 onPageSelected: handlePageSelection,
-                showMiniMap: $showMapView,
+                showMap: $showMapView,
                 onCloseMap: { showMapView = false })
     }
     
