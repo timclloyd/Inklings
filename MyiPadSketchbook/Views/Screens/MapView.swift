@@ -112,8 +112,7 @@ struct MapView: View {
     }
     
     private var toolbarView: some View {
-        VStack(spacing: 0) {
-            closeButton
+        VStack() {
             rearrangeButton
             ShareButton(pageManager: pageManager)
         }
@@ -124,23 +123,7 @@ struct MapView: View {
         .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.4 : 0.15), radius: 14)
     }
     
-    // MARK: - Buttons    
-    private var closeButton: some View {
-        Button(action: onCloseMap) {
-            Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                .symbolRenderingMode(.hierarchical)
-                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
-                .padding(13) // Expand tappable area
-                .background(
-                    Circle()
-                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
-                )
-        }
-        .contentShape(Circle()) // Ensure the tappable area is circular
-        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: -1, leading: 0, bottom: -2, trailing: 0)) // Layout padding
-    }
-    
+    // MARK: - Buttons
     private var rearrangeButton: some View {
         Button(action: { isRearranging.toggle() }) {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
@@ -154,7 +137,7 @@ struct MapView: View {
         }
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 2, leading: 8, bottom: 10, trailing: 7))
+        .padding(EdgeInsets(top: 13, leading: 9, bottom: 10, trailing: 9))
     }
     
     // MARK: - Thumbnail View
