@@ -107,13 +107,13 @@ struct PageView: View {
                 Spacer()
                 VStack() {
                     pageFlipButton
-                        .padding(EdgeInsets(top: 28, leading: 0, bottom: 0, trailing: 10))
+                        .padding(EdgeInsets(top: 34, leading: 0, bottom: 0, trailing: 10))
                     
                     undoButton
-                        .padding(EdgeInsets(top: -2, leading: 0, bottom: 0, trailing: 9))
+                        .padding(EdgeInsets(top: -9, leading: 0, bottom: 0, trailing: 9))
                     
                     redoButton
-                        .padding(EdgeInsets(top: -7, leading: 0, bottom: 0, trailing: 9))
+                        .padding(EdgeInsets(top: -7.5, leading: 0, bottom: 0, trailing: 9))
                     
                     VStack(spacing: 6) {
                         toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
@@ -129,16 +129,16 @@ struct PageView: View {
                             .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
                         
                         toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                            .padding(EdgeInsets(top: 1, leading: 0, bottom: 0, trailing: 9))
                         
                         toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                            .padding(EdgeInsets(top: 1, leading: 0, bottom: 0, trailing: 9))
                         
                         toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                            .padding(EdgeInsets(top: -0.5, leading: 0, bottom: 0, trailing: 9))
                         
                         toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
-                            .padding(EdgeInsets(top: -0.5, leading: 0, bottom: 0, trailing: 9))
+                            .padding(EdgeInsets(top: -1, leading: 0, bottom: 0, trailing: 9))
                     }
                     
                 }
@@ -178,8 +178,7 @@ struct PageView: View {
         Button(action: handlePageFlip) {
             Image(systemName: "rectangle.2.swap")
                 .rotationEffect(Angle(degrees: -90.0))
-                .symbolRenderingMode(.hierarchical)
-                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
+                .font(.system(size: toolbarButtonSize))
                 .padding(9)
                 .background(
                     Circle()
