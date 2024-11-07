@@ -84,17 +84,21 @@ struct PageView: View {
                       drawing: pageManager.getCurrentPage()?.drawingData ?? Data(),
                       onDrawingChange: handleDrawingChange,
                       pageRect: pageManager.pageRect,
-                      onSwipe: handleSwipe)
+                      onSwipe: handleSwipe,
+                      onPinch: handlePinch)
             .ignoresSafeArea()
     }
     
     private var navIndicatorView: some View {
-        PageChangeIndicatorView(direction: swipeProgress.direction,
-                         progress: swipeProgress.progress,
-                         size: pageManager.pageRect.size,
-                         adjacentPages: getAdjacentPages())
-            .allowsHitTesting(false)
-            .ignoresSafeArea()
+        PageChangeIndicatorView(
+            direction: swipeProgress.direction,
+            progress: swipeProgress.progress,
+            size: pageManager.pageRect.size,
+            adjacentPages: getAdjacentPages(),
+            swipeProgress: swipeProgress  // Pass the swipeProgress
+        )
+        .allowsHitTesting(false)
+        .ignoresSafeArea()
     }
     
     private var toolbarView: some View {
@@ -315,7 +319,7 @@ struct PageView: View {
         
         switch gesture.state {
         case .changed:
-            swipeProgress = SwipeProgress(direction: direction, progress: progress)
+            swipeProgress = SwipeProgress(direction: direction, progress: progress, isMapGesture: false)
         case .ended:
             if progress >= 1.0 {
                 pageManager.addPage(translation: CGSize(width: translation.x, height: translation.y))
@@ -328,8 +332,30 @@ struct PageView: View {
             }
             // Reset swipeProgress when the gesture ends
             withAnimation(.linear(duration: 0)) {
-                swipeProgress = SwipeProgress(direction: nil, progress: 0)
+                swipeProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
             }
+        default:
+            break
+        }
+    }
+    
+    private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
+        let scale = gesture.scale
+        let distance = 0.5
+        
+        switch gesture.state {
+        case .changed:
+            if scale <= distance {
+                swipeProgress = SwipeProgress(direction: .top, progress: 1.0, isMapGesture: true)
+            } else {
+                swipeProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
+            }
+        case .ended:
+            if scale <= 0.6 {
+                canvasView.undoManager?.removeAllActions()
+                showMapView = true
+            }
+            swipeProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
         default:
             break
         }
