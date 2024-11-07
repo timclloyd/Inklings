@@ -20,12 +20,25 @@ struct PageChangeIndicatorView: View {
     let threshold: CGFloat = 0.2
     let createThreshold: CGFloat = 1
     let adjacentPages: AdjacentPages
+    let swipeProgress: SwipeProgress
 
     // MARK: - Constants
     private let arrowDiameter: CGFloat = 32
     private let shadowRadius: CGFloat = 15
     private let edgeDistance: CGFloat = 39.5
 
+    init(direction: EdgeDirection?,
+         progress: CGFloat,
+         size: CGSize,
+         adjacentPages: AdjacentPages,
+         swipeProgress: SwipeProgress) {
+        self.direction = direction
+        self.progress = progress
+        self.size = size
+        self.adjacentPages = adjacentPages
+        self.swipeProgress = swipeProgress
+    }
+    
     // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
@@ -54,21 +67,20 @@ struct PageChangeIndicatorView: View {
     
     // MARK: - Helper Methods
     private func arrowSystemName(for edge: EdgeDirection) -> String {
-        let hasAdjacentPage = hasAdjacentPage(for: edge)
+        // Show map icon for top edge during map gesture
+        if edge == .top && swipeProgress.isMapGesture {
+            return "circle.grid.3x3.circle.fill"
+        }
         
+        let hasAdjacentPage = hasAdjacentPage(for: edge)
         if hasAdjacentPage {
             switch edge {
-            case .left:
-                return "arrow.left.circle.fill"
-            case .right:
-                return "arrow.right.circle.fill"
-            case .top:
-                return "arrow.up.circle.fill"
-            case .bottom:
-                return "arrow.down.circle.fill"
+            case .left: return "arrow.left.circle.fill"
+            case .right: return "arrow.right.circle.fill"
+            case .top: return "arrow.up.circle.fill"
+            case .bottom: return "arrow.down.circle.fill"
             }
-        }
-        else {
+        } else {
             return "plus.circle.fill"
         }
     }

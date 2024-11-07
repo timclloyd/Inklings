@@ -17,9 +17,12 @@ struct AdjacentPages {
 struct SwipeProgress: Equatable {
     var direction: EdgeDirection?
     var progress: CGFloat
+    var isMapGesture: Bool = false
     
     static func == (lhs: SwipeProgress, rhs: SwipeProgress) -> Bool {
-        lhs.direction == rhs.direction && lhs.progress == rhs.progress
+        lhs.direction == rhs.direction &&
+        lhs.progress == rhs.progress &&
+        lhs.isMapGesture == rhs.isMapGesture
     }
 }
 
