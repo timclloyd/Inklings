@@ -124,28 +124,28 @@ struct PageView: View {
     
     private var toolSelectionButtons: some View {
         VStack() {
-            toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "pencil.line")
+            toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
                 .padding(EdgeInsets(top: -3, leading: 0, bottom: 0, trailing: 10))
             
-            toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "pencil.line", color: .red)
+            toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
                 .padding(EdgeInsets(top: -3, leading: 0, bottom: 0, trailing: 10))
             
-            toolButton(toolName: "pencil", action: selectPencil, systemName: "pencil")
+            toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
                 .padding(EdgeInsets(top: -2, leading: 0, bottom: 0, trailing: 10))
             
-            toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "highlighter", color: .blue)
+            toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
                 .padding(EdgeInsets(top: -4.5, leading: 0, bottom: 0, trailing: 10))
             
-            toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "highlighter", color: .green)
+            toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
                 .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
             
-            toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "highlighter", color: .yellow)
+            toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
                 .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
             
-            toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
+            toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
                 .padding(EdgeInsets(top: -4, leading: 0, bottom: 0, trailing: 10))
             
-            toolButton(toolName: "lasso", action: selectLasso, systemName: "lasso")
+            toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
                 .padding(EdgeInsets(top: -4.5, leading: 0, bottom: 0, trailing: 10))
         }
     }
