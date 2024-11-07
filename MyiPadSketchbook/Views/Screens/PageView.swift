@@ -113,31 +113,33 @@ struct PageView: View {
                         .padding(EdgeInsets(top: -2, leading: 0, bottom: 0, trailing: 9))
                     
                     redoButton
-                        .padding(EdgeInsets(top: -7, leading: 0, bottom: 0, trailing: 8))
+                        .padding(EdgeInsets(top: -7, leading: 0, bottom: 0, trailing: 9))
                     
-                    toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
-                        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 10))
-                    
-                    toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
-                        .padding(EdgeInsets(top: -6.5, leading: 0, bottom: 0, trailing: 10))
-                    
-                    toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
-                        .padding(EdgeInsets(top: -7.5, leading: 0, bottom: 0, trailing: 10))
-                    
-                    toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
-                        .padding(EdgeInsets(top: -6.5, leading: 0, bottom: 0, trailing: 10))
-                    
-                    toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
-                        .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
-                    
-                    toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
-                        .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
-                    
-                    toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
-                        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 10))
-                    
-                    toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
-                        .padding(EdgeInsets(top: -8.5, leading: 0, bottom: 0, trailing: 10))
+                    VStack(spacing: 6) {
+                        toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
+                            .padding(EdgeInsets(top: -5, leading: 0, bottom: 0, trailing: 9))
+                        
+                        toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                        
+                        toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                        
+                        toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                        
+                        toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                        
+                        toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                        
+                        toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
+                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
+                        
+                        toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
+                            .padding(EdgeInsets(top: -0.5, leading: 0, bottom: 0, trailing: 9))
+                    }
                     
                 }
                 .background(Color(UIColor.systemBackground).cornerRadius(10))
@@ -153,7 +155,7 @@ struct PageView: View {
             selectedTool = toolName
         }) {
             Image(systemName: systemName)
-                .font(.system(size: toolbarButtonSize))
+                .font(.system(size: toolbarButtonSize * 0.8))
                 .padding(9)
                 .background(Circle().fill(Color(UIColor.systemBackground)))
         }
