@@ -17,7 +17,7 @@ struct MapView: View {
     let pages: [Page]
     @Environment(\.colorScheme) var colorScheme
     var onPageSelected: (Page) -> Void
-    @Binding var showMiniMap: Bool
+    @Binding var showMap: Bool
     var onCloseMap: () -> Void
     
     // MARK: - State
@@ -173,7 +173,7 @@ struct MapView: View {
         .onTapGesture {
             if !isRearranging {
                 onPageSelected(page)
-                showMiniMap = false
+                showMap = false
             }
         }
     }
@@ -247,7 +247,7 @@ struct MapView: View {
                     draggedPageOffset = .zero
                 } else if value.translation == .zero {
                     onPageSelected(page)
-                    showMiniMap = false
+                    showMap = false
                 }
             }
     }
@@ -280,7 +280,7 @@ struct MapView: View {
             draggedPageOffset = .zero
         } else if value.translation == .zero {
             onPageSelected(page)
-            showMiniMap = false
+            showMap = false
         }
     }
     
