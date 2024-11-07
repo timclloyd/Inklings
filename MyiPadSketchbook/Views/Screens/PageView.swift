@@ -258,7 +258,7 @@ struct PageView: View {
     
     private func updateCanGoToPreviousPage() {
         DispatchQueue.main.async {
-            self.canGoToPreviousPage = self.pageManager.previousPageID != nil
+            self.canGoToPreviousPage = self.pageManager.previousPageID != nil && self.pageManager.previousPageID != self.pageManager.currentPageID
         }
     }
     
