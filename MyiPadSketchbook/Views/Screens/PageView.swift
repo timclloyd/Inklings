@@ -106,47 +106,44 @@ struct PageView: View {
             HStack {
                 Spacer()
                 VStack() {
-                    showMapButton
+                    pageFlipButton
+                        .padding(EdgeInsets(top: 28, leading: 0, bottom: 0, trailing: 10))
                     
-                    VStack() {
-                        pageFlipButton
-                        undoButton
-                        redoButton
-                    }
-                    toolSelectionButtons
+                    undoButton
+                        .padding(EdgeInsets(top: -2, leading: 0, bottom: 0, trailing: 9))
+                    
+                    redoButton
+                        .padding(EdgeInsets(top: -7, leading: 0, bottom: 0, trailing: 8))
+                    
+                    toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
+                        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 10))
+                    
+                    toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
+                        .padding(EdgeInsets(top: -6.5, leading: 0, bottom: 0, trailing: 10))
+                    
+                    toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
+                        .padding(EdgeInsets(top: -7.5, leading: 0, bottom: 0, trailing: 10))
+                    
+                    toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
+                        .padding(EdgeInsets(top: -6.5, leading: 0, bottom: 0, trailing: 10))
+                    
+                    toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
+                        .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
+                    
+                    toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
+                        .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
+                    
+                    toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
+                        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 10))
+                    
+                    toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
+                        .padding(EdgeInsets(top: -8.5, leading: 0, bottom: 0, trailing: 10))
+                    
                 }
                 .background(Color(UIColor.systemBackground).cornerRadius(10))
                 .fixedSize()
             }
             Spacer()
-        }
-    }
-    
-    private var toolSelectionButtons: some View {
-        VStack() {
-            toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
-                .padding(EdgeInsets(top: -3, leading: 0, bottom: 0, trailing: 10))
-            
-            toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
-                .padding(EdgeInsets(top: -3, leading: 0, bottom: 0, trailing: 10))
-            
-            toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
-                .padding(EdgeInsets(top: -2, leading: 0, bottom: 0, trailing: 10))
-            
-            toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
-                .padding(EdgeInsets(top: -4.5, leading: 0, bottom: 0, trailing: 10))
-            
-            toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
-                .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
-            
-            toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
-                .padding(EdgeInsets(top: -5.5, leading: 0, bottom: 0, trailing: 10))
-            
-            toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
-                .padding(EdgeInsets(top: -4, leading: 0, bottom: 0, trailing: 10))
-            
-            toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
-                .padding(EdgeInsets(top: -4.5, leading: 0, bottom: 0, trailing: 10))
         }
     }
     
@@ -156,7 +153,7 @@ struct PageView: View {
             selectedTool = toolName
         }) {
             Image(systemName: systemName)
-                .font(.system(size: toolbarButtonSize * 0.9))
+                .font(.system(size: toolbarButtonSize))
                 .padding(9)
                 .background(Circle().fill(Color(UIColor.systemBackground)))
         }
@@ -175,27 +172,12 @@ struct PageView: View {
     }
     
     // MARK: - Buttons
-    private var showMapButton: some View {
-        Button(action: showMap) {
-            Image(systemName: "rectangle.portrait.on.rectangle.portrait")
-                .symbolRenderingMode(.hierarchical)
-                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
-                .padding(13) // Expand tappable area
-                .background(
-                    Circle()
-                        .fill(Color(UIColor.systemBackground))
-                )
-        }
-        .contentShape(Circle()) // Ensure the tappable area is circular
-        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 21, leading: 0, bottom: 0, trailing: 10)) // Layout padding
-    }
-    
     private var pageFlipButton: some View {
         Button(action: handlePageFlip) {
             Image(systemName: "rectangle.2.swap")
                 .rotationEffect(Angle(degrees: -90.0))
-                .font(.system(size: toolbarButtonSize))
+                .symbolRenderingMode(.hierarchical)
+                .font(.system(size: toolbarButtonSize * 1.5, weight: .light))
                 .padding(9)
                 .background(
                     Circle()
@@ -205,7 +187,6 @@ struct PageView: View {
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: canGoToPreviousPage))
         .disabled(!canGoToPreviousPage)
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 10))
     }
     
     private var undoButton: some View {
@@ -221,7 +202,6 @@ struct PageView: View {
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: canUndo))
         .disabled(!canUndo)
-        .padding(EdgeInsets(top: -7, leading: 0, bottom: 0, trailing: 9))
     }
     
     private var redoButton: some View {
@@ -237,7 +217,6 @@ struct PageView: View {
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: canRedo))
         .disabled(!canRedo)
-        .padding(EdgeInsets(top: -8, leading: 0, bottom: 0, trailing: 8))
     }
     
     private var mapView: some View {
