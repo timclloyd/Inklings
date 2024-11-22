@@ -14,15 +14,23 @@ struct ToolbarButtonStyle: ButtonStyle {
     @Environment(\.colorScheme) var colorScheme
     var isEnabled: Bool
     var color: Color? = nil
+    var highlightBackground: Bool = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundColor(
                 (color ?? .primary).opacity(
                     isEnabled
-                        ? (configuration.isPressed ? 0.57 : 0.87) // Enabled
-                        : 0.3 // Disabled
+                    ? (configuration.isPressed ? 0.57 : 1.5) // Enabled
+                    : highlightBackground ? 0.87 : 0.3 // Disabled
                 )
+            )
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(highlightBackground && isEnabled
+                          ? Color(UIColor.systemGray5)
+                        : Color(UIColor.systemBackground))
+                    .padding(1)
             )
             .animation(.easeInOut, value: isEnabled)
     }
