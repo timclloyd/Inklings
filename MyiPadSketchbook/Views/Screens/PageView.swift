@@ -158,9 +158,12 @@ struct PageView: View {
             Image(systemName: systemName)
                 .font(.system(size: toolbarButtonSize * 0.8))
                 .padding(9)
-                .background(Circle().fill(Color(UIColor.systemBackground)))
         }
-        .buttonStyle(ToolbarButtonStyle(isEnabled: selectedTool == toolName, color: color))
+        .buttonStyle(ToolbarButtonStyle(
+            isEnabled: selectedTool == toolName,
+            color: color,
+            highlightBackground: true
+        ))
     }
     
     private var coordinateLabel: some View {
