@@ -26,7 +26,11 @@ struct MyiPadSketchbookApp: App {
 
     var body: some Scene {
         WindowGroup {
-            PageView(modelContext: sharedModelContainer.mainContext)
+            if UIDevice.current.userInterfaceIdiom == .phone {
+                PhoneMapView(modelContext: sharedModelContainer.mainContext)
+            } else {
+                PageView(modelContext: sharedModelContainer.mainContext)
+            }
         }
         .modelContainer(sharedModelContainer)
     }
