@@ -70,16 +70,24 @@ class ExportManager: ObservableObject {
     
     private func createCompositeImage(for page: Page) async throws -> UIImage {
         let rect = pageManager.pageRect
-        let renderer = UIGraphicsImageRenderer(bounds: rect)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = UIScreen.main.scale
+        format.opaque = true
         
-        // Create a simplified version of PageView content
-        let exportView = ExportPageView(
-            pageManager: pageManager,
-            page: page,
-            colorScheme: colorScheme
-        )
+        let renderer = UIGraphicsImageRenderer(bounds: rect, format: format)
         
         return renderer.image { context in
+            // First fill with white background
+            UIColor.white.setFill()
+            context.fill(rect)
+            
+            // Create and render the ExportPageView
+            let exportView = ExportPageView(
+                pageManager: pageManager,
+                page: page,
+                colorScheme: colorScheme
+            )
+            
             let controller = UIHostingController(rootView: exportView)
             controller.view.frame = rect
             controller.view.backgroundColor = .clear
