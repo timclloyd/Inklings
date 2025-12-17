@@ -70,28 +70,54 @@ class ExportManager: ObservableObject {
     
     private func createCompositeImage(for page: Page) async throws -> UIImage {
         let rect = pageManager.pageRect
+
+        // Create and render the ExportPageView
+        let exportView = ExportPageView(
+            pageManager: pageManager,
+            page: page,
+            colorScheme: colorScheme
+        )
+
+        let controller = UIHostingController(rootView: exportView)
+        controller.view.frame = rect
+        controller.view.backgroundColor = .white
+
+        // Force multiple layout passes to ensure SwiftUI view is fully resolved
+        controller.view.setNeedsLayout()
+        controller.view.layoutIfNeeded()
+
+        // Wait for Core Animation to finish rendering using CATransaction
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            CATransaction.begin()
+            CATransaction.setCompletionBlock {
+                continuation.resume()
+            }
+            // Trigger another layout inside the transaction
+            controller.view.setNeedsLayout()
+            controller.view.layoutIfNeeded()
+            CATransaction.commit()
+        }
+
+        // Small additional delay for SwiftUI's rendering pipeline
+        try? await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
+
         let format = UIGraphicsImageRendererFormat()
         format.scale = UIScreen.main.scale
         format.opaque = true
-        
+
         let renderer = UIGraphicsImageRenderer(bounds: rect, format: format)
-        
+
         return renderer.image { context in
             // First fill with white background
             UIColor.white.setFill()
             context.fill(rect)
-            
-            // Create and render the ExportPageView
-            let exportView = ExportPageView(
-                pageManager: pageManager,
-                page: page,
-                colorScheme: colorScheme
-            )
-            
-            let controller = UIHostingController(rootView: exportView)
-            controller.view.frame = rect
-            controller.view.backgroundColor = .clear
-            controller.view.layoutIfNeeded()
+
+            // Ensure view is ready before drawing
+            guard controller.view.bounds.size != .zero else {
+                return
+            }
+
+            // Use drawHierarchy with afterScreenUpdates now that we've given it time
             controller.view.drawHierarchy(in: rect, afterScreenUpdates: true)
         }
     }
