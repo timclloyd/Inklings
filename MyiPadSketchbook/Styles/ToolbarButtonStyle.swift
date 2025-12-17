@@ -29,7 +29,7 @@ struct ToolbarButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(highlightBackground && isEnabled
                           ? Color(UIColor.systemGray5)
-                        : Color(UIColor.systemBackground))
+                        : Color(UIColor.systemBackground).opacity(0.01))
                     .padding(1)
             )
             .animation(.easeInOut, value: isEnabled)

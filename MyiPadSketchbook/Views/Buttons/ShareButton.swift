@@ -23,19 +23,23 @@ struct ShareButton: View {
     
     var body: some View {
         Button(action: startExport) {
-            if exportManager.isExporting {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle())
-                    .scaleEffect(0.7)
-            } else {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: toolbarButtonSize * 1.15, weight: .light))
-                    .padding(9) // Expand tappable area
-                    .background(
-                        Circle()
-                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
-                    )
+            ZStack {
+                if exportManager.isExporting {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .primary))
+                        .scaleEffect(1.15)
+                        .frame(width: toolbarButtonSize * 1.15, height: toolbarButtonSize * 1.15)
+                } else {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: toolbarButtonSize * 1.15, weight: .light))
+                        .frame(width: toolbarButtonSize * 1.15, height: toolbarButtonSize * 1.15)
+                }
             }
+            .padding(9)
+            .background(
+                Circle()
+                    .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+            )
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
         .disabled(exportManager.isExporting)
