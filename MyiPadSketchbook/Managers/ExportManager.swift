@@ -39,22 +39,37 @@ class ExportManager: ObservableObject {
         try FileManager.default.createDirectory(at: exportURL, withIntermediateDirectories: true)
         
         let totalPages = pageManager.pages.count
-        
-        // Export each page
-        for (index, page) in pageManager.pages.enumerated() {
-            // Create composite image
-            let compositeImage = try await createCompositeImage(for: page)
-            
-            // Convert to JPEG data
-            guard let jpegData = compositeImage.jpegData(compressionQuality: 0.9) else { continue }
-            
-            // Save to file
-            let filename = "\(page.positionX ?? 0),\(page.positionY ?? 0).jpeg"
-            let fileURL = exportURL.appendingPathComponent(filename)
-            try jpegData.write(to: fileURL)
-            
-            // Update progress
-            progress = Double(index + 1) / Double(totalPages)
+        // Use number of CPU cores, capped between 2-8 for memory safety
+        let maxConcurrentRenders = min(8, max(2, ProcessInfo.processInfo.activeProcessorCount))
+
+        // Export pages with controlled concurrency
+        var completedCount = 0
+
+        try await withThrowingTaskGroup(of: Void.self) { group in
+            var currentIndex = 0
+
+            // Start initial batch
+            for page in pageManager.pages.prefix(maxConcurrentRenders) {
+                group.addTask {
+                    try await self.exportSinglePage(page: page, to: exportURL)
+                }
+                currentIndex += 1
+            }
+
+            // As each completes, start the next one
+            for try await _ in group {
+                completedCount += 1
+                progress = Double(completedCount) / Double(totalPages)
+
+                // Add next page if there are more
+                if currentIndex < pageManager.pages.count {
+                    let page = pageManager.pages[currentIndex]
+                    group.addTask {
+                        try await self.exportSinglePage(page: page, to: exportURL)
+                    }
+                    currentIndex += 1
+                }
+            }
         }
         
         // Generate and save canvas file
@@ -67,7 +82,22 @@ class ExportManager: ObservableObject {
         
         return exportURL
     }
-    
+
+    private func exportSinglePage(page: Page, to exportURL: URL) async throws {
+        // Create composite image
+        let compositeImage = try await createCompositeImage(for: page)
+
+        // Convert to JPEG data
+        guard let jpegData = compositeImage.jpegData(compressionQuality: 0.9) else {
+            return
+        }
+
+        // Save to file
+        let filename = "\(page.positionX ?? 0),\(page.positionY ?? 0).jpeg"
+        let fileURL = exportURL.appendingPathComponent(filename)
+        try jpegData.write(to: fileURL)
+    }
+
     private func createCompositeImage(for page: Page) async throws -> UIImage {
         let rect = pageManager.pageRect
 
