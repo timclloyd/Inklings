@@ -54,9 +54,11 @@ struct PencilKitView: UIViewRepresentable {
         canvasView.addGestureRecognizer(panGesture)
         canvasView.addGestureRecognizer(pinchGesture)
 
-        toolPicker.setVisible(false, forFirstResponder: canvasView)
+        toolPicker.setVisible(true, forFirstResponder: canvasView)
         toolPicker.addObserver(canvasView)
         canvasView.becomeFirstResponder()
+
+        toolPicker.overrideUserInterfaceStyle = .unspecified
 
         return canvasView
     }

@@ -30,7 +30,8 @@ struct PageView: View {
     @State private var canRedo = false
     @State private var canGoToPreviousPage = false
     @State private var pageChangedFromMap = false
-    @State private var selectedTool: String = "pen"
+    @State private var currentTool: String = "pen_black"
+    @State private var previousTool: String?
     
     // MARK: - Initialisation
     init(modelContext: ModelContext) {
@@ -57,6 +58,11 @@ struct PageView: View {
         }
         .onChange(of: colorScheme) {
             pageManager.updateAllThumbnails()
+        }
+        .onPencilSqueeze { phase in
+            if case .ended = phase {
+                handleSqueeze()
+            }
         }
     }
     
@@ -153,14 +159,14 @@ struct PageView: View {
     private func toolButton(toolName: String, action: @escaping () -> Void, systemName: String, color: Color? = nil) -> some View {
         Button(action: {
             action()
-            selectedTool = toolName
+            currentTool = toolName
         }) {
             Image(systemName: systemName)
                 .font(.system(size: toolbarButtonSize * 0.8))
                 .padding(9)
         }
         .buttonStyle(ToolbarButtonStyle(
-            isEnabled: selectedTool == toolName,
+            isEnabled: currentTool == toolName,
             color: color,
             highlightBackground: true
         ))
@@ -312,9 +318,7 @@ struct PageView: View {
                     canvasView.drawing = drawing
                     canvasView.undoManager?.removeAllActions()
                 }
-                // Do not update canGoToPreviousPage here
             }
-            // Reset swipeProgress when the gesture ends
             withAnimation(.linear(duration: 0)) {
                 swipeProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
             }
@@ -326,7 +330,7 @@ struct PageView: View {
     private func handlePinch(_ gesture: UIPinchGestureRecognizer) {
         let scale = gesture.scale
         let distance = 0.5
-        
+
         switch gesture.state {
         case .changed:
             if scale <= distance {
@@ -365,7 +369,7 @@ struct PageView: View {
         )
     }
     
-    //MARK: - Pencil tool stuff
+    // MARK: - Tool Selection
     private func selectPen(color: Color) {
         let toolName: String
         let uiColor: UIColor
@@ -380,13 +384,13 @@ struct PageView: View {
             toolName = "pen_black"
             uiColor = UIColor.black.withAlphaComponent(0.9)
         }
-        selectedTool = toolName
+        currentTool = toolName
         let inkTool = PKInkingTool(.pen, color: uiColor, width: 3)
         toolPicker.selectedTool = inkTool
     }
 
     private func selectPencil() {
-        selectedTool = "pencil"
+        currentTool = "pencil"
         let inkTool = PKInkingTool(.pencil, color: UIColor.black.withAlphaComponent(0.5), width: 3)
         toolPicker.selectedTool = inkTool
     }
@@ -408,18 +412,18 @@ struct PageView: View {
             toolName = "marker"
             uiColor = UIColor.systemBlue.withAlphaComponent(0.45)
         }
-        selectedTool = toolName
+        currentTool = toolName
         let inkTool = PKInkingTool(.marker, color: uiColor, width: 20)
         toolPicker.selectedTool = inkTool
     }
 
     private func selectEraser() {
-        selectedTool = "eraser"
+        currentTool = "eraser"
         toolPicker.selectedTool = PKEraserTool(.vector)
     }
 
     private func selectLasso() {
-        selectedTool = "lasso"
+        currentTool = "lasso"
         toolPicker.selectedTool = PKLassoTool()
     }
 
@@ -428,6 +432,39 @@ struct PageView: View {
         toolPicker.addObserver(canvasView)
         canvasView.becomeFirstResponder()
         selectPen(color: .black)
+    }
+
+    private func handleSqueeze() {
+        if currentTool == "eraser" {
+            if let previous = previousTool {
+                (currentTool, previousTool) = (previous, currentTool)
+                selectToolByName(previous)
+            }
+        } else {
+            (currentTool, previousTool) = ("eraser", currentTool)
+            selectEraser()
+        }
+    }
+
+    private func selectToolByName(_ toolName: String) {
+        switch toolName {
+        case "pen_black":
+            selectPen(color: .black)
+        case "pen_red":
+            selectPen(color: .red)
+        case "pencil":
+            selectPencil()
+        case "marker_blue":
+            selectMarker(color: .blue)
+        case "marker_green":
+            selectMarker(color: .green)
+        case "marker_yellow":
+            selectMarker(color: .yellow)
+        case "lasso":
+            selectLasso()
+        default:
+            selectPen(color: .black)
+        }
     }
 }
 
