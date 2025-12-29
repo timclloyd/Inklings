@@ -125,20 +125,24 @@ struct PageView: View {
         .overlay(
             HStack(spacing: 4) {
                 toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
+                
+                toolButton(toolName: "pen_white", action: { selectPen(color: .white) }, systemName: "circle")
+                
+                toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9)).padding(.leading, 10)
 
-                toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
+                toolButton(toolName: "pencil", action: { selectPencil() }, systemName: "circle.dotted.circle.fill")
 
-                toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
+                toolButton(toolName: "pencil_white", action: { selectPencil(color: .white) }, systemName: "circle.dotted.circle")
 
                 toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
 
                 toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
 
-                toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
+                toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5)).padding(.trailing, 10)
 
-                toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
+                toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
 
-                toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
+                toolButton(toolName: "lasso", action: selectLasso, systemName: "lasso")
             }
         )
         .padding(.vertical, 15)
@@ -368,6 +372,9 @@ struct PageView: View {
         case .red:
             toolName = "pen_red"
             uiColor = UIColor.systemRed.withAlphaComponent(0.9)
+        case .white:
+            toolName = "pen_white"
+            uiColor = UIColor.white.withAlphaComponent(0.9)
         default:
             toolName = "pen_black"
             uiColor = UIColor.black.withAlphaComponent(0.9)
@@ -377,9 +384,22 @@ struct PageView: View {
         toolPicker.selectedTool = inkTool
     }
 
-    private func selectPencil() {
-        currentTool = "pencil"
-        let inkTool = PKInkingTool(.pencil, color: UIColor.black.withAlphaComponent(0.5), width: 3)
+    private func selectPencil(color: Color = .black) {
+        let toolName: String
+        let uiColor: UIColor
+        switch color {
+        case .black:
+            toolName = "pencil"
+            uiColor = UIColor.black.withAlphaComponent(0.5)
+        case .white:
+            toolName = "pencil_white"
+            uiColor = UIColor.white.withAlphaComponent(0.5)
+        default:
+            toolName = "pencil"
+            uiColor = UIColor.black.withAlphaComponent(0.5)
+        }
+        currentTool = toolName
+        let inkTool = PKInkingTool(.pencil, color: uiColor, width: 3)
         toolPicker.selectedTool = inkTool
     }
 
@@ -440,8 +460,12 @@ struct PageView: View {
             selectPen(color: .black)
         case "pen_red":
             selectPen(color: .red)
+        case "pen_white":
+            selectPen(color: .white)
         case "pencil":
             selectPencil()
+        case "pencil_white":
+            selectPencil(color: .white)
         case "marker_blue":
             selectMarker(color: .blue)
         case "marker_green":
