@@ -407,7 +407,7 @@ struct PageView: View {
 
     private func selectEraser() {
         currentTool = "eraser"
-        toolPicker.selectedTool = PKEraserTool(.vector)
+        toolPicker.selectedTool = PKEraserTool(.bitmap)
     }
 
     private func selectLasso() {
