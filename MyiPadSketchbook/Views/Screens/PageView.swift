@@ -74,6 +74,7 @@ struct PageView: View {
             navIndicatorView
             toolbarView
         }
+        .padding(.top, 28)
     }
     
     private var backgroundView: some View {
@@ -109,49 +110,41 @@ struct PageView: View {
     
     private var toolbarView: some View {
         VStack {
-            HStack {
-                Spacer()
-                VStack() {
+            HStack(spacing: 18) {
+                HStack(spacing: 18) {
                     pageFlipButton
-                        .padding(EdgeInsets(top: 34, leading: 0, bottom: 0, trailing: 10))
-                    
                     undoButton
-                        .padding(EdgeInsets(top: -9, leading: 0, bottom: 0, trailing: 9))
-                    
                     redoButton
-                        .padding(EdgeInsets(top: -7.5, leading: 0, bottom: 0, trailing: 9))
-                    
-                    VStack(spacing: 6) {
-                        toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
-                            .padding(EdgeInsets(top: -5, leading: 0, bottom: 0, trailing: 9))
-                        
-                        toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
-                        
-                        toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
-                        
-                        toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
-                            .padding(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 9))
-                        
-                        toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
-                            .padding(EdgeInsets(top: 1, leading: 0, bottom: 0, trailing: 9))
-                        
-                        toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
-                            .padding(EdgeInsets(top: 1, leading: 0, bottom: 0, trailing: 9))
-                        
-                        toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
-                            .padding(EdgeInsets(top: -0.5, leading: 0, bottom: 0, trailing: 9))
-                        
-                        toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
-                            .padding(EdgeInsets(top: -1, leading: 0, bottom: 0, trailing: 9))
-                    }
-                    
                 }
-                .background(Color(UIColor.systemBackground).cornerRadius(10))
-                .fixedSize()
-                .padding(.trailing, 7)
+                .padding(.leading, -6)
+
+                Spacer()
             }
+            .overlay(
+                HStack() {
+                    toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
+
+                    toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
+
+                    toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
+
+                    toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
+
+                    toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
+
+                    toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
+
+                    toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
+
+                    toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
+                }
+            )
+            .padding(.horizontal)
+            .padding(.top, -2)
+            .padding(.vertical, 7)
+            .frame(maxWidth: .infinity)
+            .background(Color(UIColor.systemGray6))
+
             Spacer()
         }
     }
@@ -189,10 +182,10 @@ struct PageView: View {
             Image(systemName: "rectangle.2.swap")
                 .rotationEffect(Angle(degrees: -90.0))
                 .font(.system(size: toolbarButtonSize))
-                .padding(9)
+                .padding(1)
                 .background(
                     Circle()
-                        .fill(Color(UIColor.systemBackground))
+                        .fill(Color(UIColor.systemGray6))
                 )
         }
         .contentShape(Circle())
@@ -204,10 +197,10 @@ struct PageView: View {
         Button(action: handleUndo) {
             Image(systemName: "arrow.uturn.left.circle")
                 .font(.system(size: toolbarButtonSize))
-                .padding(9)
+                .padding(1)
                 .background(
                     Circle()
-                        .fill(Color(UIColor.systemBackground))
+                        .fill(Color(UIColor.systemGray6))
                 )
         }
         .contentShape(Circle())
@@ -219,10 +212,10 @@ struct PageView: View {
         Button(action: handleRedo) {
             Image(systemName: "arrow.uturn.right.circle")
                 .font(.system(size: toolbarButtonSize))
-                .padding(9)
+                .padding(1)
                 .background(
                     Circle()
-                        .fill(Color(UIColor.systemBackground))
+                        .fill(Color(UIColor.systemGray6))
                 )
         }
         .contentShape(Circle())

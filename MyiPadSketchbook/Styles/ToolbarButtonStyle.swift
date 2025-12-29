@@ -26,9 +26,9 @@ struct ToolbarButtonStyle: ButtonStyle {
                 )
             )
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(highlightBackground && isEnabled
-                          ? Color(UIColor.systemGray5)
+                          ? Color(UIColor.systemGray4)
                         : Color(UIColor.systemBackground).opacity(0.01))
                     .padding(1)
             )
