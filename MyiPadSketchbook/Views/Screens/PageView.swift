@@ -128,17 +128,17 @@ struct PageView: View {
                 
                 toolButton(toolName: "pen_white", action: { selectPen(color: .white) }, systemName: "circle")
                 
-                toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9)).padding(.leading, 10)
+                toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9)).padding(.trailing, 12)
 
                 toolButton(toolName: "pencil", action: { selectPencil() }, systemName: "circle.dotted.circle.fill")
 
-                toolButton(toolName: "pencil_white", action: { selectPencil(color: .white) }, systemName: "circle.dotted.circle")
+                toolButton(toolName: "pencil_white", action: { selectPencil(color: .white) }, systemName: "circle.dotted.circle").padding(.trailing, 12)
 
                 toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
 
                 toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
 
-                toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5)).padding(.trailing, 10)
+                toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5)).padding(.trailing, 12)
 
                 toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
 
