@@ -42,10 +42,7 @@ struct PageView: View {
     var body: some View {
         ZStack {
             if !showMapView {
-                ZStack(alignment: .bottom) {
-                    mainView
-                    coordinateLabel
-                }
+                mainView
             } else {
                 mapView
             }
@@ -68,13 +65,19 @@ struct PageView: View {
     
     // MARK: - Subviews
     private var mainView: some View {
-        ZStack {
-            backgroundView
-            drawingView
-            navIndicatorView
-            toolbarView
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                toolbarView
+                    .padding(.top, geometry.safeAreaInsets.top)
+
+                ZStack {
+                    backgroundView
+                    drawingView
+                    navIndicatorView
+                }
+            }
         }
-        .padding(.top, 28)
+        .ignoresSafeArea()
     }
     
     private var backgroundView: some View {
@@ -82,9 +85,8 @@ struct PageView: View {
                              adjacentPages: getAdjacentPages(),
                              swipeProgress: swipeProgress,
                              dragState: dragState)
-            .ignoresSafeArea()
     }
-    
+
     private var drawingView: some View {
         PencilKitView(canvasView: $canvasView,
                       toolPicker: $toolPicker,
@@ -93,7 +95,6 @@ struct PageView: View {
                       pageRect: pageManager.pageRect,
                       onSwipe: handleSwipe,
                       onPinch: handlePinch)
-            .ignoresSafeArea()
     }
     
     private var navIndicatorView: some View {
@@ -102,51 +103,47 @@ struct PageView: View {
             progress: swipeProgress.progress,
             size: pageManager.pageRect.size,
             adjacentPages: getAdjacentPages(),
-            swipeProgress: swipeProgress  // Pass the swipeProgress
+            swipeProgress: swipeProgress
         )
         .allowsHitTesting(false)
-        .ignoresSafeArea()
     }
     
     private var toolbarView: some View {
-        VStack {
+        HStack() {
             HStack(spacing: 18) {
-                HStack(spacing: 18) {
-                    pageFlipButton
-                    undoButton
-                    redoButton
-                }
-                .padding(.leading, -6)
-
-                Spacer()
+                pageFlipButton
+                undoButton
+                redoButton
             }
-            .overlay(
-                HStack() {
-                    toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
-
-                    toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
-
-                    toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
-
-                    toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
-
-                    toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
-
-                    toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
-
-                    toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
-
-                    toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
-                }
-            )
-            .padding(.horizontal)
-            .padding(.top, -2)
-            .padding(.vertical, 7)
-            .frame(maxWidth: .infinity)
-            .background(Color(UIColor.systemGray6))
+            .padding(.leading, 10)
 
             Spacer()
+
+            coordinateLabel
+                .padding(.trailing, 10)
         }
+        .overlay(
+            HStack(spacing: 4) {
+                toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
+
+                toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
+
+                toolButton(toolName: "pencil", action: selectPencil, systemName: "circle.lefthalf.striped.horizontal.inverse")
+
+                toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
+
+                toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
+
+                toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
+
+                toolButton(toolName: "eraser", action: selectEraser, systemName: "circle.slash.fill")
+
+                toolButton(toolName: "lasso", action: selectLasso, systemName: "circle.dashed")
+            }
+        )
+        .padding(.vertical, 15)
+        .frame(maxWidth: .infinity)
+        .background(Color(UIColor.systemGray6))
     }
     
     private func toolButton(toolName: String, action: @escaping () -> Void, systemName: String, color: Color? = nil) -> some View {
@@ -170,10 +167,8 @@ struct PageView: View {
             .font(.system(size: 14))
             .padding(2)
             .padding(.horizontal, 4)
-            .foregroundColor(Color.primary.opacity(0.87))
-            .background(Color(.systemGray5))
+            .foregroundColor(Color.primary.opacity(0.4))
             .cornerRadius(7)
-            .padding(.bottom, 18)
     }
     
     // MARK: - Buttons
