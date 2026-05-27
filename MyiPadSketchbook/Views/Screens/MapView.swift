@@ -25,11 +25,12 @@ struct MapView: View {
     @State private var draggedPageOffset: CGSize = .zero
     @GestureState private var dragGestureState: CGSize = .zero
     @State private var contentOffset: CGPoint = .zero
+    @State private var scrollTarget: CGPoint?
+    @State private var scrollTargetAnimated: Bool = true
     
     @State private var isRearranging: Bool = false
     @State private var showNotebookView: Bool = false
     @GestureState private var dragLocation: CGPoint = .zero
-    @State private var scrollViewProxy: ScrollViewProxy?
     
     // MARK: - Constants
     private let spacing: CGFloat = 6
@@ -70,6 +71,25 @@ struct MapView: View {
         let pageCountY = pagePositions.maxY - pagePositions.minY + 1 + (2 * mapViewEdgePadding)
         return CGFloat(pageCountY) * (thumbnailSize.height + spacing) + spacing
     }
+
+    private var mapGridPositions: [MapGridPosition] {
+        let xRange = (pagePositions.minX - mapViewEdgePadding)...(pagePositions.maxX + mapViewEdgePadding)
+        let yRange = (pagePositions.minY - mapViewEdgePadding)...(pagePositions.maxY + mapViewEdgePadding)
+
+        return xRange.flatMap { x in
+            yRange.map { y in MapGridPosition(x: x, y: y) }
+        }
+    }
+
+    private var mapContentRevision: String {
+        let pageRevision = pages
+            .map { page in
+                "\(page.id?.uuidString ?? ""):\(page.positionX ?? 0):\(page.positionY ?? 0):\(page.thumbnailData?.count ?? 0)"
+            }
+            .joined(separator: "|")
+
+        return "\(pageRevision)|\(isRearranging)|\(colorScheme)"
+    }
     
     // MARK: - Body
     var body: some View {
@@ -89,15 +109,14 @@ struct MapView: View {
                         )
                             .transition(.opacity)
                     } else {
-                        ScrollViewReader { proxy in
-                            ScrollView([.horizontal, .vertical], showsIndicators: false) {
-                                thumbnailsView(in: geometry)
-                            }
-                            .gesture(panGesture)
-                            .onAppear {
-                                self.scrollViewProxy = proxy
-                                self.centreOnCurrentPage()
-                            }
+                        MapScrollView(
+                            contentSize: CGSize(width: contentWidth, height: contentHeight),
+                            contentRevision: mapContentRevision,
+                            contentOffset: $contentOffset,
+                            scrollTarget: $scrollTarget,
+                            scrollTargetAnimated: $scrollTargetAnimated
+                        ) {
+                            thumbnailsView(in: geometry)
                         }
                         .edgesIgnoringSafeArea(.all)
                     }
@@ -110,6 +129,11 @@ struct MapView: View {
                     Spacer()
                 }
                 .zIndex(1)
+
+                if !showNotebookView {
+                    notebookMiniMap(in: geometry)
+                        .zIndex(2)
+                }
             }
         }
         .onAppear(perform: centreOnCurrentPage)
@@ -126,6 +150,40 @@ struct MapView: View {
             }
         }
         .frame(width: contentWidth, height: contentHeight)
+    }
+
+    private func notebookMiniMap(in geometry: GeometryProxy) -> some View {
+        VStack {
+            Spacer()
+
+            HStack {
+                NotebookMapPreview(
+                    pages: pages,
+                    colorScheme: colorScheme,
+                    edgePadding: mapViewEdgePadding,
+                    innerPadding: 10,
+                    pageSpacing: 2,
+                    viewport: miniMapViewport(for: geometry.size),
+                    onContentPointChanged: { contentPoint in
+                        scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, animated: false)
+                    },
+                    onContentPointSelected: { contentPoint in
+                        scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, animated: true)
+                    }
+                )
+                .padding(8)
+                .frame(width: geometry.size.width * 0.5, height: geometry.size.height * 0.2)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(UIColor.systemBackground).opacity(0.92))
+                )
+
+                Spacer()
+            }
+            .padding(.leading, 12)
+            .padding(.bottom, geometry.safeAreaInsets.bottom + 12)
+        }
+        .allowsHitTesting(!isRearranging)
     }
     
     private var toolbarView: some View {
@@ -354,6 +412,12 @@ struct MapView: View {
         let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0) + mapViewEdgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
         return CGPoint(x: x, y: y)
     }
+
+    private func thumbnailPosition(for position: MapGridPosition) -> CGPoint {
+        let x = CGFloat(position.x - pagePositions.minX + mapViewEdgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
+        let y = CGFloat(pagePositions.maxY - position.y + mapViewEdgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
+        return CGPoint(x: x, y: y)
+    }
     
     private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
         let xMovement = Int(round(translation.width / (thumbnailSize.width + spacing)))
@@ -372,16 +436,58 @@ struct MapView: View {
         
         return isWithinBounds && isNotOccupied
     }
+
+    private func miniMapViewport(for visibleSize: CGSize) -> CGRect {
+        let width = min(1, visibleSize.width / max(1, contentWidth))
+        let height = min(1, visibleSize.height / max(1, contentHeight))
+        let x = min(max(0, contentOffset.x / max(1, contentWidth)), max(0, 1 - width))
+        let y = min(max(0, contentOffset.y / max(1, contentHeight)), max(0, 1 - height))
+
+        return CGRect(x: x, y: y, width: width, height: height)
+    }
+
+    private func scrollToGridPosition(_ position: (x: Int, y: Int), viewportSize: CGSize, animated: Bool) {
+        let targetPosition = thumbnailPosition(for: MapGridPosition(x: position.x, y: position.y))
+        let unclampedOffset = CGPoint(
+            x: targetPosition.x - viewportSize.width / 2,
+            y: targetPosition.y - viewportSize.height / 2
+        )
+
+        scrollTargetAnimated = animated
+        scrollTarget = clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
+    }
+
+    private func scrollToMiniMapPoint(_ point: CGPoint, viewportSize: CGSize, animated: Bool) {
+        let unclampedOffset = CGPoint(
+            x: point.x * contentWidth - viewportSize.width / 2,
+            y: point.y * contentHeight - viewportSize.height / 2
+        )
+
+        scrollTargetAnimated = animated
+        scrollTarget = clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
+    }
     
     private func centreOnCurrentPage() {
-        guard let currentPage = pageManager.getCurrentPage(),
-              let scrollViewProxy = scrollViewProxy else { return }
-        
-        let id = "page_\(currentPage.id?.uuidString ?? "")"
-        
-        withAnimation(nil) {
-            scrollViewProxy.scrollTo(id, anchor: .center)
-        }
+        guard let currentPage = pageManager.getCurrentPage() else { return }
+
+        let visibleSize = UIScreen.main.bounds.size
+        let targetPosition = thumbnailPosition(for: MapGridPosition(
+            x: currentPage.positionX ?? 0,
+            y: currentPage.positionY ?? 0
+        ))
+        let unclampedOffset = CGPoint(
+            x: targetPosition.x - visibleSize.width / 2,
+            y: targetPosition.y - visibleSize.height / 2
+        )
+
+        scrollTarget = clampedContentOffset(unclampedOffset, viewportSize: visibleSize)
+    }
+
+    private func clampedContentOffset(_ offset: CGPoint, viewportSize: CGSize) -> CGPoint {
+        CGPoint(
+            x: min(max(0, offset.x), max(0, contentWidth - viewportSize.width)),
+            y: min(max(0, offset.y), max(0, contentHeight - viewportSize.height))
+        )
     }
     
     private func getOverlappingPages(for page: Page) -> [Page] {
@@ -492,5 +598,122 @@ struct MapView: View {
         }
         
         func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
+    }
+}
+
+private struct MapGridPosition: Identifiable, Hashable {
+    let x: Int
+    let y: Int
+
+    var id: String {
+        "\(x)_\(y)"
+    }
+}
+
+private struct MapScrollView<Content: View>: UIViewRepresentable {
+    let contentSize: CGSize
+    let contentRevision: String
+    @Binding var contentOffset: CGPoint
+    @Binding var scrollTarget: CGPoint?
+    @Binding var scrollTargetAnimated: Bool
+    let content: Content
+
+    init(
+        contentSize: CGSize,
+        contentRevision: String,
+        contentOffset: Binding<CGPoint>,
+        scrollTarget: Binding<CGPoint?>,
+        scrollTargetAnimated: Binding<Bool>,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.contentSize = contentSize
+        self.contentRevision = contentRevision
+        _contentOffset = contentOffset
+        _scrollTarget = scrollTarget
+        _scrollTargetAnimated = scrollTargetAnimated
+        self.content = content()
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(contentOffset: $contentOffset, scrollTarget: $scrollTarget)
+    }
+
+    func makeUIView(context: Context) -> UIScrollView {
+        let scrollView = UIScrollView()
+        scrollView.delegate = context.coordinator
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.bounces = true
+        scrollView.backgroundColor = .clear
+
+        let hostingController = UIHostingController(rootView: content)
+        hostingController.view.backgroundColor = .clear
+        hostingController.view.frame = CGRect(origin: .zero, size: contentSize)
+        scrollView.addSubview(hostingController.view)
+        scrollView.contentSize = contentSize
+
+        context.coordinator.hostingController = hostingController
+        context.coordinator.contentRevision = contentRevision
+        context.coordinator.contentSize = contentSize
+
+        return scrollView
+    }
+
+    func updateUIView(_ scrollView: UIScrollView, context: Context) {
+        if context.coordinator.contentRevision != contentRevision {
+            context.coordinator.hostingController?.rootView = content
+            context.coordinator.contentRevision = contentRevision
+        }
+
+        if context.coordinator.contentSize != contentSize {
+            context.coordinator.hostingController?.view.frame = CGRect(origin: .zero, size: contentSize)
+            scrollView.contentSize = contentSize
+            context.coordinator.contentSize = contentSize
+        }
+
+        if let scrollTarget {
+            let clampedTarget = CGPoint(
+                x: min(max(0, scrollTarget.x), max(0, contentSize.width - scrollView.bounds.width)),
+                y: min(max(0, scrollTarget.y), max(0, contentSize.height - scrollView.bounds.height))
+            )
+
+            if abs(scrollView.contentOffset.x - clampedTarget.x) > 0.5 ||
+                abs(scrollView.contentOffset.y - clampedTarget.y) > 0.5 {
+                scrollView.setContentOffset(clampedTarget, animated: scrollTargetAnimated)
+            }
+
+            DispatchQueue.main.async {
+                self.contentOffset = clampedTarget
+                self.scrollTarget = nil
+            }
+        }
+    }
+
+    final class Coordinator: NSObject, UIScrollViewDelegate {
+        var hostingController: UIHostingController<Content>?
+        var contentRevision: String = ""
+        var contentSize: CGSize = .zero
+        var contentOffset: Binding<CGPoint>
+        var scrollTarget: Binding<CGPoint?>
+        private var lastPublishedOffset: CGPoint = .zero
+        private var lastPublishTime: CFTimeInterval = 0
+
+        init(contentOffset: Binding<CGPoint>, scrollTarget: Binding<CGPoint?>) {
+            self.contentOffset = contentOffset
+            self.scrollTarget = scrollTarget
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            let now = CACurrentMediaTime()
+            let offset = scrollView.contentOffset
+            let movedEnough = abs(offset.x - lastPublishedOffset.x) > 4 || abs(offset.y - lastPublishedOffset.y) > 4
+            let enoughTimePassed = now - lastPublishTime > 1.0 / 15.0
+
+            guard movedEnough && enoughTimePassed else { return }
+
+            lastPublishedOffset = offset
+            lastPublishTime = now
+            contentOffset.wrappedValue = offset
+        }
     }
 }
