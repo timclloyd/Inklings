@@ -34,6 +34,7 @@ struct MapView: View {
     // MARK: - Constants
     private let spacing: CGFloat = 6
     private let mapViewEdgePadding = 4
+    private let toolbarHeight: CGFloat = 64
     
     // MARK: - Computed Properties
     private var pages: [Page] {
@@ -78,7 +79,7 @@ struct MapView: View {
                 
                 Group {
                     if showNotebookView {
-                        notebookGridView
+                        notebookGridView(in: geometry)
                             .transition(.opacity)
                     } else {
                         ScrollViewReader { proxy in
@@ -196,7 +197,7 @@ struct MapView: View {
         .padding(.leading, 10)
     }
 
-    private var notebookGridView: some View {
+    private func notebookGridView(in geometry: GeometryProxy) -> some View {
         ScrollView {
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 18),
@@ -206,7 +207,6 @@ struct MapView: View {
                     NotebookTile(
                         notebook: notebook,
                         pages: pageManager.pages(in: notebook),
-                        isSelected: notebook.id == pageManager.currentNotebookID,
                         colorScheme: colorScheme
                     )
                     .onTapGesture {
@@ -216,7 +216,7 @@ struct MapView: View {
                 }
             }
             .padding(.horizontal, 18)
-            .padding(.top, 24)
+            .padding(.top, geometry.safeAreaInsets.top + toolbarHeight + 24)
             .padding(.bottom, 36)
         }
     }
@@ -456,7 +456,6 @@ struct MapView: View {
     struct NotebookTile: View {
         let notebook: Notebook
         let pages: [Page]
-        let isSelected: Bool
         let colorScheme: ColorScheme
 
         private let cornerRadius: CGFloat = 8
@@ -476,15 +475,11 @@ struct MapView: View {
         }
 
         private var fillColor: Color {
-            colorScheme == .dark ? Color(.systemGray5) : .white
+            colorScheme == .dark ? Color(.systemGray6) : .white
         }
 
         private var pageColor: Color {
             colorScheme == .dark ? Color(.systemGray2) : Color(.systemGray3)
-        }
-
-        private var selectedColor: Color {
-            colorScheme == .dark ? .white.opacity(0.7) : .primary.opacity(0.65)
         }
 
         var body: some View {
@@ -494,13 +489,9 @@ struct MapView: View {
                         .fill(fillColor)
 
                     pageLayout(in: geometry.size)
-
-                    RoundedRectangle(cornerRadius: cornerRadius)
-                        .stroke(isSelected ? selectedColor : Color.clear, lineWidth: 3)
                 }
             }
             .aspectRatio(1, contentMode: .fit)
-            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.12), radius: 8, x: 0, y: 2)
         }
 
         private func pageLayout(in size: CGSize) -> some View {
@@ -508,23 +499,25 @@ struct MapView: View {
             let rows = max(1, pagePositions.maxY - pagePositions.minY + 1)
             let availableWidth = max(1, size.width - (innerPadding * 2))
             let availableHeight = max(1, size.height - (innerPadding * 2))
-            let cellSize = min(
-                (availableWidth - CGFloat(max(0, columns - 1)) * pageSpacing) / CGFloat(columns),
-                (availableHeight - CGFloat(max(0, rows - 1)) * pageSpacing) / CGFloat(rows)
-            )
-            let contentWidth = CGFloat(columns) * cellSize + CGFloat(max(0, columns - 1)) * pageSpacing
-            let contentHeight = CGFloat(rows) * cellSize + CGFloat(max(0, rows - 1)) * pageSpacing
+            let pageAspectRatio = Page.legacyIPadPro11PageSize.width / Page.legacyIPadPro11PageSize.height
+            let maxPageWidth = (availableWidth - CGFloat(max(0, columns - 1)) * pageSpacing) / CGFloat(columns)
+            let maxPageHeight = (availableHeight - CGFloat(max(0, rows - 1)) * pageSpacing) / CGFloat(rows)
+            let pageWidth = min(maxPageWidth, maxPageHeight * pageAspectRatio)
+            let pageHeight = pageWidth / pageAspectRatio
+            let pageCornerRadius = min(2, max(0.75, pageWidth * 0.08))
+            let contentWidth = CGFloat(columns) * pageWidth + CGFloat(max(0, columns - 1)) * pageSpacing
+            let contentHeight = CGFloat(rows) * pageHeight + CGFloat(max(0, rows - 1)) * pageSpacing
             let originX = (size.width - contentWidth) / 2
             let originY = (size.height - contentHeight) / 2
 
             return ZStack(alignment: .topLeading) {
                 ForEach(pages) { page in
-                    RoundedRectangle(cornerRadius: 2)
+                    RoundedRectangle(cornerRadius: pageCornerRadius)
                         .fill(pageColor)
-                        .frame(width: cellSize, height: cellSize)
+                        .frame(width: pageWidth, height: pageHeight)
                         .position(
-                            x: originX + CGFloat((page.positionX ?? 0) - pagePositions.minX) * (cellSize + pageSpacing) + cellSize / 2,
-                            y: originY + CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (cellSize + pageSpacing) + cellSize / 2
+                            x: originX + CGFloat((page.positionX ?? 0) - pagePositions.minX) * (pageWidth + pageSpacing) + pageWidth / 2,
+                            y: originY + CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (pageHeight + pageSpacing) + pageHeight / 2
                         )
                 }
             }
