@@ -70,10 +70,18 @@ struct PageView: View {
                 toolbarView
                     .padding(.top, geometry.safeAreaInsets.top)
 
-                ZStack {
-                    backgroundView
-                    drawingView
-                    navIndicatorView
+                GeometryReader { contentGeometry in
+                    ZStack {
+                        backgroundView
+                        drawingView
+                        navIndicatorView
+                    }
+                    .onAppear {
+                        pageManager.updatePageSize(contentGeometry.size)
+                    }
+                    .onChange(of: contentGeometry.size) { _, newSize in
+                        pageManager.updatePageSize(newSize)
+                    }
                 }
             }
         }

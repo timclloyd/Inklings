@@ -1,1 +1,3 @@
 Scripts/all-app-code.swift
+*.xcuserstate
+xcuserdata/

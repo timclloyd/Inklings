@@ -16,7 +16,7 @@ class PageManager: ObservableObject {
     @Published var currentPageID: UUID?
     @Published var previousPageID: UUID?
     @Published var pages: [Page] = []
-    let pageRect: CGRect
+    @Published private(set) var pageRect: CGRect
     
     private var modelContext: ModelContext
     
@@ -109,6 +109,18 @@ class PageManager: ObservableObject {
     func getCurrentPage() -> Page? {
         guard let currentPageID = currentPageID else { return nil }
         return pages.first { $0.id == currentPageID }
+    }
+
+    func updatePageSize(_ size: CGSize) {
+        guard size.width > 0, size.height > 0 else { return }
+
+        let currentSize = pageRect.size
+        guard abs(currentSize.width - size.width) > 0.5 || abs(currentSize.height - size.height) > 0.5 else {
+            return
+        }
+
+        pageRect = CGRect(origin: .zero, size: size)
+        updateAllThumbnails()
     }
     
     func updatePagePosition(_ page: Page) {
