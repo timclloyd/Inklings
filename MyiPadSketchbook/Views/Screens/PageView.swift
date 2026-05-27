@@ -15,7 +15,6 @@ struct PageView: View {
     // MARK: - Environment
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) private var colorScheme
-    @Query private var pages: [Page]
     
     // MARK: - State Objects
     @StateObject private var pageManager: PageManager
@@ -232,7 +231,6 @@ struct PageView: View {
     
     private var mapView: some View {
         MapView(pageManager: pageManager,
-                pages: pages,
                 onPageSelected: handlePageSelection,
                 showMap: $showMapView,
                 onCloseMap: { showMapView = false })

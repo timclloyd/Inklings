@@ -11,6 +11,21 @@ import PencilKit
 import SwiftData
 
 @Model
+final class Notebook {
+    var id: UUID?
+    var createdAt: Date?
+    var name: String?
+    var lastSelectedPageID: UUID?
+
+    init(id: UUID = UUID(), createdAt: Date = Date(), name: String? = nil) {
+        self.id = id
+        self.createdAt = createdAt
+        self.name = name
+        self.lastSelectedPageID = nil
+    }
+}
+
+@Model
 final class Page {
     static let legacyIPadPro11PageSize = CGSize(width: 834, height: 1194)
 
@@ -21,14 +36,16 @@ final class Page {
     var thumbnailData: Data?
     var pageWidth: Double?
     var pageHeight: Double?
+    var notebookID: UUID?
     
-    init(id: UUID = UUID(), drawingData: Data = PKDrawing().dataRepresentation(), positionX: Int = 0, positionY: Int = 0, pageSize: CGSize = Page.legacyIPadPro11PageSize) {
+    init(id: UUID = UUID(), drawingData: Data = PKDrawing().dataRepresentation(), positionX: Int = 0, positionY: Int = 0, pageSize: CGSize = Page.legacyIPadPro11PageSize, notebookID: UUID? = nil) {
         self.id = id
         self.drawingData = drawingData
         self.positionX = positionX
         self.positionY = positionY
         self.pageWidth = pageSize.width
         self.pageHeight = pageSize.height
+        self.notebookID = notebookID
     }
 
     var pageSize: CGSize {

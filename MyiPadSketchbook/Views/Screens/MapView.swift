@@ -14,7 +14,6 @@ import UIKit
 struct MapView: View {
     // MARK: - Properties
     @ObservedObject var pageManager: PageManager
-    let pages: [Page]
     @Environment(\.colorScheme) var colorScheme
     var onPageSelected: (Page) -> Void
     @Binding var showMap: Bool
@@ -28,6 +27,7 @@ struct MapView: View {
     @State private var contentOffset: CGPoint = .zero
     
     @State private var isRearranging: Bool = false
+    @State private var showNotebookView: Bool = false
     @GestureState private var dragLocation: CGPoint = .zero
     @State private var scrollViewProxy: ScrollViewProxy?
     
@@ -36,6 +36,10 @@ struct MapView: View {
     private let mapViewEdgePadding = 4
     
     // MARK: - Computed Properties
+    private var pages: [Page] {
+        pageManager.pages
+    }
+
     private var thumbnailSize: CGSize {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
         return CGSize(width: 120, height: 120 / aspectRatio)
@@ -72,17 +76,25 @@ struct MapView: View {
             ZStack {
                 backgroundColor.edgesIgnoringSafeArea(.all)
                 
-                ScrollViewReader { proxy in
-                    ScrollView([.horizontal, .vertical], showsIndicators: false) {
-                        thumbnailsView(in: geometry)
-                    }
-                    .gesture(panGesture)
-                    .onAppear {
-                        self.scrollViewProxy = proxy
-                        self.centreOnCurrentPage()
+                Group {
+                    if showNotebookView {
+                        notebookGridView
+                            .transition(.opacity)
+                    } else {
+                        ScrollViewReader { proxy in
+                            ScrollView([.horizontal, .vertical], showsIndicators: false) {
+                                thumbnailsView(in: geometry)
+                            }
+                            .gesture(panGesture)
+                            .simultaneousGesture(notebookPinchGesture)
+                            .onAppear {
+                                self.scrollViewProxy = proxy
+                                self.centreOnCurrentPage()
+                            }
+                        }
+                        .edgesIgnoringSafeArea(.all)
                     }
                 }
-                .edgesIgnoringSafeArea(.all)
                 .zIndex(0)
                 
                 VStack {
@@ -113,8 +125,12 @@ struct MapView: View {
     
     private var toolbarView: some View {
         VStack() {
-            rearrangeButton
-            ShareButton(pageManager: pageManager)
+            if showNotebookView {
+                addNotebookButton
+            } else {
+                rearrangeButton
+                ShareButton(pageManager: pageManager)
+            }
         }
         .background(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
         .cornerRadius(14)
@@ -138,6 +154,50 @@ struct MapView: View {
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
         .padding(EdgeInsets(top: 13, leading: 9, bottom: 10, trailing: 9))
+    }
+
+    private var addNotebookButton: some View {
+        Button(action: {
+            _ = pageManager.createNotebook()
+            showNotebookView = false
+        }) {
+            Image(systemName: "plus.circle")
+                .font(.system(size: toolbarButtonSize * 1.15))
+                .foregroundColor(Color.primary)
+                .padding(9)
+                .background(
+                    Circle()
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                )
+        }
+        .contentShape(Circle())
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+        .padding(EdgeInsets(top: 13, leading: 9, bottom: 10, trailing: 9))
+    }
+
+    private var notebookGridView: some View {
+        ScrollView {
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 18),
+                GridItem(.flexible(), spacing: 18)
+            ], spacing: 18) {
+                ForEach(pageManager.notebooks) { notebook in
+                    NotebookTile(
+                        notebook: notebook,
+                        pages: pageManager.pages(in: notebook),
+                        isSelected: notebook.id == pageManager.currentNotebookID,
+                        colorScheme: colorScheme
+                    )
+                    .onTapGesture {
+                        pageManager.switchToNotebook(notebook)
+                        showNotebookView = false
+                    }
+                }
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 24)
+            .padding(.bottom, 36)
+        }
     }
     
     // MARK: - Thumbnail View
@@ -216,6 +276,17 @@ struct MapView: View {
                 if !isRearranging {
                     contentOffset.x -= value.translation.width
                     contentOffset.y -= value.translation.height
+                }
+            }
+    }
+
+    private var notebookPinchGesture: some Gesture {
+        MagnificationGesture()
+            .onEnded { scale in
+                guard !isRearranging, scale < 0.75 else { return }
+
+                withAnimation(.easeInOut(duration: 0.16)) {
+                    showNotebookView = true
                 }
             }
     }
@@ -368,6 +439,85 @@ struct MapView: View {
                 .background(Color(.systemGray5))
                 .cornerRadius(5)
                 .padding(.bottom, 3)
+        }
+    }
+
+    // MARK: - NotebookTile
+    struct NotebookTile: View {
+        let notebook: Notebook
+        let pages: [Page]
+        let isSelected: Bool
+        let colorScheme: ColorScheme
+
+        private let cornerRadius: CGFloat = 8
+        private let innerPadding: CGFloat = 18
+        private let pageSpacing: CGFloat = 3
+
+        private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
+            let xPositions = pages.map { $0.positionX ?? 0 }
+            let yPositions = pages.map { $0.positionY ?? 0 }
+
+            return (
+                minX: xPositions.min() ?? 0,
+                maxX: xPositions.max() ?? 0,
+                minY: yPositions.min() ?? 0,
+                maxY: yPositions.max() ?? 0
+            )
+        }
+
+        private var fillColor: Color {
+            colorScheme == .dark ? Color(.systemGray5) : .white
+        }
+
+        private var pageColor: Color {
+            colorScheme == .dark ? Color(.systemGray2) : Color(.systemGray3)
+        }
+
+        private var selectedColor: Color {
+            colorScheme == .dark ? .white.opacity(0.7) : .primary.opacity(0.65)
+        }
+
+        var body: some View {
+            GeometryReader { geometry in
+                ZStack {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(fillColor)
+
+                    pageLayout(in: geometry.size)
+
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(isSelected ? selectedColor : Color.clear, lineWidth: 3)
+                }
+            }
+            .aspectRatio(1, contentMode: .fit)
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.3 : 0.12), radius: 8, x: 0, y: 2)
+        }
+
+        private func pageLayout(in size: CGSize) -> some View {
+            let columns = max(1, pagePositions.maxX - pagePositions.minX + 1)
+            let rows = max(1, pagePositions.maxY - pagePositions.minY + 1)
+            let availableWidth = max(1, size.width - (innerPadding * 2))
+            let availableHeight = max(1, size.height - (innerPadding * 2))
+            let cellSize = min(
+                (availableWidth - CGFloat(max(0, columns - 1)) * pageSpacing) / CGFloat(columns),
+                (availableHeight - CGFloat(max(0, rows - 1)) * pageSpacing) / CGFloat(rows)
+            )
+            let contentWidth = CGFloat(columns) * cellSize + CGFloat(max(0, columns - 1)) * pageSpacing
+            let contentHeight = CGFloat(rows) * cellSize + CGFloat(max(0, rows - 1)) * pageSpacing
+            let originX = (size.width - contentWidth) / 2
+            let originY = (size.height - contentHeight) / 2
+
+            return ZStack(alignment: .topLeading) {
+                ForEach(pages) { page in
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(pageColor)
+                        .frame(width: cellSize, height: cellSize)
+                        .position(
+                            x: originX + CGFloat((page.positionX ?? 0) - pagePositions.minX) * (cellSize + pageSpacing) + cellSize / 2,
+                            y: originY + CGFloat(pagePositions.maxY - (page.positionY ?? 0)) * (cellSize + pageSpacing) + cellSize / 2
+                        )
+                }
+            }
         }
     }
     
