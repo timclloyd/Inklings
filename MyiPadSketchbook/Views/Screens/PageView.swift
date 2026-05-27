@@ -90,7 +90,7 @@ struct PageView: View {
     private var drawingView: some View {
         PencilKitView(canvasView: $canvasView,
                       toolPicker: $toolPicker,
-                      drawing: pageManager.getCurrentPage()?.drawingData ?? Data(),
+                      drawing: pageManager.drawingForDisplay(for: pageManager.getCurrentPage()),
                       onDrawingChange: handleDrawingChange,
                       pageRect: pageManager.pageRect,
                       onSwipe: handleSwipe,
@@ -253,10 +253,8 @@ struct PageView: View {
         canvasView.undoManager?.removeAllActions()
         
         if let previousPage = pageManager.goToPreviousPage() {
-            if let drawing = try? PKDrawing(data: previousPage.drawingData!) {
-                canvasView.drawing = drawing
-                updateUndoRedoState()
-            }
+            canvasView.drawing = pageManager.drawingForDisplay(for: previousPage)
+            updateUndoRedoState()
             updateCanGoToPreviousPage()
         }
     }
@@ -280,10 +278,8 @@ struct PageView: View {
         canvasView.undoManager?.removeAllActions()
         
         pageManager.setCurrentPage(selectedPage, updatePrevious: true)
-        if let drawing = try? PKDrawing(data: selectedPage.drawingData!) {
-            canvasView.drawing = drawing
-            updateUndoRedoState()
-        }
+        canvasView.drawing = pageManager.drawingForDisplay(for: selectedPage)
+        updateUndoRedoState()
         updateCanGoToPreviousPage()
         showMapView = false
     }
@@ -305,11 +301,8 @@ struct PageView: View {
         case .ended:
             if progress >= 1.0 {
                 pageManager.addPage(translation: CGSize(width: translation.x, height: translation.y))
-                if let currentPage = pageManager.getCurrentPage(),
-                   let drawing = try? PKDrawing(data: currentPage.drawingData!) {
-                    canvasView.drawing = drawing
-                    canvasView.undoManager?.removeAllActions()
-                }
+                canvasView.drawing = pageManager.drawingForDisplay(for: pageManager.getCurrentPage())
+                canvasView.undoManager?.removeAllActions()
             }
             withAnimation(.linear(duration: 0)) {
                 swipeProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)

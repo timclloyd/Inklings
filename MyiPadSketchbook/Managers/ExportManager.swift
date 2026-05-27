@@ -171,11 +171,9 @@ struct ExportPageView: View {
             .environment(\.colorScheme, colorScheme)
             
             // Drawing content
-            if let drawing = try? PKDrawing(data: page.drawingData ?? Data()) {
-                Image(uiImage: drawing.image(from: pageManager.pageRect, scale: UIScreen.main.scale))
-                    .resizable()
-                    .scaledToFit()
-            }
+            Image(uiImage: pageManager.drawingForDisplay(for: page).image(from: pageManager.pageRect, scale: UIScreen.main.scale))
+                .resizable()
+                .scaledToFit()
             
             // Coordinate label
             Text("\(page.positionX ?? 0), \(page.positionY ?? 0)")
@@ -255,4 +253,3 @@ class CanvasFileGenerator {
         return String((0..<16).map { _ in characters.randomElement()! })
     }
 }
-

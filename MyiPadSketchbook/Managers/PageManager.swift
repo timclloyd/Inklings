@@ -28,6 +28,10 @@ class PageManager: ObservableObject {
         
         let descriptor = FetchDescriptor<Page>()
         self.pages = (try? modelContext.fetch(descriptor)) ?? []
+        if migratePagesMissingPageSize() {
+            updateAllThumbnails()
+            try? modelContext.save()
+        }
         
         // Load saved position
         let savedX = UserDefaults.standard.integer(forKey: "CurrentPageX")
@@ -45,7 +49,7 @@ class PageManager: ObservableObject {
     
     // MARK: - Page handling
     func createPage(position: (x: Int, y: Int)) -> Page {
-        let newPage = Page(positionX: position.x, positionY: position.y)
+        let newPage = Page(positionX: position.x, positionY: position.y, pageSize: pageRect.size)
         modelContext.insert(newPage)
         pages.append(newPage)
         updateThumbnail(for: newPage)
@@ -121,12 +125,34 @@ class PageManager: ObservableObject {
     func updateDrawing(_ drawing: PKDrawing) {
         guard let currentPage = getCurrentPage() else { return }
         currentPage.drawingData = drawing.dataRepresentation()
+        currentPage.setPageSize(pageRect.size)
         updateThumbnail(for: currentPage)
+    }
+
+    func drawingForDisplay(for page: Page?) -> PKDrawing {
+        guard let page,
+              let drawingData = page.drawingData,
+              let drawing = try? PKDrawing(data: drawingData) else {
+            return PKDrawing()
+        }
+
+        return drawing.scaled(from: page.pageSize, to: pageRect.size)
+    }
+
+    private func migratePagesMissingPageSize() -> Bool {
+        var didMigrate = false
+
+        for page in pages where page.pageWidth == nil || page.pageHeight == nil {
+            page.setPageSize(Page.legacyIPadPro11PageSize)
+            didMigrate = true
+        }
+
+        return didMigrate
     }
     
     // MARK: - Thumbnail handling
     func updateThumbnail(for page: Page) {
-        guard let drawing = try? PKDrawing(data: page.drawingData!) else { return }
+        let drawing = drawingForDisplay(for: page)
         
         // Reduce scale for efficiency
         let scale = UIScreen.main.scale * 0.1
@@ -154,5 +180,28 @@ class PageManager: ObservableObject {
         for page in pages {
             updateThumbnail(for: page)
         }
+    }
+}
+
+private extension PKDrawing {
+    func scaled(from sourceSize: CGSize, to targetSize: CGSize) -> PKDrawing {
+        guard sourceSize.width > 0,
+              sourceSize.height > 0,
+              targetSize.width > 0,
+              targetSize.height > 0,
+              sourceSize != targetSize else {
+            return self
+        }
+
+        let scale = min(targetSize.width / sourceSize.width, targetSize.height / sourceSize.height)
+        let scaledSize = CGSize(width: sourceSize.width * scale, height: sourceSize.height * scale)
+        let offset = CGPoint(
+            x: (targetSize.width - scaledSize.width) / 2,
+            y: (targetSize.height - scaledSize.height) / 2
+        )
+
+        let transform = CGAffineTransform(a: scale, b: 0, c: 0, d: scale, tx: offset.x, ty: offset.y)
+
+        return transformed(using: transform)
     }
 }

@@ -14,7 +14,7 @@ struct PencilKitView: UIViewRepresentable {
     // MARK: - Properties
     @Binding var canvasView: PKCanvasView
     @Binding var toolPicker: PKToolPicker
-    var drawing: Data
+    var drawing: PKDrawing
     var onDrawingChange: (PKDrawing) -> Void
     var pageRect: CGRect
     var onSwipe: (UIPanGestureRecognizer) -> Void
@@ -22,7 +22,7 @@ struct PencilKitView: UIViewRepresentable {
 
     init(canvasView: Binding<PKCanvasView>,
          toolPicker: Binding<PKToolPicker>,
-         drawing: Data,
+         drawing: PKDrawing,
          onDrawingChange: @escaping (PKDrawing) -> Void,
          pageRect: CGRect,
          onSwipe: @escaping (UIPanGestureRecognizer) -> Void,
@@ -39,7 +39,7 @@ struct PencilKitView: UIViewRepresentable {
     // MARK: - Methods
     func makeUIView(context: Context) -> PKCanvasView {
         canvasView.delegate = context.coordinator
-        canvasView.drawing = try! PKDrawing(data: drawing)
+        context.coordinator.setDrawing(drawing, on: canvasView)
         canvasView.backgroundColor = .clear
         canvasView.isOpaque = false
         canvasView.contentSize = pageRect.size
@@ -64,8 +64,10 @@ struct PencilKitView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: PKCanvasView, context: Context) {
-        if let pkDrawing = try? PKDrawing(data: drawing), uiView.drawing != pkDrawing {
-            uiView.drawing = pkDrawing
+        uiView.contentSize = pageRect.size
+
+        if uiView.drawing != drawing {
+            context.coordinator.setDrawing(drawing, on: uiView)
         }
     }
 
@@ -75,13 +77,21 @@ struct PencilKitView: UIViewRepresentable {
 
     class Coordinator: NSObject, PKCanvasViewDelegate {
         var parent: PencilKitView
+        private var isApplyingDrawing = false
 
         init(_ parent: PencilKitView) {
             self.parent = parent
         }
 
         func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
+            guard !isApplyingDrawing else { return }
             parent.onDrawingChange(canvasView.drawing)
+        }
+
+        func setDrawing(_ drawing: PKDrawing, on canvasView: PKCanvasView) {
+            isApplyingDrawing = true
+            canvasView.drawing = drawing
+            isApplyingDrawing = false
         }
 
         @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
