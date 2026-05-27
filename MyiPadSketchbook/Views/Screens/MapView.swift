@@ -86,7 +86,6 @@ struct MapView: View {
                                 thumbnailsView(in: geometry)
                             }
                             .gesture(panGesture)
-                            .simultaneousGesture(notebookPinchGesture)
                             .onAppear {
                                 self.scrollViewProxy = proxy
                                 self.centreOnCurrentPage()
@@ -97,11 +96,9 @@ struct MapView: View {
                 }
                 .zIndex(0)
                 
-                VStack {
-                    HStack {
-                        Spacer()
-                        toolbarView
-                    }
+                VStack(spacing: 0) {
+                    toolbarView
+                        .padding(.top, geometry.safeAreaInsets.top)
                     Spacer()
                 }
                 .zIndex(1)
@@ -124,28 +121,38 @@ struct MapView: View {
     }
     
     private var toolbarView: some View {
-        VStack() {
+        HStack {
             if showNotebookView {
                 addNotebookButton
             } else {
-                rearrangeButton
-                ShareButton(pageManager: pageManager)
+                notebooksButton
+                    .padding(.leading, 10)
+
+                Spacer()
+
+                HStack(spacing: 18) {
+                    rearrangeButton
+                    ShareButton(pageManager: pageManager)
+                }
+                .padding(.trailing, 10)
             }
         }
-        .background(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
-        .cornerRadius(14)
-        .padding(.top, -2.5)
-        .padding(.trailing, 10)
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.4 : 0.15), radius: 14)
+        .padding(.vertical, 15)
+        .frame(maxWidth: .infinity)
+        .background(Color(UIColor.systemBackground))
     }
     
     // MARK: - Buttons
-    private var rearrangeButton: some View {
-        Button(action: { isRearranging.toggle() }) {
-            Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
-                .font(.system(size: isRearranging ? toolbarButtonSize * 1.15 : toolbarButtonSize))
-                .foregroundColor(isRearranging ? Color.orange : Color.primary)
-                .padding(9)
+    private var notebooksButton: some View {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.16)) {
+                showNotebookView = true
+            }
+        }) {
+            Image(systemName: "rectangle.grid.2x2")
+                .font(.system(size: toolbarButtonSize))
+                .foregroundColor(Color.primary)
+                .frame(width: 34, height: 34)
                 .background(
                     Circle()
                         .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
@@ -153,7 +160,21 @@ struct MapView: View {
         }
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 13, leading: 9, bottom: 10, trailing: 9))
+    }
+
+    private var rearrangeButton: some View {
+        Button(action: { isRearranging.toggle() }) {
+            Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
+                .font(.system(size: toolbarButtonSize))
+                .foregroundColor(isRearranging ? Color.orange : Color.primary)
+                .frame(width: 34, height: 34)
+                .background(
+                    Circle()
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                )
+        }
+        .contentShape(Circle())
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
     }
 
     private var addNotebookButton: some View {
@@ -162,9 +183,9 @@ struct MapView: View {
             showNotebookView = false
         }) {
             Image(systemName: "plus.circle")
-                .font(.system(size: toolbarButtonSize * 1.15))
+                .font(.system(size: toolbarButtonSize))
                 .foregroundColor(Color.primary)
-                .padding(9)
+                .frame(width: 34, height: 34)
                 .background(
                     Circle()
                         .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
@@ -172,7 +193,7 @@ struct MapView: View {
         }
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(EdgeInsets(top: 13, leading: 9, bottom: 10, trailing: 9))
+        .padding(.leading, 10)
     }
 
     private var notebookGridView: some View {
@@ -280,17 +301,6 @@ struct MapView: View {
             }
     }
 
-    private var notebookPinchGesture: some Gesture {
-        MagnificationGesture()
-            .onEnded { scale in
-                guard !isRearranging, scale < 0.75 else { return }
-
-                withAnimation(.easeInOut(duration: 0.16)) {
-                    showNotebookView = true
-                }
-            }
-    }
-    
     private func dragGesture(for page: Page) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .updating($dragLocation) { value, state, _ in

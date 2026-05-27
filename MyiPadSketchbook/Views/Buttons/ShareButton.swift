@@ -27,15 +27,15 @@ struct ShareButton: View {
                 if exportManager.isExporting {
                     ProgressView()
                         .progressViewStyle(CircularProgressViewStyle(tint: .primary))
-                        .scaleEffect(1.15)
-                        .frame(width: toolbarButtonSize * 1.15, height: toolbarButtonSize * 1.15)
+                        .scaleEffect(0.9)
+                        .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                 } else {
                     Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: toolbarButtonSize * 1.15, weight: .light))
-                        .frame(width: toolbarButtonSize * 1.15, height: toolbarButtonSize * 1.15)
+                        .font(.system(size: toolbarButtonSize, weight: .light))
+                        .frame(width: toolbarButtonSize, height: toolbarButtonSize)
                 }
             }
-            .padding(9)
+            .frame(width: 34, height: 34)
             .background(
                 Circle()
                     .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
@@ -48,7 +48,6 @@ struct ShareButton: View {
                 ShareSheet(items: [exportURL])
             }
         }
-        .padding(EdgeInsets(top: -14, leading: 8, bottom: 10, trailing: 7))
     }
     
     private func startExport() {
