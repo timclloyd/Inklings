@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 // MARK: - LibraryView
 struct LibraryView: View {
@@ -13,6 +14,7 @@ struct LibraryView: View {
     let onAddNotebook: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
+    @State private var notebookPendingTrash: Notebook?
 
     var body: some View {
         ScrollView {
@@ -25,9 +27,7 @@ struct LibraryView: View {
                         pages: pageManager.pages(in: notebook),
                         colorScheme: colorScheme
                     )
-                    .onTapGesture {
-                        onNotebookSelected(notebook)
-                    }
+                    .gesture(notebookGesture(for: notebook))
                 }
 
                 Button(action: onAddNotebook) {
@@ -38,6 +38,47 @@ struct LibraryView: View {
             .padding(.horizontal, 18)
             .padding(.top, topInset)
             .padding(.bottom, 36)
+        }
+        .alert(
+            "Move Notebook to Trash?",
+            isPresented: Binding(
+                get: { notebookPendingTrash != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        notebookPendingTrash = nil
+                    }
+                }
+            ),
+            presenting: notebookPendingTrash
+        ) { notebook in
+            Button("Move to Trash", role: .destructive) {
+                pageManager.moveNotebookToTrash(notebook)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                notebookPendingTrash = nil
+            }
+            Button("Cancel", role: .cancel) {
+                notebookPendingTrash = nil
+            }
+        } message: { _ in
+            Text("This notebook will be hidden from the library. Its pages are kept for future trash recovery.")
+        }
+    }
+
+    private func notebookGesture(for notebook: Notebook) -> some Gesture {
+        ExclusiveGesture(
+            LongPressGesture(minimumDuration: 0.5),
+            TapGesture()
+        )
+        .onEnded { value in
+            switch value {
+            case .first(true):
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                notebookPendingTrash = notebook
+            case .second:
+                onNotebookSelected(notebook)
+            default:
+                break
+            }
         }
     }
 }

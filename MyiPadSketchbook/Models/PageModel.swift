@@ -16,12 +16,14 @@ final class Notebook {
     var createdAt: Date?
     var name: String?
     var lastSelectedPageID: UUID?
+    var deletedAt: Date?
 
     init(id: UUID = UUID(), createdAt: Date = Date(), name: String? = nil) {
         self.id = id
         self.createdAt = createdAt
         self.name = name
         self.lastSelectedPageID = nil
+        self.deletedAt = nil
     }
 }
 

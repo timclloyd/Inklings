@@ -168,6 +168,25 @@ class PageManager: ObservableObject {
     func pages(in notebook: Notebook) -> [Page] {
         allPages.filter { $0.notebookID == notebook.id }
     }
+
+    func moveNotebookToTrash(_ notebook: Notebook) {
+        guard let notebookID = notebook.id else { return }
+
+        let movingCurrentNotebookToTrash = currentNotebookID == notebookID
+        notebook.deletedAt = Date()
+        notebooks.removeAll { $0.id == notebookID }
+
+        if notebooks.isEmpty {
+            _ = createNotebook()
+        } else if movingCurrentNotebookToTrash {
+            sortNotebooks()
+            switchToNotebook(notebooks[0])
+        } else {
+            refreshCurrentNotebookPages()
+        }
+
+        try? modelContext.save()
+    }
     
     func updatePagePosition(_ page: Page) {
         objectWillChange.send()
@@ -210,7 +229,7 @@ class PageManager: ObservableObject {
 
     private func loadNotebooks() {
         let descriptor = FetchDescriptor<Notebook>()
-        notebooks = (try? modelContext.fetch(descriptor)) ?? []
+        notebooks = ((try? modelContext.fetch(descriptor)) ?? []).filter { $0.deletedAt == nil }
 
         if notebooks.isEmpty {
             let firstNotebook = Notebook(name: "Notebook 1")

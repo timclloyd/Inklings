@@ -116,6 +116,27 @@ final class MyiPadSketchbookTests: XCTestCase {
         XCTAssertEqual(manager.getCurrentPage()?.notebookID, emptyNotebook.id)
     }
 
+    func testMoveNotebookToTrashHidesNotebookAndKeepsPages() throws {
+        let firstNotebook = Notebook(createdAt: Date(timeIntervalSince1970: 1), name: "First")
+        let secondNotebook = Notebook(createdAt: Date(timeIntervalSince1970: 2), name: "Second")
+        let trashedPage = Page(positionX: 0, positionY: 0, notebookID: firstNotebook.id)
+        let visiblePage = Page(positionX: 1, positionY: 1, notebookID: secondNotebook.id)
+        container.mainContext.insert(firstNotebook)
+        container.mainContext.insert(secondNotebook)
+        container.mainContext.insert(trashedPage)
+        container.mainContext.insert(visiblePage)
+        try container.mainContext.save()
+
+        let manager = PageManager(modelContext: container.mainContext)
+        manager.moveNotebookToTrash(firstNotebook)
+
+        XCTAssertNotNil(firstNotebook.deletedAt)
+        XCTAssertFalse(manager.notebooks.contains { $0.id == firstNotebook.id })
+        XCTAssertTrue(manager.notebooks.contains { $0.id == secondNotebook.id })
+        XCTAssertEqual(trashedPage.notebookID, firstNotebook.id)
+        XCTAssertEqual(manager.pages(in: firstNotebook).map(\.id), [trashedPage.id])
+    }
+
     func testAddPageCreatesExpectedHorizontalAndVerticalCoordinates() throws {
         let manager = PageManager(modelContext: container.mainContext)
 
