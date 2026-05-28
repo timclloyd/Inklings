@@ -22,7 +22,7 @@ xcodebuild -list -project MyiPadSketchbook.xcodeproj
 xcodebuild \
   -project MyiPadSketchbook.xcodeproj \
   -scheme Debug \
-  -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M4)' \
+  -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M4),OS=17.5' \
   build
 ```
 
