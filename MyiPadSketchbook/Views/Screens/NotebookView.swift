@@ -32,7 +32,7 @@ struct NotebookView: View {
     // MARK: - Constants
     private let spacing: CGFloat = 6
     private let notebookEdgePadding = 4
-    private let toolbarHeight: CGFloat = 64
+    private let toolbarHeight: CGFloat = 50
     
     // MARK: - Computed Properties
     private var pages: [Page] {
@@ -111,9 +111,14 @@ struct NotebookView: View {
                 }
                 .zIndex(1)
                 
-                VStack(spacing: 0) {
-                    toolbarView
-                        .padding(.top, geometry.safeAreaInsets.top)
+                VStack {
+                    HStack {
+                        Spacer()
+                        toolbarView
+                    }
+                    .padding(.top, geometry.safeAreaInsets.top + 24)
+                    .padding(.trailing, 24)
+
                     Spacer()
                 }
                 .zIndex(2)
@@ -158,8 +163,6 @@ struct NotebookView: View {
 
     private func notebookOverview(in geometry: GeometryProxy, layout: NotebookLayout) -> some View {
         VStack {
-            Spacer()
-
             HStack {
                 NotebookPreview(
                     pages: pages,
@@ -189,28 +192,31 @@ struct NotebookView: View {
                 Spacer()
             }
             .padding(.leading, 24)
+            .padding(.top, geometry.safeAreaInsets.top + 24)
+
+            Spacer()
         }
         .allowsHitTesting(!isRearranging)
     }
     
     private var toolbarView: some View {
-        HStack {
+        HStack(spacing: 18) {
             if navigationLevel == .library {
-                Spacer()
                 addNotebookButton
             } else {
-                Spacer()
-
-                HStack(spacing: 18) {
-                    rearrangeButton
-                    ShareButton(pageManager: pageManager)
-                }
-                .padding(.trailing, 10)
+                rearrangeButton
+                ShareButton(pageManager: pageManager)
             }
         }
-        .padding(.vertical, 15)
-        .frame(maxWidth: .infinity)
-        .background(Color(UIColor.systemBackground))
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(UIColor.systemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
     }
     
     // MARK: - Buttons
@@ -245,7 +251,6 @@ struct NotebookView: View {
         }
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(.trailing, 10)
     }
 
     // MARK: - Thumbnail View
