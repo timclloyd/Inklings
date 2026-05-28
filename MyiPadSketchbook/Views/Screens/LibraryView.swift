@@ -18,22 +18,10 @@ struct LibraryView: View {
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 18),
-                GridItem(.flexible(), spacing: 18)
-            ], spacing: 18) {
-                ForEach(pageManager.notebooks) { notebook in
-                    LibraryNotebookTile(
-                        pages: pageManager.pages(in: notebook),
-                        colorScheme: colorScheme
-                    )
-                    .gesture(notebookGesture(for: notebook))
+            LazyVStack(spacing: 18) {
+                ForEach(libraryRows) { row in
+                    libraryRow(row)
                 }
-
-                Button(action: onAddNotebook) {
-                    LibraryAddNotebookTile(colorScheme: colorScheme)
-                }
-                .buttonStyle(.plain)
             }
             .padding(.horizontal, 18)
             .padding(.top, topInset)
@@ -64,6 +52,59 @@ struct LibraryView: View {
         }
     }
 
+    private var libraryRows: [LibraryBentoRow] {
+        let notebookItems = pageManager.notebooks.map { notebook in
+            let pages = pageManager.pages(in: notebook)
+            return LibraryBentoItem.notebook(
+                notebook,
+                pages: pages,
+                layout: LibraryNotebookTileLayout(pages: pages)
+            )
+        }
+
+        return LibraryBentoLayout.rows(for: notebookItems + [.addNotebook])
+    }
+
+    @ViewBuilder
+    private func libraryRow(_ row: LibraryBentoRow) -> some View {
+        switch row {
+        case .wide(let item):
+            libraryItem(item)
+        case .pair(let leading, let trailing):
+            HStack(alignment: .top, spacing: 18) {
+                libraryItem(leading)
+                    .frame(maxWidth: .infinity)
+                libraryItem(trailing)
+                    .frame(maxWidth: .infinity)
+            }
+        case .single(let item):
+            HStack(alignment: .top, spacing: 18) {
+                libraryItem(item)
+                    .frame(maxWidth: .infinity)
+                Spacer()
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func libraryItem(_ item: LibraryBentoItem) -> some View {
+        switch item {
+        case .notebook(let notebook, let pages, let layout):
+            LibraryNotebookTile(
+                pages: pages,
+                colorScheme: colorScheme,
+                aspectRatio: layout.aspectRatio
+            )
+            .gesture(notebookGesture(for: notebook))
+        case .addNotebook:
+            Button(action: onAddNotebook) {
+                LibraryAddNotebookTile(colorScheme: colorScheme)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private func notebookGesture(for notebook: Notebook) -> some Gesture {
         ExclusiveGesture(
             LongPressGesture(minimumDuration: 0.5),
@@ -80,6 +121,100 @@ struct LibraryView: View {
                 break
             }
         }
+    }
+}
+
+// MARK: - LibraryBentoLayout
+enum LibraryBentoItem: Identifiable {
+    case notebook(Notebook, pages: [Page], layout: LibraryNotebookTileLayout)
+    case addNotebook
+
+    var id: String {
+        switch self {
+        case .notebook(let notebook, _, _):
+            "notebook-\(notebook.id?.uuidString ?? "")"
+        case .addNotebook:
+            "add-notebook"
+        }
+    }
+
+    var columnSpan: Int {
+        switch self {
+        case .notebook(_, _, let layout):
+            layout.columnSpan
+        case .addNotebook:
+            1
+        }
+    }
+}
+
+enum LibraryBentoRow: Identifiable {
+    case wide(LibraryBentoItem)
+    case pair(LibraryBentoItem, LibraryBentoItem)
+    case single(LibraryBentoItem)
+
+    var id: String {
+        switch self {
+        case .wide(let item):
+            "wide-\(item.id)"
+        case .pair(let leading, let trailing):
+            "pair-\(leading.id)-\(trailing.id)"
+        case .single(let item):
+            "single-\(item.id)"
+        }
+    }
+}
+
+enum LibraryBentoLayout {
+    static func rows(for items: [LibraryBentoItem]) -> [LibraryBentoRow] {
+        var rows: [LibraryBentoRow] = []
+        var pendingSingle: LibraryBentoItem?
+
+        for item in items {
+            if item.columnSpan == 2 {
+                if let single = pendingSingle {
+                    rows.append(.single(single))
+                    pendingSingle = nil
+                }
+                rows.append(.wide(item))
+            } else if let single = pendingSingle {
+                rows.append(.pair(single, item))
+                pendingSingle = nil
+            } else {
+                pendingSingle = item
+            }
+        }
+
+        if let pendingSingle {
+            rows.append(.single(pendingSingle))
+        }
+
+        return rows
+    }
+}
+
+// MARK: - LibraryNotebookTileLayout
+struct LibraryNotebookTileLayout {
+    let columnSpan: Int
+    let aspectRatio: CGFloat
+
+    init(pages: [Page]) {
+        let xPositions = pages.map { $0.positionX ?? 0 }
+        let yPositions = pages.map { $0.positionY ?? 0 }
+        let columns = max(1, (xPositions.max() ?? 0) - (xPositions.min() ?? 0) + 1)
+        let rows = max(1, (yPositions.max() ?? 0) - (yPositions.min() ?? 0) + 1)
+
+        self.init(columns: columns, rows: rows)
+    }
+
+    init(columns: Int, rows: Int) {
+        let columns = max(1, columns)
+        let rows = max(1, rows)
+        let isWide = columns >= max(3, rows * 2)
+        let isTall = rows >= max(3, columns * 2)
+
+        columnSpan = isWide ? 2 : 1
+        aspectRatio = isWide ? 2.08 : isTall ? 0.48 : 1
     }
 }
 
@@ -117,6 +252,7 @@ private struct LibraryAddNotebookTile: View {
 private struct LibraryNotebookTile: View {
     let pages: [Page]
     let colorScheme: ColorScheme
+    let aspectRatio: CGFloat
 
     private let cornerRadius: CGFloat = 12
 
@@ -138,7 +274,7 @@ private struct LibraryNotebookTile: View {
                     .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
             )
         }
-        .aspectRatio(1, contentMode: .fit)
+        .aspectRatio(aspectRatio, contentMode: .fit)
     }
 }
 
