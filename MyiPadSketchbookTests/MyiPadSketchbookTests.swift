@@ -236,6 +236,21 @@ final class MyiPadSketchbookTests: XCTestCase {
         XCTAssertEqual(negativeXPositiveYNode.y, -1400)
     }
 
+    func testNotebookOverviewPreviewUsesScrollLayoutEdgePadding() throws {
+        let pages = [
+            Page(positionX: 0, positionY: 0),
+            Page(positionX: 2, positionY: -1)
+        ]
+        let layout = NotebookLayout(
+            pages: pages,
+            thumbnailSize: CGSize(width: 120, height: 160),
+            spacing: 6,
+            edgePadding: 4
+        )
+
+        XCTAssertEqual(NotebookOverviewLayout.previewEdgePadding(for: layout), layout.edgePadding)
+    }
+
     private func makeModelContainer() throws -> ModelContainer {
         let schema = Schema([
             Notebook.self,

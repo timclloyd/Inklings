@@ -167,7 +167,7 @@ struct NotebookView: View {
                 NotebookPreview(
                     pages: pages,
                     colorScheme: colorScheme,
-                    edgePadding: 0,
+                    edgePadding: NotebookOverviewLayout.previewEdgePadding(for: layout),
                     innerPadding: 8,
                     pageSpacing: 2,
                     viewport: overviewViewport(for: geometry.size, layout: layout),
@@ -548,7 +548,13 @@ struct NotebookView: View {
     }
 }
 
-private struct NotebookGridPosition: Identifiable, Hashable {
+enum NotebookOverviewLayout {
+    static func previewEdgePadding(for layout: NotebookLayout) -> Int {
+        layout.edgePadding
+    }
+}
+
+struct NotebookGridPosition: Identifiable, Hashable {
     let x: Int
     let y: Int
 
@@ -557,7 +563,7 @@ private struct NotebookGridPosition: Identifiable, Hashable {
     }
 }
 
-private struct NotebookLayout {
+struct NotebookLayout {
     let bounds: (minX: Int, maxX: Int, minY: Int, maxY: Int)
     let thumbnailSize: CGSize
     let spacing: CGFloat
