@@ -20,10 +20,8 @@ struct MapView: View {
     var onCloseMap: () -> Void
     
     // MARK: - State
-    @State private var panOffset: CGSize = .zero
     @State private var draggedPage: Page?
     @State private var draggedPageOffset: CGSize = .zero
-    @GestureState private var dragGestureState: CGSize = .zero
     @State private var contentOffset: CGPoint = .zero
     @State private var scrollTarget: CGPoint?
     @State private var scrollTargetAnimated: Bool = true
@@ -46,39 +44,25 @@ struct MapView: View {
         let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
         return CGSize(width: 120, height: 120 / aspectRatio)
     }
-    
-    private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
-        let xPositions = pages.map { $0.positionX ?? 0 }
-        let yPositions = pages.map { $0.positionY ?? 0 }
-        return (
-            minX: xPositions.min() ?? 0,
-            maxX: xPositions.max() ?? 0,
-            minY: yPositions.min() ?? 0,
-            maxY: yPositions.max() ?? 0
-        )
-    }
-    
+
     private var backgroundColor: Color {
         colorScheme == .dark ? Color.black : Color(.systemGray6)
     }
-    
-    private var contentWidth: CGFloat {
-        let pageCountX = pagePositions.maxX - pagePositions.minX + 1 + (2 * mapViewEdgePadding)
-        return CGFloat(pageCountX) * (thumbnailSize.width + spacing) + spacing
-    }
-    
-    private var contentHeight: CGFloat {
-        let pageCountY = pagePositions.maxY - pagePositions.minY + 1 + (2 * mapViewEdgePadding)
-        return CGFloat(pageCountY) * (thumbnailSize.height + spacing) + spacing
+
+    private var mapLayout: MapLayout {
+        MapLayout(
+            pages: pages,
+            thumbnailSize: thumbnailSize,
+            spacing: spacing,
+            edgePadding: mapViewEdgePadding
+        )
     }
 
-    private var mapGridPositions: [MapGridPosition] {
-        let xRange = (pagePositions.minX - mapViewEdgePadding)...(pagePositions.maxX + mapViewEdgePadding)
-        let yRange = (pagePositions.minY - mapViewEdgePadding)...(pagePositions.maxY + mapViewEdgePadding)
-
-        return xRange.flatMap { x in
-            yRange.map { y in MapGridPosition(x: x, y: y) }
+    private var overlapCounts: [MapGridPosition: Int] {
+        Dictionary(grouping: pages) { page in
+            MapGridPosition(x: page.positionX ?? 0, y: page.positionY ?? 0)
         }
+        .mapValues(\.count)
     }
 
     private var mapContentRevision: String {
@@ -94,6 +78,9 @@ struct MapView: View {
     // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
+            let layout = mapLayout
+            let overlaps = overlapCounts
+
             ZStack {
                 backgroundColor.edgesIgnoringSafeArea(.all)
                 
@@ -111,13 +98,13 @@ struct MapView: View {
                             .transition(.opacity)
                     } else {
                         MapScrollView(
-                            contentSize: CGSize(width: contentWidth, height: contentHeight),
+                            contentSize: layout.contentSize,
                             contentRevision: mapContentRevision,
                             contentOffset: $contentOffset,
                             scrollTarget: $scrollTarget,
                             scrollTargetAnimated: $scrollTargetAnimated
                         ) {
-                            thumbnailsView(in: geometry)
+                            thumbnailsView(layout: layout, overlapCounts: overlaps)
                         }
                         .edgesIgnoringSafeArea(.all)
                     }
@@ -132,7 +119,7 @@ struct MapView: View {
                 .zIndex(1)
 
                 if !showNotebookView {
-                    notebookMiniMap(in: geometry)
+                    notebookMiniMap(in: geometry, layout: layout)
                         .zIndex(2)
                 }
             }
@@ -146,16 +133,19 @@ struct MapView: View {
     }
     
     // MARK: - Subviews
-    private func thumbnailsView(in geometry: GeometryProxy) -> some View {
+    private func thumbnailsView(layout: MapLayout, overlapCounts: [MapGridPosition: Int]) -> some View {
         ZStack {
             ForEach(pages) { page in
-                thumbnailView(for: page, in: geometry)
+                thumbnailView(for: page, layout: layout, overlapCount: overlapCounts[
+                    MapGridPosition(x: page.positionX ?? 0, y: page.positionY ?? 0),
+                    default: 1
+                ])
             }
         }
-        .frame(width: contentWidth, height: contentHeight)
+        .frame(width: layout.contentSize.width, height: layout.contentSize.height)
     }
 
-    private func notebookMiniMap(in geometry: GeometryProxy) -> some View {
+    private func notebookMiniMap(in geometry: GeometryProxy, layout: MapLayout) -> some View {
         VStack {
             Spacer()
 
@@ -166,12 +156,12 @@ struct MapView: View {
                     edgePadding: mapViewEdgePadding,
                     innerPadding: 10,
                     pageSpacing: 2,
-                    viewport: miniMapViewport(for: geometry.size),
+                    viewport: miniMapViewport(for: geometry.size, layout: layout),
                     onContentPointChanged: { contentPoint in
-                        scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, animated: false)
+                        scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, layout: layout, animated: false)
                     },
                     onContentPointSelected: { contentPoint in
-                        scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, animated: true)
+                        scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, layout: layout, animated: true)
                     }
                 )
                 .padding(8)
@@ -266,12 +256,11 @@ struct MapView: View {
     }
 
     // MARK: - Thumbnail View
-    private func thumbnailView(for page: Page, in geometry: GeometryProxy) -> some View {
+    private func thumbnailView(for page: Page, layout: MapLayout, overlapCount: Int) -> some View {
         let isSelected = draggedPage?.id == page.id
         let isCurrentPage = page.id == pageManager.getCurrentPage()?.id
         let appearance = thumbnailAppearance(for: page, isSelected: isSelected && isRearranging, isCurrentPage: isCurrentPage)
-        let overlappingPages = getOverlappingPages(for: page)
-        let hasOverlap = overlappingPages.count > 1
+        let hasOverlap = overlapCount > 1
         
         return ZStack {
             ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
@@ -288,10 +277,10 @@ struct MapView: View {
                 .id("page_\(page.id?.uuidString ?? "")")
             
             if hasOverlap {
-                overlapIndicator(count: overlappingPages.count)
+                overlapIndicator(count: overlapCount)
             }
         }
-        .position(thumbnailPosition(for: page))
+        .position(layout.thumbnailPosition(for: page))
         .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
         .zIndex(isSelected && isRearranging ? 1 : 0)
         .gesture(isRearranging ? dragGesture(for: page) : nil)
@@ -335,16 +324,6 @@ struct MapView: View {
     }
     
     // MARK: - Gestures
-    private var panGesture: some Gesture {
-        DragGesture()
-            .onChanged { value in
-                if !isRearranging {
-                    contentOffset.x -= value.translation.width
-                    contentOffset.y -= value.translation.height
-                }
-            }
-    }
-
     private func dragGesture(for page: Page) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .updating($dragLocation) { value, state, _ in
@@ -377,51 +356,7 @@ struct MapView: View {
             }
     }
     
-    // MARK: - Gesture Handlers
-    private func handleDragChange(_ value: DragGesture.Value, for page: Page) {
-        if isRearranging {
-            draggedPage = page
-            draggedPageOffset = value.translation
-        } else if value.translation != .zero {
-            // Pan the view
-            contentOffset.x -= value.translation.width
-            contentOffset.y -= value.translation.height
-        }
-    }
-    
-    private func handleDragEnd(_ value: DragGesture.Value, for page: Page) {
-        if isRearranging {
-            let gridMovement = calculateGridMovement(value.translation)
-            let newPosition = (
-                x: (page.positionX ?? 0) + gridMovement.x,
-                y: (page.positionY ?? 0) + gridMovement.y
-            )
-            if isValidMove(to: newPosition) {
-                page.positionX = newPosition.x
-                page.positionY = newPosition.y
-                pageManager.updatePagePosition(page)
-            }
-            draggedPage = nil
-            draggedPageOffset = .zero
-        } else if value.translation == .zero {
-            onPageSelected(page)
-            showMap = false
-        }
-    }
-    
     // MARK: - Helper Methods
-    private func thumbnailPosition(for page: Page) -> CGPoint {
-        let x = CGFloat((page.positionX ?? 0) - pagePositions.minX + mapViewEdgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
-        let y = CGFloat(pagePositions.maxY - (page.positionY ?? 0) + mapViewEdgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
-        return CGPoint(x: x, y: y)
-    }
-
-    private func thumbnailPosition(for position: MapGridPosition) -> CGPoint {
-        let x = CGFloat(position.x - pagePositions.minX + mapViewEdgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
-        let y = CGFloat(pagePositions.maxY - position.y + mapViewEdgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
-        return CGPoint(x: x, y: y)
-    }
-    
     private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
         let xMovement = Int(round(translation.width / (thumbnailSize.width + spacing)))
         let yMovement = -Int(round(translation.height / (thumbnailSize.height + spacing)))
@@ -429,10 +364,11 @@ struct MapView: View {
     }
     
     private func isValidMove(to position: (x: Int, y: Int)) -> Bool {
-        let minX = pagePositions.minX - mapViewEdgePadding
-        let maxX = pagePositions.maxX + mapViewEdgePadding
-        let minY = pagePositions.minY - mapViewEdgePadding
-        let maxY = pagePositions.maxY + mapViewEdgePadding
+        let layout = mapLayout
+        let minX = layout.bounds.minX - mapViewEdgePadding
+        let maxX = layout.bounds.maxX + mapViewEdgePadding
+        let minY = layout.bounds.minY - mapViewEdgePadding
+        let maxY = layout.bounds.maxY + mapViewEdgePadding
         
         let isWithinBounds = position.x >= minX && position.x <= maxX && position.y >= minY && position.y <= maxY
         let isNotOccupied = !pages.contains { $0.id != draggedPage?.id && $0.positionX == position.x && $0.positionY == position.y }
@@ -440,40 +376,37 @@ struct MapView: View {
         return isWithinBounds && isNotOccupied
     }
 
-    private func miniMapViewport(for visibleSize: CGSize) -> CGRect {
-        let width = min(1, visibleSize.width / max(1, contentWidth))
-        let height = min(1, visibleSize.height / max(1, contentHeight))
-        let x = min(max(0, contentOffset.x / max(1, contentWidth)), max(0, 1 - width))
-        let y = min(max(0, contentOffset.y / max(1, contentHeight)), max(0, 1 - height))
-
-        return CGRect(x: x, y: y, width: width, height: height)
+    private func miniMapViewport(for visibleSize: CGSize, layout: MapLayout) -> CGRect {
+        layout.viewport(for: contentOffset, visibleSize: visibleSize)
     }
 
     private func scrollToGridPosition(_ position: (x: Int, y: Int), viewportSize: CGSize, animated: Bool) {
-        let targetPosition = thumbnailPosition(for: MapGridPosition(x: position.x, y: position.y))
+        let layout = mapLayout
+        let targetPosition = layout.thumbnailPosition(for: MapGridPosition(x: position.x, y: position.y))
         let unclampedOffset = CGPoint(
             x: targetPosition.x - viewportSize.width / 2,
             y: targetPosition.y - viewportSize.height / 2
         )
 
         scrollTargetAnimated = animated
-        scrollTarget = clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
+        scrollTarget = layout.clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
     }
 
-    private func scrollToMiniMapPoint(_ point: CGPoint, viewportSize: CGSize, animated: Bool) {
+    private func scrollToMiniMapPoint(_ point: CGPoint, viewportSize: CGSize, layout: MapLayout, animated: Bool) {
         let unclampedOffset = CGPoint(
-            x: point.x * contentWidth - viewportSize.width / 2,
-            y: point.y * contentHeight - viewportSize.height / 2
+            x: point.x * layout.contentSize.width - viewportSize.width / 2,
+            y: point.y * layout.contentSize.height - viewportSize.height / 2
         )
 
         scrollTargetAnimated = animated
-        scrollTarget = clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
+        scrollTarget = layout.clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
     }
     
     private func centreOnCurrentPage(visibleSize: CGSize, animated: Bool) {
         guard let currentPage = pageManager.getCurrentPage() else { return }
+        let layout = mapLayout
 
-        let targetPosition = thumbnailPosition(for: MapGridPosition(
+        let targetPosition = layout.thumbnailPosition(for: MapGridPosition(
             x: currentPage.positionX ?? 0,
             y: currentPage.positionY ?? 0
         ))
@@ -483,18 +416,7 @@ struct MapView: View {
         )
 
         scrollTargetAnimated = animated
-        scrollTarget = clampedContentOffset(unclampedOffset, viewportSize: visibleSize)
-    }
-
-    private func clampedContentOffset(_ offset: CGPoint, viewportSize: CGSize) -> CGPoint {
-        CGPoint(
-            x: min(max(0, offset.x), max(0, contentWidth - viewportSize.width)),
-            y: min(max(0, offset.y), max(0, contentHeight - viewportSize.height))
-        )
-    }
-    
-    private func getOverlappingPages(for page: Page) -> [Page] {
-        pages.filter { $0.positionX == page.positionX && $0.positionY == page.positionY }
+        scrollTarget = layout.clampedContentOffset(unclampedOffset, viewportSize: visibleSize)
     }
     
     // MARK: - ThumbnailContent
@@ -610,6 +532,63 @@ private struct MapGridPosition: Identifiable, Hashable {
 
     var id: String {
         "\(x)_\(y)"
+    }
+}
+
+private struct MapLayout {
+    let bounds: (minX: Int, maxX: Int, minY: Int, maxY: Int)
+    let thumbnailSize: CGSize
+    let spacing: CGFloat
+    let edgePadding: Int
+    let contentSize: CGSize
+
+    init(pages: [Page], thumbnailSize: CGSize, spacing: CGFloat, edgePadding: Int) {
+        let xPositions = pages.map { $0.positionX ?? 0 }
+        let yPositions = pages.map { $0.positionY ?? 0 }
+        let bounds = (
+            minX: xPositions.min() ?? 0,
+            maxX: xPositions.max() ?? 0,
+            minY: yPositions.min() ?? 0,
+            maxY: yPositions.max() ?? 0
+        )
+        let pageCountX = bounds.maxX - bounds.minX + 1 + (2 * edgePadding)
+        let pageCountY = bounds.maxY - bounds.minY + 1 + (2 * edgePadding)
+
+        self.bounds = bounds
+        self.thumbnailSize = thumbnailSize
+        self.spacing = spacing
+        self.edgePadding = edgePadding
+        self.contentSize = CGSize(
+            width: CGFloat(pageCountX) * (thumbnailSize.width + spacing) + spacing,
+            height: CGFloat(pageCountY) * (thumbnailSize.height + spacing) + spacing
+        )
+    }
+
+    func thumbnailPosition(for page: Page) -> CGPoint {
+        thumbnailPosition(for: MapGridPosition(x: page.positionX ?? 0, y: page.positionY ?? 0))
+    }
+
+    func thumbnailPosition(for position: MapGridPosition) -> CGPoint {
+        let x = CGFloat(position.x - bounds.minX + edgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
+        let y = CGFloat(bounds.maxY - position.y + edgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
+
+        return CGPoint(x: x, y: y)
+    }
+
+    func viewport(for offset: CGPoint, visibleSize: CGSize) -> CGRect {
+        let width = min(1, visibleSize.width / max(1, contentSize.width))
+        let height = min(1, visibleSize.height / max(1, contentSize.height))
+        let x = min(max(0, offset.x / max(1, contentSize.width)), max(0, 1 - width))
+        let y = min(max(0, offset.y / max(1, contentSize.height)), max(0, 1 - height))
+
+        return CGRect(x: x, y: y, width: width, height: height)
+    }
+
+    func clampedContentOffset(_ offset: CGPoint, viewportSize: CGSize) -> CGPoint {
+        CGPoint(
+            x: min(max(0, offset.x), max(0, contentSize.width - viewportSize.width)),
+            y: min(max(0, offset.y), max(0, contentSize.height - viewportSize.height))
+        )
     }
 }
 

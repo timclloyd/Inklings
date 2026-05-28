@@ -79,20 +79,8 @@ struct NotebookMapPreview: View {
     var onGridPositionChanged: (((x: Int, y: Int)) -> Void)? = nil
     var onGridPositionSelected: (((x: Int, y: Int)) -> Void)? = nil
 
-    private var pagePositions: (minX: Int, maxX: Int, minY: Int, maxY: Int) {
-        let xPositions = pages.map { $0.positionX ?? 0 }
-        let yPositions = pages.map { $0.positionY ?? 0 }
-
-        return (
-            minX: xPositions.min() ?? 0,
-            maxX: xPositions.max() ?? 0,
-            minY: yPositions.min() ?? 0,
-            maxY: yPositions.max() ?? 0
-        )
-    }
-
-    private var pageColor: Color {
-        colorScheme == .dark ? Color(.systemGray2) : Color(.systemGray3)
+    private var mapSummary: NotebookMapSummary {
+        NotebookMapSummary(pages: pages)
     }
 
     private var viewportColor: Color {
@@ -101,40 +89,43 @@ struct NotebookMapPreview: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let layout = previewLayout(in: geometry.size)
+            let summary = mapSummary
+            let layout = previewLayout(in: geometry.size, summary: summary)
 
             if onPageSelected == nil &&
                 onContentPointChanged == nil &&
                 onContentPointSelected == nil &&
                 onGridPositionChanged == nil &&
                 onGridPositionSelected == nil {
-                previewContent(layout: layout)
+                previewContent(summary: summary, layout: layout)
                     .frame(width: geometry.size.width, height: geometry.size.height)
             } else {
-                previewContent(layout: layout)
+                previewContent(summary: summary, layout: layout)
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .contentShape(Rectangle())
                     .gesture(
                         DragGesture(minimumDistance: 0)
                             .onChanged { value in
-                                selectChangingLocation(value.location, layout: layout)
+                                selectChangingLocation(value.location, summary: summary, layout: layout)
                             }
                             .onEnded { value in
-                                selectLocation(value.location, layout: layout)
+                                selectLocation(value.location, summary: summary, layout: layout)
                             }
                     )
             }
         }
     }
 
-    private func previewContent(layout: PreviewLayout) -> some View {
+    private func previewContent(summary: NotebookMapSummary, layout: PreviewLayout) -> some View {
         ZStack(alignment: .topLeading) {
-            ForEach(pages) { page in
-                RoundedRectangle(cornerRadius: layout.pageCornerRadius)
-                    .fill(pageColor)
-                    .frame(width: layout.pageSize.width, height: layout.pageSize.height)
-                    .position(position(for: page, layout: layout))
-            }
+            NotebookMapPagesLayer(
+                summary: summary,
+                layout: layout,
+                colorScheme: colorScheme,
+                edgePadding: edgePadding,
+                pageSpacing: pageSpacing
+            )
+            .equatable()
 
             if let viewport {
                 RoundedRectangle(cornerRadius: 2)
@@ -155,9 +146,9 @@ struct NotebookMapPreview: View {
         }
     }
 
-    private func previewLayout(in size: CGSize) -> PreviewLayout {
-        let columns = max(1, pagePositions.maxX - pagePositions.minX + 1 + (edgePadding * 2))
-        let rows = max(1, pagePositions.maxY - pagePositions.minY + 1 + (edgePadding * 2))
+    private func previewLayout(in size: CGSize, summary: NotebookMapSummary) -> PreviewLayout {
+        let columns = max(1, summary.maxX - summary.minX + 1 + (edgePadding * 2))
+        let rows = max(1, summary.maxY - summary.minY + 1 + (edgePadding * 2))
         let availableWidth = max(1, size.width - (innerPadding * 2))
         let availableHeight = max(1, size.height - (innerPadding * 2))
         let pageAspectRatio = Page.legacyIPadPro11PageSize.width / Page.legacyIPadPro11PageSize.height
@@ -172,6 +163,7 @@ struct NotebookMapPreview: View {
         let originY = (size.height - contentHeight) / 2
 
         return PreviewLayout(
+            containerSize: size,
             origin: CGPoint(x: originX, y: originY),
             contentSize: CGSize(width: contentWidth, height: contentHeight),
             pageSize: CGSize(width: pageWidth, height: pageHeight),
@@ -179,37 +171,41 @@ struct NotebookMapPreview: View {
         )
     }
 
-    private func position(for page: Page, layout: PreviewLayout) -> CGPoint {
+    private func position(for page: Page, summary: NotebookMapSummary, layout: PreviewLayout) -> CGPoint {
+        position(x: page.positionX ?? 0, y: page.positionY ?? 0, summary: summary, layout: layout)
+    }
+
+    private func position(x: Int, y: Int, summary: NotebookMapSummary, layout: PreviewLayout) -> CGPoint {
         CGPoint(
-            x: layout.origin.x + CGFloat((page.positionX ?? 0) - pagePositions.minX + edgePadding) * (layout.pageSize.width + pageSpacing) + layout.pageSize.width / 2,
-            y: layout.origin.y + CGFloat(pagePositions.maxY - (page.positionY ?? 0) + edgePadding) * (layout.pageSize.height + pageSpacing) + layout.pageSize.height / 2
+            x: layout.origin.x + CGFloat(x - summary.minX + edgePadding) * (layout.pageSize.width + pageSpacing) + layout.pageSize.width / 2,
+            y: layout.origin.y + CGFloat(summary.maxY - y + edgePadding) * (layout.pageSize.height + pageSpacing) + layout.pageSize.height / 2
         )
     }
 
-    private func selectNearestPage(to location: CGPoint, layout: PreviewLayout) {
+    private func selectNearestPage(to location: CGPoint, summary: NotebookMapSummary, layout: PreviewLayout) {
         guard let onPageSelected,
               let nearestPage = pages.min(by: {
-                  distanceSquared(from: location, to: position(for: $0, layout: layout)) < distanceSquared(from: location, to: position(for: $1, layout: layout))
+                  distanceSquared(from: location, to: position(for: $0, summary: summary, layout: layout)) < distanceSquared(from: location, to: position(for: $1, summary: summary, layout: layout))
               }) else { return }
 
         onPageSelected(nearestPage)
     }
 
-    private func selectLocation(_ location: CGPoint, layout: PreviewLayout) {
+    private func selectLocation(_ location: CGPoint, summary: NotebookMapSummary, layout: PreviewLayout) {
         if let onContentPointSelected {
             onContentPointSelected(contentPoint(for: location, layout: layout))
         } else if let onGridPositionSelected {
-            onGridPositionSelected(gridPosition(for: location, layout: layout))
+            onGridPositionSelected(gridPosition(for: location, summary: summary, layout: layout))
         } else {
-            selectNearestPage(to: location, layout: layout)
+            selectNearestPage(to: location, summary: summary, layout: layout)
         }
     }
 
-    private func selectChangingLocation(_ location: CGPoint, layout: PreviewLayout) {
+    private func selectChangingLocation(_ location: CGPoint, summary: NotebookMapSummary, layout: PreviewLayout) {
         if let onContentPointChanged {
             onContentPointChanged(contentPoint(for: location, layout: layout))
         } else if let onGridPositionChanged {
-            onGridPositionChanged(gridPosition(for: location, layout: layout))
+            onGridPositionChanged(gridPosition(for: location, summary: summary, layout: layout))
         }
     }
 
@@ -220,17 +216,17 @@ struct NotebookMapPreview: View {
         )
     }
 
-    private func gridPosition(for location: CGPoint, layout: PreviewLayout) -> (x: Int, y: Int) {
+    private func gridPosition(for location: CGPoint, summary: NotebookMapSummary, layout: PreviewLayout) -> (x: Int, y: Int) {
         let columnStride = layout.pageSize.width + pageSpacing
         let rowStride = layout.pageSize.height + pageSpacing
-        let columns = max(1, pagePositions.maxX - pagePositions.minX + 1 + (edgePadding * 2))
-        let rows = max(1, pagePositions.maxY - pagePositions.minY + 1 + (edgePadding * 2))
+        let columns = max(1, summary.maxX - summary.minX + 1 + (edgePadding * 2))
+        let rows = max(1, summary.maxY - summary.minY + 1 + (edgePadding * 2))
         let column = min(max(0, Int(round((location.x - layout.origin.x - layout.pageSize.width / 2) / columnStride))), columns - 1)
         let row = min(max(0, Int(round((location.y - layout.origin.y - layout.pageSize.height / 2) / rowStride))), rows - 1)
 
         return (
-            x: pagePositions.minX - edgePadding + column,
-            y: pagePositions.maxY + edgePadding - row
+            x: summary.minX - edgePadding + column,
+            y: summary.maxY + edgePadding - row
         )
     }
 
@@ -240,10 +236,74 @@ struct NotebookMapPreview: View {
         return dx * dx + dy * dy
     }
 
-    private struct PreviewLayout {
+    private struct PreviewLayout: Equatable {
+        let containerSize: CGSize
         let origin: CGPoint
         let contentSize: CGSize
         let pageSize: CGSize
         let pageCornerRadius: CGFloat
+    }
+
+    private struct NotebookMapPagesLayer: View, Equatable {
+        let summary: NotebookMapSummary
+        let layout: PreviewLayout
+        let colorScheme: ColorScheme
+        let edgePadding: Int
+        let pageSpacing: CGFloat
+
+        private var pageColor: Color {
+            colorScheme == .dark ? Color(.systemGray2) : Color(.systemGray3)
+        }
+
+        var body: some View {
+            ZStack(alignment: .topLeading) {
+                ForEach(summary.pages) { page in
+                    RoundedRectangle(cornerRadius: layout.pageCornerRadius)
+                        .fill(pageColor)
+                        .frame(width: layout.pageSize.width, height: layout.pageSize.height)
+                        .position(position(for: page))
+                }
+            }
+            .frame(width: layout.containerSize.width, height: layout.containerSize.height)
+        }
+
+        private func position(for page: NotebookMapSummary.PagePosition) -> CGPoint {
+            CGPoint(
+                x: layout.origin.x + CGFloat(page.x - summary.minX + edgePadding) * (layout.pageSize.width + pageSpacing) + layout.pageSize.width / 2,
+                y: layout.origin.y + CGFloat(summary.maxY - page.y + edgePadding) * (layout.pageSize.height + pageSpacing) + layout.pageSize.height / 2
+            )
+        }
+    }
+}
+
+private struct NotebookMapSummary: Equatable {
+    let pages: [PagePosition]
+    let minX: Int
+    let maxX: Int
+    let minY: Int
+    let maxY: Int
+
+    init(pages: [Page]) {
+        let pagePositions = pages.map { page in
+            PagePosition(
+                id: page.id?.uuidString ?? "\(page.positionX ?? 0)_\(page.positionY ?? 0)",
+                x: page.positionX ?? 0,
+                y: page.positionY ?? 0
+            )
+        }
+        let xPositions = pagePositions.map(\.x)
+        let yPositions = pagePositions.map(\.y)
+
+        self.pages = pagePositions
+        minX = xPositions.min() ?? 0
+        maxX = xPositions.max() ?? 0
+        minY = yPositions.min() ?? 0
+        maxY = yPositions.max() ?? 0
+    }
+
+    struct PagePosition: Identifiable, Equatable {
+        let id: String
+        let x: Int
+        let y: Int
     }
 }
