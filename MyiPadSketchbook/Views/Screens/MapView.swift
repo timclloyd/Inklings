@@ -716,7 +716,9 @@ private struct MapScrollView<Content: View>: UIViewRepresentable {
 
             lastPublishedOffset = offset
             lastPublishTime = now
-            contentOffset.wrappedValue = offset
+            DispatchQueue.main.async {
+                self.contentOffset.wrappedValue = offset
+            }
         }
     }
 }
