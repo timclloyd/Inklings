@@ -58,7 +58,7 @@ private struct LibraryNotebookTile: View {
             }
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+                    .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
             )
         }
         .aspectRatio(1, contentMode: .fit)

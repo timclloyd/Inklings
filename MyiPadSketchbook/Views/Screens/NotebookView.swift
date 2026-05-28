@@ -178,7 +178,6 @@ struct NotebookView: View {
                         scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, layout: layout, animated: true)
                     }
                 )
-//                .padding(8)
                 .frame(width: geometry.size.width * 0.5, height: geometry.size.height * 0.2)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
@@ -186,7 +185,7 @@ struct NotebookView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+                        .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
                 )
 
                 Spacer()
@@ -215,7 +214,7 @@ struct NotebookView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
         )
     }
     
