@@ -10,6 +10,7 @@ struct LibraryView: View {
     @ObservedObject var pageManager: PageManager
     let topInset: CGFloat
     let onNotebookSelected: (Notebook) -> Void
+    let onAddNotebook: () -> Void
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -28,11 +29,46 @@ struct LibraryView: View {
                         onNotebookSelected(notebook)
                     }
                 }
+
+                Button(action: onAddNotebook) {
+                    LibraryAddNotebookTile(colorScheme: colorScheme)
+                }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 18)
             .padding(.top, topInset)
             .padding(.bottom, 36)
         }
+    }
+}
+
+// MARK: - LibraryAddNotebookTile
+private struct LibraryAddNotebookTile: View {
+    let colorScheme: ColorScheme
+
+    private let cornerRadius: CGFloat = 12
+
+    var body: some View {
+        GeometryReader { _ in
+            ZStack {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(Color(UIColor.systemBackground))
+
+                Image(systemName: "plus.circle")
+                    .font(.system(size: toolbarButtonSize))
+                    .foregroundColor(Color.primary)
+                    .frame(width: 34, height: 34)
+                    .background(
+                        Circle()
+                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                    )
+            }
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
+            )
+        }
+        .aspectRatio(1, contentMode: .fit)
     }
 }
 

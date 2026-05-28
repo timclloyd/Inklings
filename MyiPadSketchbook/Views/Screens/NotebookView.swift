@@ -86,10 +86,14 @@ struct NotebookView: View {
                     if navigationLevel == .library {
                         LibraryView(
                             pageManager: pageManager,
-                            topInset: geometry.safeAreaInsets.top + toolbarHeight + 24,
+                            topInset: geometry.safeAreaInsets.top + 24,
                             onNotebookSelected: { notebook in
                                 pageManager.switchToNotebook(notebook)
                                 centreOnCurrentPage(visibleSize: geometry.size, animated: false)
+                                navigationLevel = .notebook
+                            },
+                            onAddNotebook: {
+                                _ = pageManager.createNotebook()
                                 navigationLevel = .notebook
                             }
                         )
@@ -111,19 +115,19 @@ struct NotebookView: View {
                 }
                 .zIndex(1)
                 
-                VStack {
-                    HStack {
-                        Spacer()
-                        toolbarView
-                    }
-                    .padding(.top, geometry.safeAreaInsets.top + 24)
-                    .padding(.trailing, 24)
-
-                    Spacer()
-                }
-                .zIndex(2)
-
                 if navigationLevel == .notebook {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            toolbarView
+                        }
+                        .padding(.top, geometry.safeAreaInsets.top + 24)
+                        .padding(.trailing, 24)
+
+                        Spacer()
+                    }
+                    .zIndex(2)
+
                     notebookOverview(in: geometry, layout: layout)
                         .zIndex(3)
 
@@ -200,12 +204,8 @@ struct NotebookView: View {
     
     private var toolbarView: some View {
         HStack(spacing: 18) {
-            if navigationLevel == .library {
-                addNotebookButton
-            } else {
-                rearrangeButton
-                ShareButton(pageManager: pageManager)
-            }
+            rearrangeButton
+            ShareButton(pageManager: pageManager)
         }
         .padding(8)
         .background(
@@ -224,24 +224,6 @@ struct NotebookView: View {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
                 .font(.system(size: toolbarButtonSize, weight: .light))
                 .foregroundColor(isRearranging ? Color.orange : Color.primary)
-                .frame(width: 34, height: 34)
-                .background(
-                    Circle()
-                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
-                )
-        }
-        .contentShape(Circle())
-        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-    }
-
-    private var addNotebookButton: some View {
-        Button(action: {
-            _ = pageManager.createNotebook()
-            navigationLevel = .notebook
-        }) {
-            Image(systemName: "plus.circle")
-                .font(.system(size: toolbarButtonSize))
-                .foregroundColor(Color.primary)
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
