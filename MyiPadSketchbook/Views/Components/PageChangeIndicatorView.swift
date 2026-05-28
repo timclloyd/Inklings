@@ -21,22 +21,24 @@ struct PageChangeIndicatorView: View {
     let createThreshold: CGFloat = 1
     let adjacentPages: AdjacentPages
     let swipeProgress: SwipeProgress
+    let edgeDistance: CGFloat
 
     // MARK: - Constants
     private let arrowDiameter: CGFloat = 32
     private let shadowRadius: CGFloat = 15
-    private let edgeDistance: CGFloat = 39.5
 
     init(direction: EdgeDirection?,
          progress: CGFloat,
          size: CGSize,
          adjacentPages: AdjacentPages,
-         swipeProgress: SwipeProgress) {
+         swipeProgress: SwipeProgress,
+         edgeDistance: CGFloat = 39.5) {
         self.direction = direction
         self.progress = progress
         self.size = size
         self.adjacentPages = adjacentPages
         self.swipeProgress = swipeProgress
+        self.edgeDistance = edgeDistance
     }
     
     // MARK: - Body
@@ -125,4 +127,3 @@ struct PageChangeIndicatorView: View {
         }
     }
 }
-

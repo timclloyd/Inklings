@@ -13,6 +13,7 @@ import SwiftData
 struct MyiPadSketchbookApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
+            Notebook.self,
             Page.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)

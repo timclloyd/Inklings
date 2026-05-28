@@ -16,9 +16,12 @@ class PageManager: ObservableObject {
     @Published var currentPageID: UUID?
     @Published var previousPageID: UUID?
     @Published var pages: [Page] = []
+    @Published var notebooks: [Notebook] = []
+    @Published var currentNotebookID: UUID?
     @Published private(set) var pageRect: CGRect
     
     private var modelContext: ModelContext
+    private var allPages: [Page] = []
     
     // MARK: - Initialisation
     init(modelContext: ModelContext) {
@@ -26,8 +29,12 @@ class PageManager: ObservableObject {
         let screenSize = UIScreen.main.bounds.size
         self.pageRect = CGRect(origin: .zero, size: screenSize)
         
-        let descriptor = FetchDescriptor<Page>()
-        self.pages = (try? modelContext.fetch(descriptor)) ?? []
+        loadNotebooks()
+        loadPages()
+        migrateNotebookOwnership()
+        selectInitialNotebook()
+        refreshCurrentNotebookPages()
+
         if migratePagesMissingPageSize() {
             updateAllThumbnails()
             try? modelContext.save()
@@ -49,8 +56,9 @@ class PageManager: ObservableObject {
     
     // MARK: - Page handling
     func createPage(position: (x: Int, y: Int)) -> Page {
-        let newPage = Page(positionX: position.x, positionY: position.y, pageSize: pageRect.size)
+        let newPage = Page(positionX: position.x, positionY: position.y, pageSize: pageRect.size, notebookID: currentNotebookID)
         modelContext.insert(newPage)
+        allPages.append(newPage)
         pages.append(newPage)
         updateThumbnail(for: newPage)
         return newPage
@@ -61,6 +69,7 @@ class PageManager: ObservableObject {
             previousPageID = currentPageID
         }
         currentPageID = page.id
+        saveLastSelectedPage(page)
         // Save current page position
         UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
         UserDefaults.standard.set(page.positionY, forKey: "CurrentPageY")
@@ -75,6 +84,7 @@ class PageManager: ObservableObject {
         let currentPage = getCurrentPage()
         self.currentPageID = previousPageID
         self.previousPageID = currentPage?.id
+        saveLastSelectedPage(previousPage)
         
         // Save current page position
         UserDefaults.standard.set(previousPage.positionX, forKey: "CurrentPageX")
@@ -122,6 +132,42 @@ class PageManager: ObservableObject {
         pageRect = CGRect(origin: .zero, size: size)
         updateAllThumbnails()
     }
+
+    // MARK: - Notebook handling
+    func createNotebook() -> Notebook {
+        let notebook = Notebook(name: "Notebook \(notebooks.count + 1)")
+        modelContext.insert(notebook)
+        notebooks.append(notebook)
+        sortNotebooks()
+        switchToNotebook(notebook)
+        try? modelContext.save()
+        return notebook
+    }
+
+    func switchToNotebook(_ notebook: Notebook) {
+        guard let notebookID = notebook.id else { return }
+
+        currentNotebookID = notebookID
+        UserDefaults.standard.set(notebookID.uuidString, forKey: "CurrentNotebookID")
+        previousPageID = nil
+        refreshCurrentNotebookPages()
+
+        if let firstPage = pages.first {
+            let page = pages.first(where: { $0.id == notebook.lastSelectedPageID }) ?? firstPage
+            currentPageID = page.id
+            saveCurrentPagePosition(page)
+            saveLastSelectedPage(page)
+        } else {
+            let initialPage = createPage(position: (0, 0))
+            currentPageID = initialPage.id
+            saveCurrentPagePosition(initialPage)
+            saveLastSelectedPage(initialPage)
+        }
+    }
+
+    func pages(in notebook: Notebook) -> [Page] {
+        allPages.filter { $0.notebookID == notebook.id }
+    }
     
     func updatePagePosition(_ page: Page) {
         objectWillChange.send()
@@ -160,6 +206,81 @@ class PageManager: ObservableObject {
         }
 
         return didMigrate
+    }
+
+    private func loadNotebooks() {
+        let descriptor = FetchDescriptor<Notebook>()
+        notebooks = (try? modelContext.fetch(descriptor)) ?? []
+
+        if notebooks.isEmpty {
+            let firstNotebook = Notebook(name: "Notebook 1")
+            modelContext.insert(firstNotebook)
+            notebooks = [firstNotebook]
+        }
+
+        sortNotebooks()
+    }
+
+    private func loadPages() {
+        let descriptor = FetchDescriptor<Page>()
+        allPages = (try? modelContext.fetch(descriptor)) ?? []
+    }
+
+    private func migrateNotebookOwnership() {
+        guard let firstNotebookID = notebooks.first?.id else { return }
+        var didMigrate = false
+
+        for page in allPages where page.notebookID == nil {
+            page.notebookID = firstNotebookID
+            didMigrate = true
+        }
+
+        if didMigrate {
+            try? modelContext.save()
+        }
+    }
+
+    private func selectInitialNotebook() {
+        if let savedIDString = UserDefaults.standard.string(forKey: "CurrentNotebookID"),
+           let savedID = UUID(uuidString: savedIDString),
+           notebooks.contains(where: { $0.id == savedID }) {
+            currentNotebookID = savedID
+        } else {
+            currentNotebookID = notebooks.first?.id
+        }
+    }
+
+    private func refreshCurrentNotebookPages() {
+        pages = allPages.filter { $0.notebookID == currentNotebookID }
+    }
+
+    private func sortNotebooks() {
+        notebooks.sort {
+            let leftDate = $0.createdAt ?? .distantPast
+            let rightDate = $1.createdAt ?? .distantPast
+
+            if leftDate == rightDate {
+                return ($0.id?.uuidString ?? "") < ($1.id?.uuidString ?? "")
+            }
+
+            return leftDate < rightDate
+        }
+    }
+
+    private func saveCurrentPagePosition(_ page: Page) {
+        UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
+        UserDefaults.standard.set(page.positionY, forKey: "CurrentPageY")
+    }
+
+    private func saveLastSelectedPage(_ page: Page) {
+        guard let notebookID = page.notebookID,
+              let notebook = notebooks.first(where: { $0.id == notebookID }),
+              notebook.lastSelectedPageID != page.id else {
+            return
+        }
+
+        notebook.lastSelectedPageID = page.id
+        try? modelContext.save()
     }
     
     // MARK: - Thumbnail handling
