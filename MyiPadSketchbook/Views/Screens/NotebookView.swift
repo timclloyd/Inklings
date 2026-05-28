@@ -164,8 +164,8 @@ struct NotebookView: View {
                 NotebookPreview(
                     pages: pages,
                     colorScheme: colorScheme,
-                    edgePadding: notebookEdgePadding,
-                    innerPadding: 10,
+                    edgePadding: 0,
+                    innerPadding: 8,
                     pageSpacing: 2,
                     viewport: overviewViewport(for: geometry.size, layout: layout),
                     onContentPointChanged: { contentPoint in
@@ -175,17 +175,20 @@ struct NotebookView: View {
                         scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, layout: layout, animated: true)
                     }
                 )
-                .padding(8)
+//                .padding(8)
                 .frame(width: geometry.size.width * 0.5, height: geometry.size.height * 0.2)
                 .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(UIColor.systemBackground).opacity(0.92))
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(UIColor.systemBackground))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.primary.opacity(0.15), lineWidth: 1)
                 )
 
                 Spacer()
             }
-            .padding(.leading, 12)
-            .padding(.bottom, geometry.safeAreaInsets.bottom + 12)
+            .padding(.leading, 24)
         }
         .allowsHitTesting(!isRearranging)
     }

@@ -41,17 +41,13 @@ private struct LibraryNotebookTile: View {
     let pages: [Page]
     let colorScheme: ColorScheme
 
-    private let cornerRadius: CGFloat = 8
-
-    private var fillColor: Color {
-        colorScheme == .dark ? Color(.systemGray6) : .white
-    }
+    private let cornerRadius: CGFloat = 12
 
     var body: some View {
         GeometryReader { _ in
             ZStack {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(fillColor)
+                    .fill(Color(UIColor.systemBackground))
 
                 NotebookPreview(
                     pages: pages,
@@ -60,6 +56,10 @@ private struct LibraryNotebookTile: View {
                     innerPadding: 18
                 )
             }
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+            )
         }
         .aspectRatio(1, contentMode: .fit)
     }
