@@ -10,6 +10,12 @@ import SwiftUI
 import SwiftData
 import PencilKit
 
+enum NavigationLevel {
+    case library
+    case notebook
+    case page
+}
+
 // MARK: - PageView
 struct PageView: View {
     // MARK: - Environment
@@ -22,13 +28,12 @@ struct PageView: View {
     // MARK: - State
     @State private var canvasView = PKCanvasView()
     @State private var toolPicker = PKToolPicker()
-    @State private var showMapView = false
+    @State private var navigationLevel: NavigationLevel = .page
     @State private var swipeProgress = SwipeProgress(direction: nil, progress: 0)
     @GestureState private var dragState = DragState.inactive
     @State private var canUndo = false
     @State private var canRedo = false
     @State private var canGoToPreviousPage = false
-    @State private var pageChangedFromMap = false
     @State private var currentTool: String = "pen_black"
     @State private var previousTool: String?
     
@@ -40,10 +45,11 @@ struct PageView: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            if !showMapView {
-                mainView
-            } else {
-                mapView
+            switch navigationLevel {
+            case .page:
+                pageContentView
+            case .notebook, .library:
+                notebookView
             }
         }
         .onAppear {
@@ -63,7 +69,7 @@ struct PageView: View {
     }
     
     // MARK: - Subviews
-    private var mainView: some View {
+    private var pageContentView: some View {
         GeometryReader { geometry in
             VStack(spacing: 0) {
                 toolbarView
@@ -229,11 +235,12 @@ struct PageView: View {
         .disabled(!canRedo)
     }
     
-    private var mapView: some View {
-        MapView(pageManager: pageManager,
-                onPageSelected: handlePageSelection,
-                showMap: $showMapView,
-                onCloseMap: { showMapView = false })
+    private var notebookView: some View {
+        NotebookView(
+            pageManager: pageManager,
+            navigationLevel: $navigationLevel,
+            onPageSelected: handlePageSelection
+        )
     }
     
     // MARK: - Helper Methods
@@ -265,11 +272,6 @@ struct PageView: View {
         }
     }
     
-    private func showMap() {
-        canvasView.undoManager?.removeAllActions()
-        showMapView = true
-    }
-    
     private func handleUndo() {
         canvasView.undoManager?.undo()
         updateUndoRedoState()
@@ -287,7 +289,7 @@ struct PageView: View {
         canvasView.drawing = pageManager.drawingForDisplay(for: selectedPage)
         updateUndoRedoState()
         updateCanGoToPreviousPage()
-        showMapView = false
+        navigationLevel = .page
     }
     
     private func handleSwipe(_ gesture: UIPanGestureRecognizer) {
@@ -332,18 +334,11 @@ struct PageView: View {
         case .ended:
             if scale <= 0.6 {
                 canvasView.undoManager?.removeAllActions()
-                showMapView = true
+                navigationLevel = .notebook
             }
             swipeProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
         default:
             break
-        }
-    }
-    
-    private func checkAndUpdatePreviousPage() {
-        if pageChangedFromMap {
-            updateCanGoToPreviousPage()
-            pageChangedFromMap = false
         }
     }
     

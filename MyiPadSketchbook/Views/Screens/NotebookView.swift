@@ -2,308 +2,700 @@
 //  NotebookView.swift
 //  MyiPadSketchbook
 //
+//  Created by Tim Lloyd on 2024-08-18.
+//
 
 import SwiftUI
+import PencilKit
+import SwiftData
+import UIKit
 
 // MARK: - NotebookView
 struct NotebookView: View {
+    // MARK: - Properties
     @ObservedObject var pageManager: PageManager
-    let topInset: CGFloat
-    let onNotebookSelected: (Notebook) -> Void
+    @Environment(\.colorScheme) var colorScheme
+    @Binding var navigationLevel: NavigationLevel
+    var onPageSelected: (Page) -> Void
+    
+    // MARK: - State
+    @State private var draggedPage: Page?
+    @State private var draggedPageOffset: CGSize = .zero
+    @State private var contentOffset: CGPoint = .zero
+    @State private var scrollTarget: CGPoint?
+    @State private var scrollTargetAnimated: Bool = true
+    
+    @State private var isRearranging: Bool = false
+    @GestureState private var dragLocation: CGPoint = .zero
+    
+    // MARK: - Constants
+    private let spacing: CGFloat = 6
+    private let notebookEdgePadding = 4
+    private let toolbarHeight: CGFloat = 64
+    
+    // MARK: - Computed Properties
+    private var pages: [Page] {
+        pageManager.pages
+    }
 
-    @Environment(\.colorScheme) private var colorScheme
+    private var thumbnailSize: CGSize {
+        let aspectRatio = pageManager.pageRect.width / pageManager.pageRect.height
+        return CGSize(width: 120, height: 120 / aspectRatio)
+    }
 
-    var body: some View {
-        ScrollView {
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 18),
-                GridItem(.flexible(), spacing: 18)
-            ], spacing: 18) {
-                ForEach(pageManager.notebooks) { notebook in
-                    NotebookTile(
-                        pages: pageManager.pages(in: notebook),
-                        colorScheme: colorScheme
-                    )
-                    .onTapGesture {
-                        onNotebookSelected(notebook)
-                    }
-                }
-            }
-            .padding(.horizontal, 18)
-            .padding(.top, topInset)
-            .padding(.bottom, 36)
+    private var backgroundColor: Color {
+        colorScheme == .dark ? Color.black : Color(.systemGray6)
+    }
+
+    private var notebookLayout: NotebookLayout {
+        NotebookLayout(
+            pages: pages,
+            thumbnailSize: thumbnailSize,
+            spacing: spacing,
+            edgePadding: notebookEdgePadding
+        )
+    }
+
+    private var overlapCounts: [NotebookGridPosition: Int] {
+        Dictionary(grouping: pages) { page in
+            NotebookGridPosition(x: page.positionX ?? 0, y: page.positionY ?? 0)
         }
-    }
-}
-
-// MARK: - NotebookTile
-private struct NotebookTile: View {
-    let pages: [Page]
-    let colorScheme: ColorScheme
-
-    private let cornerRadius: CGFloat = 8
-
-    private var fillColor: Color {
-        colorScheme == .dark ? Color(.systemGray6) : .white
+        .mapValues(\.count)
     }
 
-    var body: some View {
-        GeometryReader { _ in
-            ZStack {
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(fillColor)
-
-                NotebookMapPreview(
-                    pages: pages,
-                    colorScheme: colorScheme,
-                    edgePadding: 0,
-                    innerPadding: 18
-                )
+    private var notebookContentRevision: String {
+        let pageRevision = pages
+            .map { page in
+                "\(page.id?.uuidString ?? ""):\(page.positionX ?? 0):\(page.positionY ?? 0):\(page.thumbnailData?.count ?? 0)"
             }
-        }
-        .aspectRatio(1, contentMode: .fit)
+            .joined(separator: "|")
+
+        return "\(pageRevision)|\(isRearranging)|\(colorScheme)"
     }
-}
-
-// MARK: - NotebookMapPreview
-struct NotebookMapPreview: View {
-    let pages: [Page]
-    let colorScheme: ColorScheme
-    var edgePadding: Int = 0
-    var innerPadding: CGFloat = 18
-    var pageSpacing: CGFloat = 3
-    var viewport: CGRect? = nil
-    var onPageSelected: ((Page) -> Void)? = nil
-    var onContentPointChanged: ((CGPoint) -> Void)? = nil
-    var onContentPointSelected: ((CGPoint) -> Void)? = nil
-    var onGridPositionChanged: (((x: Int, y: Int)) -> Void)? = nil
-    var onGridPositionSelected: (((x: Int, y: Int)) -> Void)? = nil
-
-    private var mapSummary: NotebookMapSummary {
-        NotebookMapSummary(pages: pages)
-    }
-
-    private var viewportColor: Color {
-        colorScheme == .dark ? Color.white : Color.primary
-    }
-
+    
+    // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
-            let summary = mapSummary
-            let layout = previewLayout(in: geometry.size, summary: summary)
+            let layout = notebookLayout
+            let overlaps = overlapCounts
 
-            if onPageSelected == nil &&
-                onContentPointChanged == nil &&
-                onContentPointSelected == nil &&
-                onGridPositionChanged == nil &&
-                onGridPositionSelected == nil {
-                previewContent(summary: summary, layout: layout)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-            } else {
-                previewContent(summary: summary, layout: layout)
-                    .frame(width: geometry.size.width, height: geometry.size.height)
-                    .contentShape(Rectangle())
-                    .gesture(
-                        DragGesture(minimumDistance: 0)
-                            .onChanged { value in
-                                selectChangingLocation(value.location, summary: summary, layout: layout)
+            ZStack {
+                backgroundColor.edgesIgnoringSafeArea(.all)
+                
+                Group {
+                    if navigationLevel == .library {
+                        LibraryView(
+                            pageManager: pageManager,
+                            topInset: geometry.safeAreaInsets.top + toolbarHeight + 24,
+                            onNotebookSelected: { notebook in
+                                pageManager.switchToNotebook(notebook)
+                                centreOnCurrentPage(visibleSize: geometry.size, animated: false)
+                                navigationLevel = .notebook
                             }
-                            .onEnded { value in
-                                selectLocation(value.location, summary: summary, layout: layout)
-                            }
-                    )
-            }
-        }
-    }
+                        )
+                            .transition(.opacity)
+                    } else {
+                        NotebookScrollView(
+                            contentSize: layout.contentSize,
+                            contentRevision: notebookContentRevision,
+                            contentOffset: $contentOffset,
+                            scrollTarget: $scrollTarget,
+                            scrollTargetAnimated: $scrollTargetAnimated
+                        ) {
+                            thumbnailsView(layout: layout, overlapCounts: overlaps)
+                        }
+                        .edgesIgnoringSafeArea(.all)
+                    }
+                }
+                .zIndex(0)
+                
+                VStack(spacing: 0) {
+                    toolbarView
+                        .padding(.top, geometry.safeAreaInsets.top)
+                    Spacer()
+                }
+                .zIndex(1)
 
-    private func previewContent(summary: NotebookMapSummary, layout: PreviewLayout) -> some View {
-        ZStack(alignment: .topLeading) {
-            NotebookMapPagesLayer(
-                summary: summary,
-                layout: layout,
-                colorScheme: colorScheme,
-                edgePadding: edgePadding,
-                pageSpacing: pageSpacing
-            )
-            .equatable()
-
-            if let viewport {
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(viewportColor.opacity(0.85), lineWidth: 1.5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(viewportColor.opacity(0.08))
-                    )
-                    .frame(
-                        width: max(4, viewport.width * layout.contentSize.width),
-                        height: max(4, viewport.height * layout.contentSize.height)
-                    )
-                    .position(
-                        x: layout.origin.x + viewport.midX * layout.contentSize.width,
-                        y: layout.origin.y + viewport.midY * layout.contentSize.height
-                    )
-            }
-        }
-    }
-
-    private func previewLayout(in size: CGSize, summary: NotebookMapSummary) -> PreviewLayout {
-        let columns = max(1, summary.maxX - summary.minX + 1 + (edgePadding * 2))
-        let rows = max(1, summary.maxY - summary.minY + 1 + (edgePadding * 2))
-        let availableWidth = max(1, size.width - (innerPadding * 2))
-        let availableHeight = max(1, size.height - (innerPadding * 2))
-        let pageAspectRatio = Page.legacyIPadPro11PageSize.width / Page.legacyIPadPro11PageSize.height
-        let maxPageWidth = (availableWidth - CGFloat(max(0, columns - 1)) * pageSpacing) / CGFloat(columns)
-        let maxPageHeight = (availableHeight - CGFloat(max(0, rows - 1)) * pageSpacing) / CGFloat(rows)
-        let pageWidth = min(maxPageWidth, maxPageHeight * pageAspectRatio)
-        let pageHeight = pageWidth / pageAspectRatio
-        let pageCornerRadius = min(2, max(0.75, pageWidth * 0.08))
-        let contentWidth = CGFloat(columns) * pageWidth + CGFloat(max(0, columns - 1)) * pageSpacing
-        let contentHeight = CGFloat(rows) * pageHeight + CGFloat(max(0, rows - 1)) * pageSpacing
-        let originX = (size.width - contentWidth) / 2
-        let originY = (size.height - contentHeight) / 2
-
-        return PreviewLayout(
-            containerSize: size,
-            origin: CGPoint(x: originX, y: originY),
-            contentSize: CGSize(width: contentWidth, height: contentHeight),
-            pageSize: CGSize(width: pageWidth, height: pageHeight),
-            pageCornerRadius: pageCornerRadius
-        )
-    }
-
-    private func position(for page: Page, summary: NotebookMapSummary, layout: PreviewLayout) -> CGPoint {
-        position(x: page.positionX ?? 0, y: page.positionY ?? 0, summary: summary, layout: layout)
-    }
-
-    private func position(x: Int, y: Int, summary: NotebookMapSummary, layout: PreviewLayout) -> CGPoint {
-        CGPoint(
-            x: layout.origin.x + CGFloat(x - summary.minX + edgePadding) * (layout.pageSize.width + pageSpacing) + layout.pageSize.width / 2,
-            y: layout.origin.y + CGFloat(summary.maxY - y + edgePadding) * (layout.pageSize.height + pageSpacing) + layout.pageSize.height / 2
-        )
-    }
-
-    private func selectNearestPage(to location: CGPoint, summary: NotebookMapSummary, layout: PreviewLayout) {
-        guard let onPageSelected,
-              let nearestPage = pages.min(by: {
-                  distanceSquared(from: location, to: position(for: $0, summary: summary, layout: layout)) < distanceSquared(from: location, to: position(for: $1, summary: summary, layout: layout))
-              }) else { return }
-
-        onPageSelected(nearestPage)
-    }
-
-    private func selectLocation(_ location: CGPoint, summary: NotebookMapSummary, layout: PreviewLayout) {
-        if let onContentPointSelected {
-            onContentPointSelected(contentPoint(for: location, layout: layout))
-        } else if let onGridPositionSelected {
-            onGridPositionSelected(gridPosition(for: location, summary: summary, layout: layout))
-        } else {
-            selectNearestPage(to: location, summary: summary, layout: layout)
-        }
-    }
-
-    private func selectChangingLocation(_ location: CGPoint, summary: NotebookMapSummary, layout: PreviewLayout) {
-        if let onContentPointChanged {
-            onContentPointChanged(contentPoint(for: location, layout: layout))
-        } else if let onGridPositionChanged {
-            onGridPositionChanged(gridPosition(for: location, summary: summary, layout: layout))
-        }
-    }
-
-    private func contentPoint(for location: CGPoint, layout: PreviewLayout) -> CGPoint {
-        CGPoint(
-            x: min(max(0, (location.x - layout.origin.x) / max(1, layout.contentSize.width)), 1),
-            y: min(max(0, (location.y - layout.origin.y) / max(1, layout.contentSize.height)), 1)
-        )
-    }
-
-    private func gridPosition(for location: CGPoint, summary: NotebookMapSummary, layout: PreviewLayout) -> (x: Int, y: Int) {
-        let columnStride = layout.pageSize.width + pageSpacing
-        let rowStride = layout.pageSize.height + pageSpacing
-        let columns = max(1, summary.maxX - summary.minX + 1 + (edgePadding * 2))
-        let rows = max(1, summary.maxY - summary.minY + 1 + (edgePadding * 2))
-        let column = min(max(0, Int(round((location.x - layout.origin.x - layout.pageSize.width / 2) / columnStride))), columns - 1)
-        let row = min(max(0, Int(round((location.y - layout.origin.y - layout.pageSize.height / 2) / rowStride))), rows - 1)
-
-        return (
-            x: summary.minX - edgePadding + column,
-            y: summary.maxY + edgePadding - row
-        )
-    }
-
-    private func distanceSquared(from lhs: CGPoint, to rhs: CGPoint) -> CGFloat {
-        let dx = lhs.x - rhs.x
-        let dy = lhs.y - rhs.y
-        return dx * dx + dy * dy
-    }
-
-    private struct PreviewLayout: Equatable {
-        let containerSize: CGSize
-        let origin: CGPoint
-        let contentSize: CGSize
-        let pageSize: CGSize
-        let pageCornerRadius: CGFloat
-    }
-
-    private struct NotebookMapPagesLayer: View, Equatable {
-        let summary: NotebookMapSummary
-        let layout: PreviewLayout
-        let colorScheme: ColorScheme
-        let edgePadding: Int
-        let pageSpacing: CGFloat
-
-        private var pageColor: Color {
-            colorScheme == .dark ? Color(.systemGray2) : Color(.systemGray3)
-        }
-
-        var body: some View {
-            ZStack(alignment: .topLeading) {
-                ForEach(summary.pages) { page in
-                    RoundedRectangle(cornerRadius: layout.pageCornerRadius)
-                        .fill(pageColor)
-                        .frame(width: layout.pageSize.width, height: layout.pageSize.height)
-                        .position(position(for: page))
+                if navigationLevel == .notebook {
+                    notebookOverview(in: geometry, layout: layout)
+                        .zIndex(2)
                 }
             }
-            .frame(width: layout.containerSize.width, height: layout.containerSize.height)
         }
+        .onAppear {
+            centreOnCurrentPage(visibleSize: UIScreen.main.bounds.size, animated: false)
+        }
+        .onChange(of: colorScheme) {
+            pageManager.updateAllThumbnails()
+        }
+    }
+    
+    // MARK: - Subviews
+    private func thumbnailsView(layout: NotebookLayout, overlapCounts: [NotebookGridPosition: Int]) -> some View {
+        ZStack {
+            ForEach(pages) { page in
+                thumbnailView(for: page, layout: layout, overlapCount: overlapCounts[
+                    NotebookGridPosition(x: page.positionX ?? 0, y: page.positionY ?? 0),
+                    default: 1
+                ])
+            }
+        }
+        .frame(width: layout.contentSize.width, height: layout.contentSize.height)
+    }
 
-        private func position(for page: NotebookMapSummary.PagePosition) -> CGPoint {
-            CGPoint(
-                x: layout.origin.x + CGFloat(page.x - summary.minX + edgePadding) * (layout.pageSize.width + pageSpacing) + layout.pageSize.width / 2,
-                y: layout.origin.y + CGFloat(summary.maxY - page.y + edgePadding) * (layout.pageSize.height + pageSpacing) + layout.pageSize.height / 2
+    private func notebookOverview(in geometry: GeometryProxy, layout: NotebookLayout) -> some View {
+        VStack {
+            Spacer()
+
+            HStack {
+                NotebookPreview(
+                    pages: pages,
+                    colorScheme: colorScheme,
+                    edgePadding: notebookEdgePadding,
+                    innerPadding: 10,
+                    pageSpacing: 2,
+                    viewport: overviewViewport(for: geometry.size, layout: layout),
+                    onContentPointChanged: { contentPoint in
+                        scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, layout: layout, animated: false)
+                    },
+                    onContentPointSelected: { contentPoint in
+                        scrollToMiniMapPoint(contentPoint, viewportSize: geometry.size, layout: layout, animated: true)
+                    }
+                )
+                .padding(8)
+                .frame(width: geometry.size.width * 0.5, height: geometry.size.height * 0.2)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(UIColor.systemBackground).opacity(0.92))
+                )
+
+                Spacer()
+            }
+            .padding(.leading, 12)
+            .padding(.bottom, geometry.safeAreaInsets.bottom + 12)
+        }
+        .allowsHitTesting(!isRearranging)
+    }
+    
+    private var toolbarView: some View {
+        HStack {
+            if navigationLevel == .library {
+                addNotebookButton
+            } else {
+                libraryButton
+                    .padding(.leading, 10)
+
+                Spacer()
+
+                HStack(spacing: 18) {
+                    rearrangeButton
+                    ShareButton(pageManager: pageManager)
+                }
+                .padding(.trailing, 10)
+            }
+        }
+        .padding(.vertical, 15)
+        .frame(maxWidth: .infinity)
+        .background(Color(UIColor.systemBackground))
+    }
+    
+    // MARK: - Buttons
+    private var libraryButton: some View {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.16)) {
+                navigationLevel = .library
+            }
+        }) {
+            Image(systemName: "rectangle.grid.2x2")
+                .font(.system(size: toolbarButtonSize))
+                .foregroundColor(Color.primary)
+                .frame(width: 34, height: 34)
+                .background(
+                    Circle()
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                )
+        }
+        .contentShape(Circle())
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+    }
+
+    private var rearrangeButton: some View {
+        Button(action: { isRearranging.toggle() }) {
+            Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
+                .font(.system(size: toolbarButtonSize, weight: .light))
+                .foregroundColor(isRearranging ? Color.orange : Color.primary)
+                .frame(width: 34, height: 34)
+                .background(
+                    Circle()
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                )
+        }
+        .contentShape(Circle())
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+    }
+
+    private var addNotebookButton: some View {
+        Button(action: {
+            _ = pageManager.createNotebook()
+            navigationLevel = .notebook
+        }) {
+            Image(systemName: "plus.circle")
+                .font(.system(size: toolbarButtonSize))
+                .foregroundColor(Color.primary)
+                .frame(width: 34, height: 34)
+                .background(
+                    Circle()
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                )
+        }
+        .contentShape(Circle())
+        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
+        .padding(.leading, 10)
+    }
+
+    // MARK: - Thumbnail View
+    private func thumbnailView(for page: Page, layout: NotebookLayout, overlapCount: Int) -> some View {
+        let isSelected = draggedPage?.id == page.id
+        let isCurrentPage = page.id == pageManager.getCurrentPage()?.id
+        let appearance = thumbnailAppearance(for: page, isSelected: isSelected && isRearranging, isCurrentPage: isCurrentPage)
+        let hasOverlap = overlapCount > 1
+        
+        return ZStack {
+            ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
+                .overlay(thumbnailBorder(appearance: appearance, isCurrentPage: isCurrentPage))
+                .background(appearance.backgroundColor)
+                .scaleEffect(appearance.scale)
+                .opacity(appearance.opacity)
+                .shadow(
+                    color: isSelected && isRearranging ? Color.black.opacity(0.3) : Color.clear,
+                    radius: isSelected && isRearranging ? 10 : 0,
+                    x: 0,
+                    y: 5
+                )
+                .id("page_\(page.id?.uuidString ?? "")")
+            
+            if hasOverlap {
+                overlapIndicator(count: overlapCount)
+            }
+        }
+        .position(layout.thumbnailPosition(for: page))
+        .offset(isSelected && isRearranging ? draggedPageOffset : .zero)
+        .zIndex(isSelected && isRearranging ? 1 : 0)
+        .gesture(isRearranging ? dragGesture(for: page) : nil)
+        .onTapGesture {
+            if !isRearranging {
+                onPageSelected(page)
+                navigationLevel = .page
+            }
+        }
+    }
+    
+    private func thumbnailAppearance(for page: Page, isSelected: Bool, isCurrentPage: Bool) -> ThumbnailAppearance {
+        if isSelected && isRearranging {
+            return .dragging(colorScheme: colorScheme)
+        } else if isCurrentPage {
+            return .current(colorScheme: colorScheme)
+        } else {
+            return .normal(colorScheme: colorScheme)
+        }
+    }
+    
+    private func thumbnailBorder(appearance: ThumbnailAppearance, isCurrentPage: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 14)
+            .stroke(
+                isRearranging ? .orange : appearance.borderColor,
+                style: StrokeStyle(
+                    lineWidth: appearance.borderWidth,
+                    dash: isRearranging ? [5] : []
+                )
+            )
+    }
+    
+    private func overlapIndicator(count: Int) -> some View {
+        Text("\(count)")
+            .font(.system(size: 16))
+            .foregroundColor(.white)
+            .padding(6)
+            .background(Color.red)
+            .clipShape(Circle())
+            .offset(x: thumbnailSize.width / 2 - 16, y: -thumbnailSize.height / 2 + 16)
+    }
+    
+    // MARK: - Gestures
+    private func dragGesture(for page: Page) -> some Gesture {
+        DragGesture(minimumDistance: 0)
+            .updating($dragLocation) { value, state, _ in
+                state = value.location
+            }
+            .onChanged { value in
+                if isRearranging {
+                    draggedPage = page
+                    draggedPageOffset = value.translation
+                }
+            }
+            .onEnded { value in
+                if isRearranging {
+                    let gridMovement = calculateGridMovement(value.translation)
+                    let newPosition = (
+                        x: (page.positionX ?? 0) + gridMovement.x,
+                        y: (page.positionY ?? 0) + gridMovement.y
+                    )
+                    if isValidMove(to: newPosition) {
+                        page.positionX = newPosition.x
+                        page.positionY = newPosition.y
+                        pageManager.updatePagePosition(page)
+                    }
+                    draggedPage = nil
+                    draggedPageOffset = .zero
+                } else if value.translation == .zero {
+                    onPageSelected(page)
+                    navigationLevel = .page
+                }
+            }
+    }
+    
+    // MARK: - Helper Methods
+    private func calculateGridMovement(_ translation: CGSize) -> (x: Int, y: Int) {
+        let xMovement = Int(round(translation.width / (thumbnailSize.width + spacing)))
+        let yMovement = -Int(round(translation.height / (thumbnailSize.height + spacing)))
+        return (x: xMovement, y: yMovement)
+    }
+    
+    private func isValidMove(to position: (x: Int, y: Int)) -> Bool {
+        let layout = notebookLayout
+        let minX = layout.bounds.minX - notebookEdgePadding
+        let maxX = layout.bounds.maxX + notebookEdgePadding
+        let minY = layout.bounds.minY - notebookEdgePadding
+        let maxY = layout.bounds.maxY + notebookEdgePadding
+        
+        let isWithinBounds = position.x >= minX && position.x <= maxX && position.y >= minY && position.y <= maxY
+        let isNotOccupied = !pages.contains { $0.id != draggedPage?.id && $0.positionX == position.x && $0.positionY == position.y }
+        
+        return isWithinBounds && isNotOccupied
+    }
+
+    private func overviewViewport(for visibleSize: CGSize, layout: NotebookLayout) -> CGRect {
+        layout.viewport(for: contentOffset, visibleSize: visibleSize)
+    }
+
+    private func scrollToGridPosition(_ position: (x: Int, y: Int), viewportSize: CGSize, animated: Bool) {
+        let layout = notebookLayout
+        let targetPosition = layout.thumbnailPosition(for: NotebookGridPosition(x: position.x, y: position.y))
+        let unclampedOffset = CGPoint(
+            x: targetPosition.x - viewportSize.width / 2,
+            y: targetPosition.y - viewportSize.height / 2
+        )
+
+        scrollTargetAnimated = animated
+        scrollTarget = layout.clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
+    }
+
+    private func scrollToMiniMapPoint(_ point: CGPoint, viewportSize: CGSize, layout: NotebookLayout, animated: Bool) {
+        let unclampedOffset = CGPoint(
+            x: point.x * layout.contentSize.width - viewportSize.width / 2,
+            y: point.y * layout.contentSize.height - viewportSize.height / 2
+        )
+
+        scrollTargetAnimated = animated
+        scrollTarget = layout.clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
+    }
+    
+    private func centreOnCurrentPage(visibleSize: CGSize, animated: Bool) {
+        guard let currentPage = pageManager.getCurrentPage() else { return }
+        let layout = notebookLayout
+
+        let targetPosition = layout.thumbnailPosition(for: NotebookGridPosition(
+            x: currentPage.positionX ?? 0,
+            y: currentPage.positionY ?? 0
+        ))
+        let unclampedOffset = CGPoint(
+            x: targetPosition.x - visibleSize.width / 2,
+            y: targetPosition.y - visibleSize.height / 2
+        )
+
+        scrollTargetAnimated = animated
+        scrollTarget = layout.clampedContentOffset(unclampedOffset, viewportSize: visibleSize)
+    }
+    
+    // MARK: - ThumbnailContent
+    struct ThumbnailContent: View {
+        let page: Page
+        let thumbnailSize: CGSize
+        let colorScheme: ColorScheme
+        let cornerRadius: CGFloat = 14
+        
+        var body: some View {
+            ZStack(alignment: .bottom) {
+                thumbnailImage
+                coordinateLabel
+            }
+            .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(.clear)
             )
         }
+        
+        private var thumbnailImage: some View {
+            Group {
+                if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .scaledToFit()
+                } else {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(Color.clear)
+                }
+            }
+            .frame(width: thumbnailSize.width, height: thumbnailSize.height)
+            .clipped()
+        }
+        
+        private var coordinateLabel: some View {
+            Text("\(page.positionX ?? 0), \(page.positionY ?? 0)")
+                .font(.system(size: 10))
+                .padding(2)
+                .padding(.horizontal, 3)
+                .foregroundColor(Color.primary.opacity(0.87))
+                .background(Color(.systemGray5))
+                .cornerRadius(5)
+                .padding(.bottom, 3)
+        }
+    }
+
+    // MARK: - ThumbnailAppearance
+    struct ThumbnailAppearance {
+        let backgroundColor: Color
+        let borderColor: Color
+        let borderWidth: CGFloat
+        let scale: CGFloat
+        let opacity: Double
+        
+        static func normal(colorScheme: ColorScheme) -> ThumbnailAppearance {
+            ThumbnailAppearance(
+                backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+                borderColor: colorScheme == .dark ? Color.clear : Color.clear,
+                borderWidth: 1.5,
+                scale: 1.0,
+                opacity: 1.0
+            )
+        }
+        
+        static func current(colorScheme: ColorScheme) -> ThumbnailAppearance {
+            ThumbnailAppearance(
+                backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+                borderColor: .primary,
+                borderWidth: 1.5,
+                scale: 1.0,
+                opacity: 1.0
+            )
+        }
+        
+        static func dragging(colorScheme: ColorScheme) -> ThumbnailAppearance {
+            ThumbnailAppearance(
+                backgroundColor: colorScheme == .dark ? Color.clear : Color.clear,
+                borderColor: .orange,
+                borderWidth: 2,
+                scale: 1.05,
+                opacity: 1.0
+            )
+        }
+    }
+    
+    struct ActivityViewController: UIViewControllerRepresentable {
+        let activityItems: [Any]
+        let applicationActivities: [UIActivity]?
+        let filename: String
+        
+        func makeUIViewController(context: UIViewControllerRepresentableContext<ActivityViewController>) -> UIActivityViewController {
+            let controller = UIActivityViewController(activityItems: activityItems, applicationActivities: applicationActivities)
+            
+            controller.completionWithItemsHandler = { (activityType, completed, returnedItems, error) in
+                if let url = activityItems.first as? URL {
+                    try? FileManager.default.removeItem(at: url)
+                }
+            }
+            
+            return controller
+        }
+        
+        func updateUIViewController(_ uiViewController: UIActivityViewController, context: UIViewControllerRepresentableContext<ActivityViewController>) {}
     }
 }
 
-private struct NotebookMapSummary: Equatable {
-    let pages: [PagePosition]
-    let minX: Int
-    let maxX: Int
-    let minY: Int
-    let maxY: Int
+private struct NotebookGridPosition: Identifiable, Hashable {
+    let x: Int
+    let y: Int
 
-    init(pages: [Page]) {
-        let pagePositions = pages.map { page in
-            PagePosition(
-                id: page.id?.uuidString ?? "\(page.positionX ?? 0)_\(page.positionY ?? 0)",
-                x: page.positionX ?? 0,
-                y: page.positionY ?? 0
-            )
-        }
-        let xPositions = pagePositions.map(\.x)
-        let yPositions = pagePositions.map(\.y)
+    var id: String {
+        "\(x)_\(y)"
+    }
+}
 
-        self.pages = pagePositions
-        minX = xPositions.min() ?? 0
-        maxX = xPositions.max() ?? 0
-        minY = yPositions.min() ?? 0
-        maxY = yPositions.max() ?? 0
+private struct NotebookLayout {
+    let bounds: (minX: Int, maxX: Int, minY: Int, maxY: Int)
+    let thumbnailSize: CGSize
+    let spacing: CGFloat
+    let edgePadding: Int
+    let contentSize: CGSize
+
+    init(pages: [Page], thumbnailSize: CGSize, spacing: CGFloat, edgePadding: Int) {
+        let xPositions = pages.map { $0.positionX ?? 0 }
+        let yPositions = pages.map { $0.positionY ?? 0 }
+        let bounds = (
+            minX: xPositions.min() ?? 0,
+            maxX: xPositions.max() ?? 0,
+            minY: yPositions.min() ?? 0,
+            maxY: yPositions.max() ?? 0
+        )
+        let pageCountX = bounds.maxX - bounds.minX + 1 + (2 * edgePadding)
+        let pageCountY = bounds.maxY - bounds.minY + 1 + (2 * edgePadding)
+
+        self.bounds = bounds
+        self.thumbnailSize = thumbnailSize
+        self.spacing = spacing
+        self.edgePadding = edgePadding
+        self.contentSize = CGSize(
+            width: CGFloat(pageCountX) * (thumbnailSize.width + spacing) + spacing,
+            height: CGFloat(pageCountY) * (thumbnailSize.height + spacing) + spacing
+        )
     }
 
-    struct PagePosition: Identifiable, Equatable {
-        let id: String
-        let x: Int
-        let y: Int
+    func thumbnailPosition(for page: Page) -> CGPoint {
+        thumbnailPosition(for: NotebookGridPosition(x: page.positionX ?? 0, y: page.positionY ?? 0))
+    }
+
+    func thumbnailPosition(for position: NotebookGridPosition) -> CGPoint {
+        let x = CGFloat(position.x - bounds.minX + edgePadding) * (thumbnailSize.width + spacing) + thumbnailSize.width / 2 + spacing
+        let y = CGFloat(bounds.maxY - position.y + edgePadding) * (thumbnailSize.height + spacing) + thumbnailSize.height / 2 + spacing
+
+        return CGPoint(x: x, y: y)
+    }
+
+    func viewport(for offset: CGPoint, visibleSize: CGSize) -> CGRect {
+        let width = min(1, visibleSize.width / max(1, contentSize.width))
+        let height = min(1, visibleSize.height / max(1, contentSize.height))
+        let x = min(max(0, offset.x / max(1, contentSize.width)), max(0, 1 - width))
+        let y = min(max(0, offset.y / max(1, contentSize.height)), max(0, 1 - height))
+
+        return CGRect(x: x, y: y, width: width, height: height)
+    }
+
+    func clampedContentOffset(_ offset: CGPoint, viewportSize: CGSize) -> CGPoint {
+        CGPoint(
+            x: min(max(0, offset.x), max(0, contentSize.width - viewportSize.width)),
+            y: min(max(0, offset.y), max(0, contentSize.height - viewportSize.height))
+        )
+    }
+}
+
+private struct NotebookScrollView<Content: View>: UIViewRepresentable {
+    let contentSize: CGSize
+    let contentRevision: String
+    @Binding var contentOffset: CGPoint
+    @Binding var scrollTarget: CGPoint?
+    @Binding var scrollTargetAnimated: Bool
+    let content: Content
+
+    init(
+        contentSize: CGSize,
+        contentRevision: String,
+        contentOffset: Binding<CGPoint>,
+        scrollTarget: Binding<CGPoint?>,
+        scrollTargetAnimated: Binding<Bool>,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.contentSize = contentSize
+        self.contentRevision = contentRevision
+        _contentOffset = contentOffset
+        _scrollTarget = scrollTarget
+        _scrollTargetAnimated = scrollTargetAnimated
+        self.content = content()
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(contentOffset: $contentOffset, scrollTarget: $scrollTarget)
+    }
+
+    func makeUIView(context: Context) -> UIScrollView {
+        let scrollView = UIScrollView()
+        scrollView.delegate = context.coordinator
+        scrollView.showsHorizontalScrollIndicator = false
+        scrollView.showsVerticalScrollIndicator = false
+        scrollView.bounces = true
+        scrollView.backgroundColor = .clear
+
+        let hostingController = UIHostingController(rootView: content)
+        hostingController.view.backgroundColor = .clear
+        hostingController.view.frame = CGRect(origin: .zero, size: contentSize)
+        scrollView.addSubview(hostingController.view)
+        scrollView.contentSize = contentSize
+
+        context.coordinator.hostingController = hostingController
+        context.coordinator.contentRevision = contentRevision
+        context.coordinator.contentSize = contentSize
+
+        return scrollView
+    }
+
+    func updateUIView(_ scrollView: UIScrollView, context: Context) {
+        if context.coordinator.contentRevision != contentRevision {
+            context.coordinator.hostingController?.rootView = content
+            context.coordinator.contentRevision = contentRevision
+        }
+
+        if context.coordinator.contentSize != contentSize {
+            context.coordinator.hostingController?.view.frame = CGRect(origin: .zero, size: contentSize)
+            scrollView.contentSize = contentSize
+            context.coordinator.contentSize = contentSize
+        }
+
+        if let scrollTarget {
+            let clampedTarget = CGPoint(
+                x: min(max(0, scrollTarget.x), max(0, contentSize.width - scrollView.bounds.width)),
+                y: min(max(0, scrollTarget.y), max(0, contentSize.height - scrollView.bounds.height))
+            )
+
+            if abs(scrollView.contentOffset.x - clampedTarget.x) > 0.5 ||
+                abs(scrollView.contentOffset.y - clampedTarget.y) > 0.5 {
+                scrollView.setContentOffset(clampedTarget, animated: scrollTargetAnimated)
+            }
+
+            DispatchQueue.main.async {
+                self.contentOffset = clampedTarget
+                self.scrollTarget = nil
+            }
+        }
+    }
+
+    final class Coordinator: NSObject, UIScrollViewDelegate {
+        var hostingController: UIHostingController<Content>?
+        var contentRevision: String = ""
+        var contentSize: CGSize = .zero
+        var contentOffset: Binding<CGPoint>
+        var scrollTarget: Binding<CGPoint?>
+        private var lastPublishedOffset: CGPoint = .zero
+        private var lastPublishTime: CFTimeInterval = 0
+
+        init(contentOffset: Binding<CGPoint>, scrollTarget: Binding<CGPoint?>) {
+            self.contentOffset = contentOffset
+            self.scrollTarget = scrollTarget
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            let now = CACurrentMediaTime()
+            let offset = scrollView.contentOffset
+            let movedEnough = abs(offset.x - lastPublishedOffset.x) > 4 || abs(offset.y - lastPublishedOffset.y) > 4
+            let enoughTimePassed = now - lastPublishTime > 1.0 / 15.0
+
+            guard movedEnough && enoughTimePassed else { return }
+
+            lastPublishedOffset = offset
+            lastPublishTime = now
+            DispatchQueue.main.async {
+                self.contentOffset.wrappedValue = offset
+            }
+        }
     }
 }

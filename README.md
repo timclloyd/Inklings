@@ -7,7 +7,8 @@ Decided to finally try and create the simple notebook app that I’ve been wanti
 - 2D grid of fixed-size dot grid pages. Navigate between them by swiping.
 - A PencilKit experience without all the fiddly parts
 - Only pencil input
-- Map view which shows all pages
+- Library, notebook, and page levels
+- Notebook view which shows all pages spatially
 - No page zooming, content ignores device rotation 
 
 The first sketch in Apple Notes:
