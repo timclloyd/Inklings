@@ -4,9 +4,10 @@
 
 - [ ] Polish
     - [/] Improve test coverage
-    - [ ] Fix position of notebookview toolbar icons
-    - [ ] Fix position of notebookview minimap
-    - [ ] Improve layering colours in notebookview and libraryview
+    - [/] Fix position of notebookview toolbar icons
+    - [/] Fix position of notebookview minimap
+    - [/] Improve layering colours in notebookview and libraryview
+    - [ ] Optimise switching light/dark mode
 - [ ] Distribute
     - [ ] New app icon
     - [ ] App store description
