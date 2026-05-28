@@ -104,6 +104,7 @@ struct MapView: View {
                             topInset: geometry.safeAreaInsets.top + toolbarHeight + 24,
                             onNotebookSelected: { notebook in
                                 pageManager.switchToNotebook(notebook)
+                                centreOnCurrentPage(visibleSize: geometry.size, animated: false)
                                 showNotebookView = false
                             }
                         )
@@ -136,7 +137,9 @@ struct MapView: View {
                 }
             }
         }
-        .onAppear(perform: centreOnCurrentPage)
+        .onAppear {
+            centreOnCurrentPage(visibleSize: UIScreen.main.bounds.size, animated: false)
+        }
         .onChange(of: colorScheme) {
             pageManager.updateAllThumbnails()
         }
@@ -467,10 +470,9 @@ struct MapView: View {
         scrollTarget = clampedContentOffset(unclampedOffset, viewportSize: viewportSize)
     }
     
-    private func centreOnCurrentPage() {
+    private func centreOnCurrentPage(visibleSize: CGSize, animated: Bool) {
         guard let currentPage = pageManager.getCurrentPage() else { return }
 
-        let visibleSize = UIScreen.main.bounds.size
         let targetPosition = thumbnailPosition(for: MapGridPosition(
             x: currentPage.positionX ?? 0,
             y: currentPage.positionY ?? 0
@@ -480,6 +482,7 @@ struct MapView: View {
             y: targetPosition.y - visibleSize.height / 2
         )
 
+        scrollTargetAnimated = animated
         scrollTarget = clampedContentOffset(unclampedOffset, viewportSize: visibleSize)
     }
 
