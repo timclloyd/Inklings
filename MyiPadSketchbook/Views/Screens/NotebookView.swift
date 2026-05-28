@@ -26,6 +26,7 @@ struct NotebookView: View {
     @State private var scrollTargetAnimated: Bool = true
     
     @State private var isRearranging: Bool = false
+    @State private var libraryPinchProgress = SwipeProgress(direction: nil, progress: 0)
     @GestureState private var dragLocation: CGPoint = .zero
     
     // MARK: - Constants
@@ -72,7 +73,6 @@ struct NotebookView: View {
 
         return "\(pageRevision)|\(isRearranging)|\(colorScheme)"
     }
-    
     // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
@@ -100,25 +100,38 @@ struct NotebookView: View {
                             contentRevision: notebookContentRevision,
                             contentOffset: $contentOffset,
                             scrollTarget: $scrollTarget,
-                            scrollTargetAnimated: $scrollTargetAnimated
+                            scrollTargetAnimated: $scrollTargetAnimated,
+                            onPinchChanged: handleNotebookPinchChanged,
+                            onPinchEnded: handleNotebookPinchEnded
                         ) {
                             thumbnailsView(layout: layout, overlapCounts: overlaps)
                         }
                         .edgesIgnoringSafeArea(.all)
                     }
                 }
-                .zIndex(0)
+                .zIndex(1)
                 
                 VStack(spacing: 0) {
                     toolbarView
                         .padding(.top, geometry.safeAreaInsets.top)
                     Spacer()
                 }
-                .zIndex(1)
+                .zIndex(2)
 
                 if navigationLevel == .notebook {
                     notebookOverview(in: geometry, layout: layout)
-                        .zIndex(2)
+                        .zIndex(3)
+
+                    PageChangeIndicatorView(
+                        direction: libraryPinchProgress.direction,
+                        progress: libraryPinchProgress.progress,
+                        size: geometry.size,
+                        adjacentPages: AdjacentPages(left: false, right: false, top: false, bottom: false),
+                        swipeProgress: libraryPinchProgress,
+                        edgeDistance: geometry.safeAreaInsets.top + toolbarHeight + 16
+                    )
+                    .allowsHitTesting(false)
+                    .zIndex(4)
                 }
             }
         }
@@ -180,11 +193,9 @@ struct NotebookView: View {
     private var toolbarView: some View {
         HStack {
             if navigationLevel == .library {
+                Spacer()
                 addNotebookButton
             } else {
-                libraryButton
-                    .padding(.leading, 10)
-
                 Spacer()
 
                 HStack(spacing: 18) {
@@ -200,25 +211,6 @@ struct NotebookView: View {
     }
     
     // MARK: - Buttons
-    private var libraryButton: some View {
-        Button(action: {
-            withAnimation(.easeInOut(duration: 0.16)) {
-                navigationLevel = .library
-            }
-        }) {
-            Image(systemName: "rectangle.grid.2x2")
-                .font(.system(size: toolbarButtonSize))
-                .foregroundColor(Color.primary)
-                .frame(width: 34, height: 34)
-                .background(
-                    Circle()
-                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
-                )
-        }
-        .contentShape(Circle())
-        .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-    }
-
     private var rearrangeButton: some View {
         Button(action: { isRearranging.toggle() }) {
             Image(systemName: isRearranging ? "checkmark.circle.fill" : "arrow.up.and.down.and.arrow.left.and.right")
@@ -250,7 +242,7 @@ struct NotebookView: View {
         }
         .contentShape(Circle())
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))
-        .padding(.leading, 10)
+        .padding(.trailing, 10)
     }
 
     // MARK: - Thumbnail View
@@ -352,6 +344,30 @@ struct NotebookView: View {
                     navigationLevel = .page
                 }
             }
+    }
+
+    private func handleNotebookPinchChanged(_ scale: CGFloat) {
+        guard navigationLevel == .notebook, !isRearranging else { return }
+        if scale <= 0.72 {
+            libraryPinchProgress = SwipeProgress(direction: .top, progress: 1, isMapGesture: true)
+        } else {
+            libraryPinchProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
+        }
+    }
+
+    private func handleNotebookPinchEnded(_ scale: CGFloat) {
+        guard navigationLevel == .notebook else {
+            libraryPinchProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
+            return
+        }
+
+        if scale <= 0.72 && !isRearranging {
+            withAnimation(.easeInOut(duration: 0.18)) {
+                navigationLevel = .library
+            }
+        }
+
+        libraryPinchProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
     }
     
     // MARK: - Helper Methods
@@ -596,6 +612,8 @@ private struct NotebookScrollView<Content: View>: UIViewRepresentable {
     @Binding var contentOffset: CGPoint
     @Binding var scrollTarget: CGPoint?
     @Binding var scrollTargetAnimated: Bool
+    let onPinchChanged: (CGFloat) -> Void
+    let onPinchEnded: (CGFloat) -> Void
     let content: Content
 
     init(
@@ -604,6 +622,8 @@ private struct NotebookScrollView<Content: View>: UIViewRepresentable {
         contentOffset: Binding<CGPoint>,
         scrollTarget: Binding<CGPoint?>,
         scrollTargetAnimated: Binding<Bool>,
+        onPinchChanged: @escaping (CGFloat) -> Void,
+        onPinchEnded: @escaping (CGFloat) -> Void,
         @ViewBuilder content: () -> Content
     ) {
         self.contentSize = contentSize
@@ -611,11 +631,18 @@ private struct NotebookScrollView<Content: View>: UIViewRepresentable {
         _contentOffset = contentOffset
         _scrollTarget = scrollTarget
         _scrollTargetAnimated = scrollTargetAnimated
+        self.onPinchChanged = onPinchChanged
+        self.onPinchEnded = onPinchEnded
         self.content = content()
     }
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(contentOffset: $contentOffset, scrollTarget: $scrollTarget)
+        Coordinator(
+            contentOffset: $contentOffset,
+            scrollTarget: $scrollTarget,
+            onPinchChanged: onPinchChanged,
+            onPinchEnded: onPinchEnded
+        )
     }
 
     func makeUIView(context: Context) -> UIScrollView {
@@ -625,6 +652,15 @@ private struct NotebookScrollView<Content: View>: UIViewRepresentable {
         scrollView.showsVerticalScrollIndicator = false
         scrollView.bounces = true
         scrollView.backgroundColor = .clear
+        scrollView.panGestureRecognizer.maximumNumberOfTouches = 1
+        scrollView.pinchGestureRecognizer?.isEnabled = false
+
+        let pinchGesture = UIPinchGestureRecognizer(
+            target: context.coordinator,
+            action: #selector(Coordinator.handlePinch(_:))
+        )
+        pinchGesture.delegate = context.coordinator
+        scrollView.addGestureRecognizer(pinchGesture)
 
         let hostingController = UIHostingController(rootView: content)
         hostingController.view.backgroundColor = .clear
@@ -640,6 +676,9 @@ private struct NotebookScrollView<Content: View>: UIViewRepresentable {
     }
 
     func updateUIView(_ scrollView: UIScrollView, context: Context) {
+        context.coordinator.onPinchChanged = onPinchChanged
+        context.coordinator.onPinchEnded = onPinchEnded
+
         if context.coordinator.contentRevision != contentRevision {
             context.coordinator.hostingController?.rootView = content
             context.coordinator.contentRevision = contentRevision
@@ -669,18 +708,27 @@ private struct NotebookScrollView<Content: View>: UIViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject, UIScrollViewDelegate {
+    final class Coordinator: NSObject, UIScrollViewDelegate, UIGestureRecognizerDelegate {
         var hostingController: UIHostingController<Content>?
         var contentRevision: String = ""
         var contentSize: CGSize = .zero
         var contentOffset: Binding<CGPoint>
         var scrollTarget: Binding<CGPoint?>
+        var onPinchChanged: (CGFloat) -> Void
+        var onPinchEnded: (CGFloat) -> Void
         private var lastPublishedOffset: CGPoint = .zero
         private var lastPublishTime: CFTimeInterval = 0
 
-        init(contentOffset: Binding<CGPoint>, scrollTarget: Binding<CGPoint?>) {
+        init(
+            contentOffset: Binding<CGPoint>,
+            scrollTarget: Binding<CGPoint?>,
+            onPinchChanged: @escaping (CGFloat) -> Void,
+            onPinchEnded: @escaping (CGFloat) -> Void
+        ) {
             self.contentOffset = contentOffset
             self.scrollTarget = scrollTarget
+            self.onPinchChanged = onPinchChanged
+            self.onPinchEnded = onPinchEnded
         }
 
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -696,6 +744,32 @@ private struct NotebookScrollView<Content: View>: UIViewRepresentable {
             DispatchQueue.main.async {
                 self.contentOffset.wrappedValue = offset
             }
+        }
+
+        @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
+            let scrollView = gesture.view as? UIScrollView
+
+            switch gesture.state {
+            case .began:
+                scrollView?.isScrollEnabled = false
+                scrollView?.panGestureRecognizer.isEnabled = false
+                scrollView?.panGestureRecognizer.isEnabled = true
+                onPinchChanged(gesture.scale)
+            case .changed:
+                onPinchChanged(gesture.scale)
+            case .ended, .cancelled, .failed:
+                scrollView?.isScrollEnabled = true
+                onPinchEnded(gesture.scale)
+            default:
+                break
+            }
+        }
+
+        func gestureRecognizer(
+            _ gestureRecognizer: UIGestureRecognizer,
+            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+        ) -> Bool {
+            true
         }
     }
 }
