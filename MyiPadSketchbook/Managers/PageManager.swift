@@ -19,9 +19,13 @@ class PageManager: ObservableObject {
     @Published var notebooks: [Notebook] = []
     @Published var currentNotebookID: UUID?
     @Published private(set) var pageRect: CGRect
+    @Published private(set) var thumbnailCacheRevision = 0
     
     private var modelContext: ModelContext
     private var allPages: [Page] = []
+    private var thumbnailCache: [ThumbnailCacheKey: Data] = [:]
+    private var persistedThumbnailAppearance: [UUID: ThumbnailAppearanceMode] = [:]
+    private var thumbnailGenerationTask: Task<Void, Never>?
     
     // MARK: - Initialisation
     init(modelContext: ModelContext) {
@@ -36,7 +40,7 @@ class PageManager: ObservableObject {
         refreshCurrentNotebookPages()
 
         if migratePagesMissingPageSize() {
-            updateAllThumbnails()
+            updateAllThumbnails(colorScheme: .light)
             try? modelContext.save()
         }
         
@@ -60,7 +64,7 @@ class PageManager: ObservableObject {
         modelContext.insert(newPage)
         allPages.append(newPage)
         pages.append(newPage)
-        updateThumbnail(for: newPage)
+        updateThumbnail(for: newPage, colorScheme: .light)
         return newPage
     }
     
@@ -130,7 +134,8 @@ class PageManager: ObservableObject {
         }
 
         pageRect = CGRect(origin: .zero, size: size)
-        updateAllThumbnails()
+        invalidateThumbnailCache()
+        updateAllThumbnails(colorScheme: .light)
     }
 
     // MARK: - Notebook handling
@@ -199,11 +204,12 @@ class PageManager: ObservableObject {
     }
     
     // MARK: - Drawing
-    func updateDrawing(_ drawing: PKDrawing) {
+    func updateDrawing(_ drawing: PKDrawing, colorScheme: ColorScheme = .light) {
         guard let currentPage = getCurrentPage() else { return }
         currentPage.drawingData = drawing.dataRepresentation()
         currentPage.setPageSize(pageRect.size)
-        updateThumbnail(for: currentPage)
+        invalidateThumbnailCache(for: currentPage)
+        updateThumbnail(for: currentPage, colorScheme: colorScheme)
     }
 
     func drawingForDisplay(for page: Page?) -> PKDrawing {
@@ -303,35 +309,142 @@ class PageManager: ObservableObject {
     }
     
     // MARK: - Thumbnail handling
-    func updateThumbnail(for page: Page) {
+    func thumbnailData(for page: Page, colorScheme: ColorScheme) -> Data? {
+        let appearance = ThumbnailAppearanceMode(colorScheme: colorScheme)
+
+        if let cacheKey = thumbnailCacheKey(for: page, appearance: appearance),
+           let cachedData = thumbnailCache[cacheKey] {
+            return cachedData
+        }
+
+        if let pageID = page.id,
+           persistedThumbnailAppearance[pageID] == appearance {
+            return page.thumbnailData
+        }
+
+        return page.thumbnailData
+    }
+
+    func updateThumbnail(for page: Page, colorScheme: ColorScheme) {
+        let appearance = ThumbnailAppearanceMode(colorScheme: colorScheme)
+        guard let cacheKey = thumbnailCacheKey(for: page, appearance: appearance) else { return }
+
+        let thumbnailImage = renderThumbnail(for: page, appearance: appearance)
+        guard let thumbnailData = thumbnailImage.pngData() else { return }
+
+        thumbnailCache[cacheKey] = thumbnailData
+        page.thumbnailData = thumbnailData
+
+        if let pageID = page.id {
+            persistedThumbnailAppearance[pageID] = appearance
+        }
+
+        thumbnailCacheRevision += 1
+    }
+
+    func ensureThumbnail(for page: Page, colorScheme: ColorScheme) {
+        let appearance = ThumbnailAppearanceMode(colorScheme: colorScheme)
+        guard let cacheKey = thumbnailCacheKey(for: page, appearance: appearance),
+              thumbnailCache[cacheKey] == nil else {
+            return
+        }
+
+        updateThumbnail(for: page, colorScheme: colorScheme)
+    }
+
+    func scheduleThumbnailGeneration(for pages: [Page], colorScheme: ColorScheme) {
+        thumbnailGenerationTask?.cancel()
+
+        let orderedPages = pages
+        thumbnailGenerationTask = Task { @MainActor [weak self] in
+            for page in orderedPages {
+                guard !Task.isCancelled else { return }
+                self?.ensureThumbnail(for: page, colorScheme: colorScheme)
+                await Task.yield()
+            }
+        }
+    }
+
+    func updateAllThumbnails(colorScheme: ColorScheme = .light) {
+        for page in pages {
+            updateThumbnail(for: page, colorScheme: colorScheme)
+        }
+    }
+
+    private func renderThumbnail(for page: Page, appearance: ThumbnailAppearanceMode) -> UIImage {
         let drawing = drawingForDisplay(for: page)
-        
-        // Reduce scale for efficiency
         let scale = UIScreen.main.scale * 0.1
-        
-        let thumbnail = drawing.image(from: pageRect, scale: scale)
         let aspectRatio = pageRect.size.width / pageRect.size.height
         let thumbnailSize = CGSize(width: 120, height: 120 / aspectRatio)
-        
-        let renderer = UIGraphicsImageRenderer(size: thumbnailSize)
-        let thumbnailImage = renderer.image { context in
-            // Set background color based on color scheme
-            let backgroundColor = UIColor { traitCollection in
-                traitCollection.userInterfaceStyle == .dark ? UIColor.systemGray6 : .white
+        var renderedImage = UIImage()
+
+        appearance.traitCollection.performAsCurrent {
+            let thumbnail = drawing.image(from: pageRect, scale: scale)
+            let format = UIGraphicsImageRendererFormat()
+            format.scale = UIScreen.main.scale
+
+            let renderer = UIGraphicsImageRenderer(size: thumbnailSize, format: format)
+            renderedImage = renderer.image { context in
+                context.cgContext.setFillColor(appearance.backgroundColor.cgColor)
+                context.cgContext.fill(CGRect(origin: .zero, size: thumbnailSize))
+                thumbnail.draw(in: CGRect(origin: .zero, size: thumbnailSize))
             }
-            context.cgContext.setFillColor(backgroundColor.cgColor)
-            context.cgContext.fill(CGRect(origin: .zero, size: thumbnailSize))
-            
-            // Draw the thumbnail
-            thumbnail.draw(in: CGRect(origin: .zero, size: thumbnailSize))
         }
-        page.thumbnailData = thumbnailImage.pngData()
+
+        return renderedImage
     }
-    
-    func updateAllThumbnails() {
-        for page in pages {
-            updateThumbnail(for: page)
-        }
+
+    private func thumbnailCacheKey(for page: Page, appearance: ThumbnailAppearanceMode) -> ThumbnailCacheKey? {
+        guard let pageID = page.id else { return nil }
+        return ThumbnailCacheKey(
+            pageID: pageID,
+            drawingDataHash: page.drawingData?.hashValue ?? 0,
+            pageWidth: page.pageWidth ?? 0,
+            pageHeight: page.pageHeight ?? 0,
+            renderWidth: pageRect.width,
+            renderHeight: pageRect.height,
+            appearance: appearance
+        )
+    }
+
+    private func invalidateThumbnailCache(for page: Page) {
+        guard let pageID = page.id else { return }
+        thumbnailCache = thumbnailCache.filter { $0.key.pageID != pageID }
+        persistedThumbnailAppearance[pageID] = nil
+    }
+
+    private func invalidateThumbnailCache() {
+        thumbnailGenerationTask?.cancel()
+        thumbnailCache.removeAll()
+        persistedThumbnailAppearance.removeAll()
+        thumbnailCacheRevision += 1
+    }
+}
+
+private struct ThumbnailCacheKey: Hashable {
+    let pageID: UUID
+    let drawingDataHash: Int
+    let pageWidth: Double
+    let pageHeight: Double
+    let renderWidth: Double
+    let renderHeight: Double
+    let appearance: ThumbnailAppearanceMode
+}
+
+private enum ThumbnailAppearanceMode: Hashable {
+    case light
+    case dark
+
+    init(colorScheme: ColorScheme) {
+        self = colorScheme == .dark ? .dark : .light
+    }
+
+    var traitCollection: UITraitCollection {
+        UITraitCollection(userInterfaceStyle: self == .dark ? .dark : .light)
+    }
+
+    var backgroundColor: UIColor {
+        self == .dark ? .systemGray6 : .white
     }
 }
 

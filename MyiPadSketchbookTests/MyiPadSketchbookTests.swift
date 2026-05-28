@@ -6,6 +6,7 @@
 //
 
 import PencilKit
+import SwiftUI
 import SwiftData
 import XCTest
 @testable import MyiPadSketchbook
@@ -227,6 +228,21 @@ final class MyiPadSketchbookTests: XCTestCase {
         let storedDrawingData = try XCTUnwrap(page.drawingData)
         XCTAssertTrue(try PKDrawing(data: storedDrawingData).strokes.isEmpty)
         XCTAssertNotNil(page.thumbnailData)
+    }
+
+    func testThumbnailCacheKeepsSeparateLightAndDarkRenders() throws {
+        let manager = PageManager(modelContext: container.mainContext)
+        let page = try XCTUnwrap(manager.getCurrentPage())
+
+        manager.ensureThumbnail(for: page, colorScheme: .light)
+        let lightThumbnailData = try XCTUnwrap(manager.thumbnailData(for: page, colorScheme: .light))
+
+        manager.ensureThumbnail(for: page, colorScheme: .dark)
+        let darkThumbnailData = try XCTUnwrap(manager.thumbnailData(for: page, colorScheme: .dark))
+
+        XCTAssertNotEqual(lightThumbnailData, darkThumbnailData)
+        XCTAssertEqual(manager.thumbnailData(for: page, colorScheme: .light), lightThumbnailData)
+        XCTAssertEqual(manager.thumbnailData(for: page, colorScheme: .dark), darkThumbnailData)
     }
 
     func testCanvasFileGeneratorProducesCoordinateBasedNodes() throws {

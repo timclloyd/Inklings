@@ -58,9 +58,6 @@ struct PageView: View {
             setupToolPicker()
             selectPen(color: .black)
         }
-        .onChange(of: colorScheme) {
-            pageManager.updateAllThumbnails()
-        }
         .onPencilSqueeze { phase in
             if case .ended = phase {
                 handleSqueeze()
@@ -258,7 +255,7 @@ struct PageView: View {
     }
     
     private func handleDrawingChange(_ drawing: PKDrawing) {
-        pageManager.updateDrawing(drawing)
+        pageManager.updateDrawing(drawing, colorScheme: colorScheme)
         updateUndoRedoState()
     }
     

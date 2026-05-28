@@ -71,7 +71,7 @@ struct NotebookView: View {
             }
             .joined(separator: "|")
 
-        return "\(pageRevision)|\(isRearranging)|\(colorScheme)"
+        return "\(pageRevision)|\(pageManager.thumbnailCacheRevision)|\(isRearranging)|\(colorScheme)"
     }
     // MARK: - Body
     var body: some View {
@@ -111,6 +111,15 @@ struct NotebookView: View {
                             thumbnailsView(layout: layout, overlapCounts: overlaps)
                         }
                         .edgesIgnoringSafeArea(.all)
+                        .onAppear {
+                            scheduleVisibleThumbnailGeneration(visibleSize: geometry.size, layout: layout)
+                        }
+                        .onChange(of: colorScheme) {
+                            scheduleVisibleThumbnailGeneration(visibleSize: geometry.size, layout: layout)
+                        }
+                        .onChange(of: contentOffset) {
+                            scheduleVisibleThumbnailGeneration(visibleSize: geometry.size, layout: layout)
+                        }
                     }
                 }
                 .zIndex(1)
@@ -146,9 +155,6 @@ struct NotebookView: View {
         }
         .onAppear {
             centreOnCurrentPage(visibleSize: UIScreen.main.bounds.size, animated: false)
-        }
-        .onChange(of: colorScheme) {
-            pageManager.updateAllThumbnails()
         }
     }
     
@@ -240,9 +246,10 @@ struct NotebookView: View {
         let isCurrentPage = page.id == pageManager.getCurrentPage()?.id
         let appearance = thumbnailAppearance(for: page, isSelected: isSelected && isRearranging, isCurrentPage: isCurrentPage)
         let hasOverlap = overlapCount > 1
+        let thumbnailData = pageManager.thumbnailData(for: page, colorScheme: colorScheme)
         
         return ZStack {
-            ThumbnailContent(page: page, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
+            ThumbnailContent(page: page, thumbnailData: thumbnailData, thumbnailSize: thumbnailSize, colorScheme: colorScheme)
                 .overlay(thumbnailBorder(appearance: appearance, isCurrentPage: isCurrentPage))
                 .background(appearance.backgroundColor)
                 .scaleEffect(appearance.scale)
@@ -421,10 +428,32 @@ struct NotebookView: View {
         scrollTargetAnimated = animated
         scrollTarget = layout.clampedContentOffset(unclampedOffset, viewportSize: visibleSize)
     }
+
+    private func scheduleVisibleThumbnailGeneration(visibleSize: CGSize, layout: NotebookLayout) {
+        guard navigationLevel == .notebook else { return }
+
+        let visibleRect = CGRect(origin: contentOffset, size: visibleSize)
+            .insetBy(dx: -thumbnailSize.width * 2, dy: -thumbnailSize.height * 2)
+
+        let visiblePages = pages.filter { page in
+            let position = layout.thumbnailPosition(for: page)
+            let frame = CGRect(
+                x: position.x - thumbnailSize.width / 2,
+                y: position.y - thumbnailSize.height / 2,
+                width: thumbnailSize.width,
+                height: thumbnailSize.height
+            )
+
+            return frame.intersects(visibleRect)
+        }
+
+        pageManager.scheduleThumbnailGeneration(for: visiblePages, colorScheme: colorScheme)
+    }
     
     // MARK: - ThumbnailContent
     struct ThumbnailContent: View {
         let page: Page
+        let thumbnailData: Data?
         let thumbnailSize: CGSize
         let colorScheme: ColorScheme
         let cornerRadius: CGFloat = 14
@@ -444,7 +473,7 @@ struct NotebookView: View {
         
         private var thumbnailImage: some View {
             Group {
-                if let thumbnailData = page.thumbnailData, let uiImage = UIImage(data: thumbnailData) {
+                if let thumbnailData, let uiImage = UIImage(data: thumbnailData) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .scaledToFit()

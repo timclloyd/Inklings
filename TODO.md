@@ -3,12 +3,12 @@
 ## Next
 
 - [ ] Polish
+    - [/] Improve layering colours in notebookview and libraryview
+    - [/] Optimise switching light/dark mode
     - [x] Improve test coverage - good enough for now
     - [x] Fix position of notebookview toolbar icons
     - [x] Fix position of notebookview minimap
-    - [/] Improve layering colours in notebookview and libraryview
-    - [ ] Add delete notebook via long press
-    - [ ] Optimise switching light/dark mode
+    - [x] Add delete notebook via long press
 - [ ] Distribute
     - [/] New app icon
     - [ ] App store description
