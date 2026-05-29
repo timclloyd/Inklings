@@ -1,5 +1,5 @@
 //
-//  MyiPadSketchbookTests.swift
+//  PageManagerTests.swift
 //  MyiPadSketchbookTests
 //
 //  Created by Tim Lloyd on 2024-08-06.
@@ -7,26 +7,11 @@
 
 import PencilKit
 import SwiftUI
-import SwiftData
 import XCTest
 @testable import MyiPadSketchbook
 
 @MainActor
-final class MyiPadSketchbookTests: XCTestCase {
-    private var container: ModelContainer!
-
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        clearPersistentSelection()
-        container = try makeModelContainer()
-    }
-
-    override func tearDownWithError() throws {
-        clearPersistentSelection()
-        container = nil
-        try super.tearDownWithError()
-    }
-
+final class PageManagerTests: SketchbookTestCase {
     func testInitialisationCreatesNotebookAndPageWhenStoreIsEmpty() throws {
         let manager = PageManager(modelContext: container.mainContext)
 
@@ -243,143 +228,5 @@ final class MyiPadSketchbookTests: XCTestCase {
         XCTAssertNotEqual(lightThumbnailData, darkThumbnailData)
         XCTAssertEqual(manager.thumbnailData(for: page, colorScheme: .light), lightThumbnailData)
         XCTAssertEqual(manager.thumbnailData(for: page, colorScheme: .dark), darkThumbnailData)
-    }
-
-    func testCanvasFileGeneratorProducesCoordinateBasedNodes() throws {
-        let pages = [
-            Page(positionX: 0, positionY: 0),
-            Page(positionX: 2, positionY: -1),
-            Page(positionX: -1, positionY: 3)
-        ]
-        let json = try CanvasFileGenerator().generateCanvasFile(pages: pages, appName: "Inklings")
-        let canvasFile = try JSONDecoder().decode(CanvasFile.self, from: Data(json.utf8))
-
-        XCTAssertEqual(canvasFile.edges, [])
-        XCTAssertEqual(canvasFile.nodes.count, 3)
-
-        let originNode = try XCTUnwrap(canvasFile.nodes.first { $0.file == "Inklings/0,0.jpeg" })
-        XCTAssertEqual(originNode.type, "file")
-        XCTAssertEqual(originNode.x, -180)
-        XCTAssertEqual(originNode.y, -200)
-        XCTAssertEqual(originNode.width, 279)
-        XCTAssertEqual(originNode.height, 399)
-
-        let positiveXNegativeYNode = try XCTUnwrap(canvasFile.nodes.first { $0.file == "Inklings/2,-1.jpeg" })
-        XCTAssertEqual(positiveXNegativeYNode.x, 378)
-        XCTAssertEqual(positiveXNegativeYNode.y, 200)
-
-        let negativeXPositiveYNode = try XCTUnwrap(canvasFile.nodes.first { $0.file == "Inklings/-1,3.jpeg" })
-        XCTAssertEqual(negativeXPositiveYNode.x, -459)
-        XCTAssertEqual(negativeXPositiveYNode.y, -1400)
-    }
-
-    func testNotebookOverviewPreviewUsesScrollLayoutEdgePadding() throws {
-        let pages = [
-            Page(positionX: 0, positionY: 0),
-            Page(positionX: 2, positionY: -1)
-        ]
-        let layout = NotebookLayout(
-            pages: pages,
-            thumbnailSize: CGSize(width: 120, height: 160),
-            spacing: 6,
-            edgePadding: 4
-        )
-
-        XCTAssertEqual(NotebookOverviewLayout.previewEdgePadding(for: layout), layout.edgePadding)
-    }
-
-    func testNotebookContentRevisionChangesDuringDrag() throws {
-        let page = Page(positionX: 0, positionY: 0)
-        let restingRevision = NotebookContentRevision.make(
-            pages: [page],
-            thumbnailCacheRevision: 0,
-            isRearranging: true,
-            draggedPage: nil,
-            draggedPageOffset: .zero,
-            colorScheme: .light
-        )
-        let dragStartedRevision = NotebookContentRevision.make(
-            pages: [page],
-            thumbnailCacheRevision: 0,
-            isRearranging: true,
-            draggedPage: page,
-            draggedPageOffset: .zero,
-            colorScheme: .light
-        )
-        let dragMovedRevision = NotebookContentRevision.make(
-            pages: [page],
-            thumbnailCacheRevision: 0,
-            isRearranging: true,
-            draggedPage: page,
-            draggedPageOffset: CGSize(width: 18, height: -24),
-            colorScheme: .light
-        )
-
-        XCTAssertNotEqual(restingRevision, dragStartedRevision)
-        XCTAssertNotEqual(dragStartedRevision, dragMovedRevision)
-    }
-
-    func testLibraryNotebookTileLayoutUsesSingleColumnForSquareNotebooks() throws {
-        let layout = LibraryNotebookTileLayout(columns: 2, rows: 2)
-
-        XCTAssertEqual(layout.columnSpan, 1)
-        XCTAssertEqual(layout.aspectRatio, 1)
-    }
-
-    func testLibraryNotebookTileLayoutUsesTwoColumnsForWideNotebooks() throws {
-        let layout = LibraryNotebookTileLayout(columns: 3, rows: 1)
-
-        XCTAssertEqual(layout.columnSpan, 2)
-        XCTAssertGreaterThan(layout.aspectRatio, 1)
-    }
-
-    func testLibraryNotebookTileLayoutUsesTallSingleColumnForTallNotebooks() throws {
-        let layout = LibraryNotebookTileLayout(columns: 1, rows: 3)
-
-        XCTAssertEqual(layout.columnSpan, 1)
-        XCTAssertLessThan(layout.aspectRatio, 1)
-    }
-
-    func testLibraryBentoLayoutGivesWideNotebookItsOwnRow() throws {
-        let squareNotebook = Notebook(name: "Square")
-        let wideNotebook = Notebook(name: "Wide")
-        let squareItem = LibraryBentoItem.notebook(
-            squareNotebook,
-            pages: [],
-            layout: LibraryNotebookTileLayout(pages: [])
-        )
-        let wideItem = LibraryBentoItem.notebook(
-            wideNotebook,
-            pages: [],
-            layout: LibraryNotebookTileLayout(columns: 3, rows: 1)
-        )
-
-        let rows = LibraryBentoLayout.rows(for: [squareItem, wideItem, .addNotebook])
-
-        XCTAssertEqual(rows.count, 3)
-        if case .single = rows[0] {} else {
-            XCTFail("Expected pending square notebook to stay in a single-column row before a wide notebook.")
-        }
-        if case .wide = rows[1] {} else {
-            XCTFail("Expected wide notebook to occupy its own row.")
-        }
-        if case .single = rows[2] {} else {
-            XCTFail("Expected add notebook tile to remain a single-column row.")
-        }
-    }
-
-    private func makeModelContainer() throws -> ModelContainer {
-        let schema = Schema([
-            Notebook.self,
-            Page.self,
-        ])
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        return try ModelContainer(for: schema, configurations: [configuration])
-    }
-
-    private func clearPersistentSelection() {
-        UserDefaults.standard.removeObject(forKey: "CurrentNotebookID")
-        UserDefaults.standard.removeObject(forKey: "CurrentPageX")
-        UserDefaults.standard.removeObject(forKey: "CurrentPageY")
     }
 }

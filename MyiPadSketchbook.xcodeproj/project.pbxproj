@@ -10,13 +10,17 @@
 		155C1DC02C62BD6A00FC5882 /* Helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DBF2C62BD6A00FC5882 /* Helpers.swift */; };
 		155C1DC42C62BD6B00FC5882 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC32C62BD6B00FC5882 /* Assets.xcassets */; };
 		155C1DC72C62BD6B00FC5882 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */; };
-		155C1DD12C62BD6B00FC5882 /* MyiPadSketchbookTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DD02C62BD6B00FC5882 /* MyiPadSketchbookTests.swift */; };
 		155C1DDB2C62BD6B00FC5882 /* MyiPadSketchbookUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DDA2C62BD6B00FC5882 /* MyiPadSketchbookUITests.swift */; };
 		155C1DDD2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155C1DDC2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift */; };
 		15B03BA42C71EA60007589CB /* MyiPadSketchbook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA32C71EA60007589CB /* MyiPadSketchbook.swift */; };
 		15B03BA62C71EA9A007589CB /* PageModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA52C71EA9A007589CB /* PageModel.swift */; };
 		15B03BA82C71EAEF007589CB /* PageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15B03BA72C71EAEF007589CB /* PageManager.swift */; };
 		15C4A9132CD6952700D2FF74 /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C4A9122CD6952200D2FF74 /* ExportManager.swift */; };
+		15D000000000000000000011 /* TestSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D000000000000000000001 /* TestSupport.swift */; };
+		15D000000000000000000012 /* PageManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D000000000000000000002 /* PageManagerTests.swift */; };
+		15D000000000000000000013 /* CanvasFileGeneratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D000000000000000000003 /* CanvasFileGeneratorTests.swift */; };
+		15D000000000000000000014 /* NotebookLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D000000000000000000004 /* NotebookLayoutTests.swift */; };
+		15D000000000000000000015 /* LibraryLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15D000000000000000000005 /* LibraryLayoutTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,7 +46,6 @@
 		155C1DC32C62BD6B00FC5882 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		155C1DC62C62BD6B00FC5882 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		155C1DCC2C62BD6B00FC5882 /* MyiPadSketchbookTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyiPadSketchbookTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		155C1DD02C62BD6B00FC5882 /* MyiPadSketchbookTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookTests.swift; sourceTree = "<group>"; };
 		155C1DD62C62BD6B00FC5882 /* MyiPadSketchbookUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MyiPadSketchbookUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		155C1DDA2C62BD6B00FC5882 /* MyiPadSketchbookUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookUITests.swift; sourceTree = "<group>"; };
 		155C1DDC2C62BD6B00FC5882 /* MyiPadSketchbookUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyiPadSketchbookUITestsLaunchTests.swift; sourceTree = "<group>"; };
@@ -53,6 +56,11 @@
 		15B03BA52C71EA9A007589CB /* PageModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageModel.swift; sourceTree = "<group>"; };
 		15B03BA72C71EAEF007589CB /* PageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageManager.swift; sourceTree = "<group>"; };
 		15C4A9122CD6952200D2FF74 /* ExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
+		15D000000000000000000001 /* TestSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSupport.swift; sourceTree = "<group>"; };
+		15D000000000000000000002 /* PageManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageManagerTests.swift; sourceTree = "<group>"; };
+		15D000000000000000000003 /* CanvasFileGeneratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasFileGeneratorTests.swift; sourceTree = "<group>"; };
+		15D000000000000000000004 /* NotebookLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotebookLayoutTests.swift; sourceTree = "<group>"; };
+		15D000000000000000000005 /* LibraryLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryLayoutTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -136,7 +144,11 @@
 		155C1DCF2C62BD6B00FC5882 /* MyiPadSketchbookTests */ = {
 			isa = PBXGroup;
 			children = (
-				155C1DD02C62BD6B00FC5882 /* MyiPadSketchbookTests.swift */,
+				15D000000000000000000003 /* CanvasFileGeneratorTests.swift */,
+				15D000000000000000000005 /* LibraryLayoutTests.swift */,
+				15D000000000000000000004 /* NotebookLayoutTests.swift */,
+				15D000000000000000000002 /* PageManagerTests.swift */,
+				15D000000000000000000001 /* TestSupport.swift */,
 			);
 			path = MyiPadSketchbookTests;
 			sourceTree = "<group>";
@@ -333,7 +345,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				155C1DD12C62BD6B00FC5882 /* MyiPadSketchbookTests.swift in Sources */,
+				15D000000000000000000013 /* CanvasFileGeneratorTests.swift in Sources */,
+				15D000000000000000000015 /* LibraryLayoutTests.swift in Sources */,
+				15D000000000000000000014 /* NotebookLayoutTests.swift in Sources */,
+				15D000000000000000000012 /* PageManagerTests.swift in Sources */,
+				15D000000000000000000011 /* TestSupport.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
