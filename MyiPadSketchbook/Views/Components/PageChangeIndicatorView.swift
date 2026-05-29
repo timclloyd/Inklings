@@ -21,24 +21,21 @@ struct PageChangeIndicatorView: View {
     let createThreshold: CGFloat = 1
     let adjacentPages: AdjacentPages
     let swipeProgress: SwipeProgress
-    let edgeDistance: CGFloat
 
     // MARK: - Constants
-    private let arrowDiameter: CGFloat = 32
-    private let shadowRadius: CGFloat = 15
+    private let indicatorSize: CGFloat = 128
+    private let shadowRadius: CGFloat = 22
 
     init(direction: EdgeDirection?,
          progress: CGFloat,
          size: CGSize,
          adjacentPages: AdjacentPages,
-         swipeProgress: SwipeProgress,
-         edgeDistance: CGFloat = 39.5) {
+         swipeProgress: SwipeProgress) {
         self.direction = direction
         self.progress = progress
         self.size = size
         self.adjacentPages = adjacentPages
         self.swipeProgress = swipeProgress
-        self.edgeDistance = edgeDistance
     }
     
     // MARK: - Body
@@ -48,20 +45,17 @@ struct PageChangeIndicatorView: View {
                 ForEach(EdgeDirection.allCases, id: \.self) { edge in
                     ZStack {
                         Circle()
-                            .fill(colorScheme == .dark ? Color.black : Color.white)
-                            .frame(width: arrowDiameter-1, height: arrowDiameter-1)
-                            .overlay(
-                                Circle().stroke(Color(UIColor.systemBackground).opacity(0.3), lineWidth: 2)
-                            )
-                        
+                            .fill(Color(UIColor.systemBackground))
+                            .frame(width: indicatorSize * 0.84, height: indicatorSize * 0.84)
+
                         Image(systemName: arrowSystemName(for: edge))
-                            .font(.system(size: arrowDiameter))
+                            .font(.system(size: indicatorSize))
                             .foregroundColor(arrowColor(for: edge))
                     }
-                    .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.15),
+                    .shadow(color: colorScheme == .dark ? .clear : .primary.opacity(0.08),
                             radius: shadowRadius, x: 0, y: 0)
                     .opacity(arrowOpacity(for: edge))
-                    .position(CGPoint(x: geometry.size.width / 2, y: edgeDistance + arrowDiameter / 2))
+                    .position(CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2))
                 }
             }
         }
@@ -71,7 +65,7 @@ struct PageChangeIndicatorView: View {
     private func arrowSystemName(for edge: EdgeDirection) -> String {
         // Show map icon for top edge during map gesture
         if edge == .top && swipeProgress.isMapGesture {
-            return "circle.grid.3x3.circle.fill"
+            return "arrow.up.left.and.arrow.down.right.circle.fill"
         }
         
         let hasAdjacentPage = hasAdjacentPage(for: edge)
@@ -103,15 +97,10 @@ struct PageChangeIndicatorView: View {
     
     private func arrowColor(for edge: EdgeDirection) -> Color {
         guard let direction = direction, direction == edge else {
-            return .primary
+            return Color(UIColor.systemGray)
         }
 
-        let hasAdjacentPage = hasAdjacentPage(for: edge)
-        if hasAdjacentPage {
-            return .primary
-        } else {
-            return .primary
-        }
+        return Color(UIColor.systemGray)
     }
     
     private func hasAdjacentPage(for edge: EdgeDirection) -> Bool {

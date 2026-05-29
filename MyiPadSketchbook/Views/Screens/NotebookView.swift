@@ -32,7 +32,6 @@ struct NotebookView: View {
     // MARK: - Constants
     private let spacing: CGFloat = 6
     private let notebookEdgePadding = 4
-    private let toolbarHeight: CGFloat = 50
     
     // MARK: - Computed Properties
     private var pages: [Page] {
@@ -154,8 +153,7 @@ struct NotebookView: View {
                         progress: libraryPinchProgress.progress,
                         size: geometry.size,
                         adjacentPages: AdjacentPages(left: false, right: false, top: false, bottom: false),
-                        swipeProgress: libraryPinchProgress,
-                        edgeDistance: geometry.safeAreaInsets.top + toolbarHeight + 16
+                        swipeProgress: libraryPinchProgress
                     )
                     .allowsHitTesting(false)
                     .zIndex(4)

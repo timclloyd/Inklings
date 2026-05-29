@@ -68,23 +68,26 @@ struct PageView: View {
     // MARK: - Subviews
     private var pageContentView: some View {
         GeometryReader { geometry in
-            VStack(spacing: 0) {
-                toolbarView
-                    .padding(.top, geometry.safeAreaInsets.top)
+            ZStack {
+                VStack(spacing: 0) {
+                    toolbarView
+                        .padding(.top, geometry.safeAreaInsets.top)
 
-                GeometryReader { contentGeometry in
-                    ZStack {
-                        backgroundView
-                        drawingView
-                        navIndicatorView
-                    }
-                    .onAppear {
-                        pageManager.updatePageSize(contentGeometry.size)
-                    }
-                    .onChange(of: contentGeometry.size) { _, newSize in
-                        pageManager.updatePageSize(newSize)
+                    GeometryReader { contentGeometry in
+                        ZStack {
+                            backgroundView
+                            drawingView
+                        }
+                        .onAppear {
+                            pageManager.updatePageSize(contentGeometry.size)
+                        }
+                        .onChange(of: contentGeometry.size) { _, newSize in
+                            pageManager.updatePageSize(newSize)
+                        }
                     }
                 }
+
+                navIndicatorView
             }
         }
         .ignoresSafeArea()
