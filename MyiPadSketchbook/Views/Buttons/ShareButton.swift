@@ -38,7 +38,7 @@ struct ShareButton: View {
             .frame(width: 34, height: 34)
             .background(
                 Circle()
-                    .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                    .fill(AppTheme.Surface.pageSwiftUIColor(for: colorScheme))
             )
         }
         .buttonStyle(ToolbarButtonStyle(isEnabled: true))

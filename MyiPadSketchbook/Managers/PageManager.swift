@@ -444,7 +444,7 @@ private enum ThumbnailAppearanceMode: Hashable {
     }
 
     var backgroundColor: UIColor {
-        self == .dark ? .systemGray6 : .white
+        AppTheme.Surface.pageUIKitColor(for: self == .dark ? UIUserInterfaceStyle.dark : UIUserInterfaceStyle.light)
     }
 }
 

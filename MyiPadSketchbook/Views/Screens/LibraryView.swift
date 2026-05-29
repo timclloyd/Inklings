@@ -224,7 +224,7 @@ private struct LibraryAddNotebookTile: View {
 
     private let cornerRadius: CGFloat = 12
     private var pageSurfaceColor: Color {
-        colorScheme == .dark ? Color(.systemGray6) : Color(.white)
+        AppTheme.Surface.pageSwiftUIColor(for: colorScheme)
     }
 
     var body: some View {
@@ -239,7 +239,7 @@ private struct LibraryAddNotebookTile: View {
                     .frame(width: 34, height: 34)
                     .background(
                         Circle()
-                            .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                            .fill(pageSurfaceColor)
                     )
             }
             .overlay(
@@ -259,7 +259,7 @@ private struct LibraryNotebookTile: View {
 
     private let cornerRadius: CGFloat = 12
     private var pageSurfaceColor: Color {
-        colorScheme == .dark ? Color(.systemGray6) : Color(.white)
+        AppTheme.Surface.pageSwiftUIColor(for: colorScheme)
     }
 
     var body: some View {

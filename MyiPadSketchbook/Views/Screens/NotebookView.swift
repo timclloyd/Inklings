@@ -49,7 +49,7 @@ struct NotebookView: View {
     }
 
     private var pageSurfaceColor: Color {
-        colorScheme == .dark ? Color(.systemGray6) : Color(.white)
+        AppTheme.Surface.pageSwiftUIColor(for: colorScheme)
     }
 
     private var notebookLayout: NotebookLayout {
@@ -238,7 +238,7 @@ struct NotebookView: View {
                 .frame(width: 34, height: 34)
                 .background(
                     Circle()
-                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.white))
+                        .fill(pageSurfaceColor)
                 )
         }
         .contentShape(Circle())
