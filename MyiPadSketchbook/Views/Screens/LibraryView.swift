@@ -16,14 +16,16 @@ struct LibraryView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var notebookPendingTrash: Notebook?
 
+    private let cardSpacing: CGFloat = 24
+
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 18) {
+            LazyVStack(spacing: cardSpacing) {
                 ForEach(libraryRows) { row in
                     libraryRow(row)
                 }
             }
-            .padding(.horizontal, 18)
+            .padding(.horizontal, cardSpacing)
             .padding(.top, topInset)
             .padding(.bottom, 36)
         }
@@ -71,14 +73,14 @@ struct LibraryView: View {
         case .wide(let item):
             libraryItem(item)
         case .pair(let leading, let trailing):
-            HStack(alignment: .top, spacing: 18) {
+            HStack(alignment: .top, spacing: cardSpacing) {
                 libraryItem(leading)
                     .frame(maxWidth: .infinity)
                 libraryItem(trailing)
                     .frame(maxWidth: .infinity)
             }
         case .single(let item):
-            HStack(alignment: .top, spacing: 18) {
+            HStack(alignment: .top, spacing: cardSpacing) {
                 libraryItem(item)
                     .frame(maxWidth: .infinity)
                 Spacer()
