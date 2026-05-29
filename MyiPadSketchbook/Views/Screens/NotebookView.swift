@@ -187,7 +187,7 @@ struct NotebookView: View {
                     pages: pages,
                     colorScheme: colorScheme,
                     edgePadding: NotebookOverviewLayout.previewEdgePadding(for: layout),
-                    innerPadding: 8,
+                    innerPadding: 4,
                     pageSpacing: 2,
                     viewport: overviewViewport(for: geometry.size, layout: layout),
                     onContentPointChanged: { contentPoint in
