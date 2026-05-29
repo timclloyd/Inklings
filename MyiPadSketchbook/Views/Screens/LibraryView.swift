@@ -223,12 +223,15 @@ private struct LibraryAddNotebookTile: View {
     let colorScheme: ColorScheme
 
     private let cornerRadius: CGFloat = 12
+    private var pageSurfaceColor: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color(.white)
+    }
 
     var body: some View {
         GeometryReader { _ in
             ZStack {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(Color(UIColor.systemBackground))
+                    .fill(pageSurfaceColor)
 
                 Image(systemName: "plus.circle")
                     .font(.system(size: toolbarButtonSize))
@@ -255,12 +258,15 @@ private struct LibraryNotebookTile: View {
     let aspectRatio: CGFloat
 
     private let cornerRadius: CGFloat = 12
+    private var pageSurfaceColor: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color(.white)
+    }
 
     var body: some View {
         GeometryReader { _ in
             ZStack {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(Color(UIColor.systemBackground))
+                    .fill(pageSurfaceColor)
 
                 NotebookPreview(
                     pages: pages,

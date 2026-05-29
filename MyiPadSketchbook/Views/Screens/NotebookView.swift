@@ -48,6 +48,10 @@ struct NotebookView: View {
         colorScheme == .dark ? Color.black : Color(.systemGray6)
     }
 
+    private var pageSurfaceColor: Color {
+        colorScheme == .dark ? Color(.systemGray6) : Color(.white)
+    }
+
     private var notebookLayout: NotebookLayout {
         NotebookLayout(
             pages: pages,
@@ -192,7 +196,7 @@ struct NotebookView: View {
                 .frame(width: geometry.size.width * 0.5, height: geometry.size.height * 0.2)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(UIColor.systemBackground))
+                        .fill(pageSurfaceColor)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -217,7 +221,7 @@ struct NotebookView: View {
         .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(UIColor.systemBackground))
+                .fill(pageSurfaceColor)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
