@@ -1,5 +1,5 @@
 //
-//  EdgeOverlayView.swift
+//  NavIndicatorView.swift
 //  MyiPadSketchbook
 //
 //  Created by Tim Lloyd on 2024-08-28.
@@ -8,8 +8,8 @@
 import Foundation
 import SwiftUI
 
-// MARK: - PageChangeIndicatorView
-struct PageChangeIndicatorView: View {
+// MARK: - NavIndicatorView
+struct NavIndicatorView: View {
     // MARK: - Environment
     @Environment(\.colorScheme) var colorScheme
     

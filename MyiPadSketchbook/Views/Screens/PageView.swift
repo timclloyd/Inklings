@@ -111,7 +111,7 @@ struct PageView: View {
     }
     
     private var navIndicatorView: some View {
-        PageChangeIndicatorView(
+        NavIndicatorView(
             direction: swipeProgress.direction,
             progress: swipeProgress.progress,
             size: pageManager.pageRect.size,

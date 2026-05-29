@@ -148,7 +148,7 @@ struct NotebookView: View {
                     notebookOverview(in: geometry, layout: layout)
                         .zIndex(3)
 
-                    PageChangeIndicatorView(
+                    NavIndicatorView(
                         direction: libraryPinchProgress.direction,
                         progress: libraryPinchProgress.progress,
                         size: geometry.size,
