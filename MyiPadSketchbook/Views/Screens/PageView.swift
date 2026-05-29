@@ -119,42 +119,47 @@ struct PageView: View {
     }
     
     private var toolbarView: some View {
-        HStack() {
+        HStack(spacing: 0) {
+            pageFlipButton
+
+            Spacer(minLength: 0)
+
             HStack(spacing: 18) {
-                pageFlipButton
                 undoButton
                 redoButton
             }
-            .padding(.leading, 10)
 
-            Spacer()
+            Spacer(minLength: 0)
 
-            coordinateLabel
-                .padding(.trailing, 10)
-        }
-        .overlay(
             HStack(spacing: 4) {
                 toolButton(toolName: "pen_black", action: { selectPen(color: .black) }, systemName: "circle.fill")
-                
                 toolButton(toolName: "pen_white", action: { selectPen(color: .white) }, systemName: "circle")
-                
-                toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9)).padding(.trailing, 12)
+                toolButton(toolName: "pen_red", action: { selectPen(color: .red) }, systemName: "circle.fill", color: .red.opacity(0.9))
+            }
 
+            Spacer(minLength: 0)
+
+            HStack(spacing: 4) {
                 toolButton(toolName: "pencil", action: { selectPencil() }, systemName: "circle.dotted.circle.fill")
+                toolButton(toolName: "pencil_white", action: { selectPencil(color: .white) }, systemName: "circle.dotted.circle")
+            }
 
-                toolButton(toolName: "pencil_white", action: { selectPencil(color: .white) }, systemName: "circle.dotted.circle").padding(.trailing, 12)
+            Spacer(minLength: 0)
 
+            HStack(spacing: 4) {
                 toolButton(toolName: "marker_blue", action: { selectMarker(color: .blue) }, systemName: "square.fill", color: .blue.opacity(0.5))
-
                 toolButton(toolName: "marker_green", action: { selectMarker(color: .green) }, systemName: "square.fill", color: .green.opacity(0.5))
+                toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5))
+            }
 
-                toolButton(toolName: "marker_yellow", action: { selectMarker(color: .yellow) }, systemName: "square.fill", color: .yellow.opacity(0.5)).padding(.trailing, 12)
+            Spacer(minLength: 0)
 
+            HStack(spacing: 4) {
                 toolButton(toolName: "eraser", action: selectEraser, systemName: "eraser")
-
                 toolButton(toolName: "lasso", action: selectLasso, systemName: "lasso")
             }
-        )
+        }
+        .padding(.horizontal, 10)
         .padding(.vertical, 15)
         .frame(maxWidth: .infinity)
         .background(Color(UIColor.systemGray6))
@@ -174,15 +179,6 @@ struct PageView: View {
             color: color,
             highlightBackground: true
         ))
-    }
-    
-    private var coordinateLabel: some View {
-        Text("\(pageManager.getCurrentPage()?.positionX ?? 0), \(pageManager.getCurrentPage()?.positionY ?? 0)")
-            .font(.system(size: 14))
-            .padding(2)
-            .padding(.horizontal, 4)
-            .foregroundColor(Color.primary.opacity(0.4))
-            .cornerRadius(7)
     }
     
     // MARK: - Buttons
