@@ -7,6 +7,16 @@ import SwiftUI
 import UIKit
 
 enum AppTheme {
+    enum Border {
+        static func panelSwiftUIColor(for colorScheme: ColorScheme) -> Color {
+            Color(panelUIKitColor(for: colorScheme))
+        }
+
+        private static func panelUIKitColor(for _: ColorScheme) -> UIColor {
+            .systemGray4
+        }
+    }
+
     enum Surface {
         static func pageSwiftUIColor(for colorScheme: ColorScheme) -> Color {
             Color(pageUIKitColor(for: colorScheme))

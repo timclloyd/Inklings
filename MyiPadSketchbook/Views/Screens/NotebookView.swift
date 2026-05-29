@@ -52,6 +52,10 @@ struct NotebookView: View {
         AppTheme.Surface.pageSwiftUIColor(for: colorScheme)
     }
 
+    private var panelBorderColor: Color {
+        AppTheme.Border.panelSwiftUIColor(for: colorScheme)
+    }
+
     private var notebookLayout: NotebookLayout {
         NotebookLayout(
             pages: pages,
@@ -200,7 +204,7 @@ struct NotebookView: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
+                        .stroke(panelBorderColor, lineWidth: 1.5)
                 )
 
                 Spacer()
@@ -225,7 +229,7 @@ struct NotebookView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
+                .stroke(panelBorderColor, lineWidth: 1.5)
         )
     }
     

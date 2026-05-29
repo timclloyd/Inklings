@@ -226,6 +226,9 @@ private struct LibraryAddNotebookTile: View {
     private var pageSurfaceColor: Color {
         AppTheme.Surface.pageSwiftUIColor(for: colorScheme)
     }
+    private var panelBorderColor: Color {
+        AppTheme.Border.panelSwiftUIColor(for: colorScheme)
+    }
 
     var body: some View {
         GeometryReader { _ in
@@ -244,7 +247,7 @@ private struct LibraryAddNotebookTile: View {
             }
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
+                    .stroke(panelBorderColor, lineWidth: 1.5)
             )
         }
         .aspectRatio(1, contentMode: .fit)
@@ -260,6 +263,9 @@ private struct LibraryNotebookTile: View {
     private let cornerRadius: CGFloat = 12
     private var pageSurfaceColor: Color {
         AppTheme.Surface.pageSwiftUIColor(for: colorScheme)
+    }
+    private var panelBorderColor: Color {
+        AppTheme.Border.panelSwiftUIColor(for: colorScheme)
     }
 
     var body: some View {
@@ -277,7 +283,7 @@ private struct LibraryNotebookTile: View {
             }
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(Color.primary.opacity(0.15), lineWidth: 1.5)
+                    .stroke(panelBorderColor, lineWidth: 1.5)
             )
         }
         .aspectRatio(aspectRatio, contentMode: .fit)
@@ -300,10 +306,6 @@ struct NotebookPreview: View {
 
     private var previewSummary: NotebookPreviewSummary {
         NotebookPreviewSummary(pages: pages)
-    }
-
-    private var viewportColor: Color {
-        colorScheme == .dark ? Color.white : Color.primary
     }
 
     var body: some View {
@@ -347,12 +349,9 @@ struct NotebookPreview: View {
             .equatable()
 
             if let viewport {
-                RoundedRectangle(cornerRadius: 2)
-                    .stroke(viewportColor.opacity(0.85), lineWidth: 1.5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(viewportColor.opacity(0.08))
-                    )
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(colorScheme == .dark ? Color.white.opacity(0.2) : Color.primary.opacity(0.1))
+                    .blendMode(colorScheme == .dark ? .plusLighter : .multiply)
                     .frame(
                         width: max(4, viewport.width * layout.contentSize.width),
                         height: max(4, viewport.height * layout.contentSize.height)
