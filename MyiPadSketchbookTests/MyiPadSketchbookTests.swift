@@ -288,6 +288,37 @@ final class MyiPadSketchbookTests: XCTestCase {
         XCTAssertEqual(NotebookOverviewLayout.previewEdgePadding(for: layout), layout.edgePadding)
     }
 
+    func testNotebookContentRevisionChangesDuringDrag() throws {
+        let page = Page(positionX: 0, positionY: 0)
+        let restingRevision = NotebookContentRevision.make(
+            pages: [page],
+            thumbnailCacheRevision: 0,
+            isRearranging: true,
+            draggedPage: nil,
+            draggedPageOffset: .zero,
+            colorScheme: .light
+        )
+        let dragStartedRevision = NotebookContentRevision.make(
+            pages: [page],
+            thumbnailCacheRevision: 0,
+            isRearranging: true,
+            draggedPage: page,
+            draggedPageOffset: .zero,
+            colorScheme: .light
+        )
+        let dragMovedRevision = NotebookContentRevision.make(
+            pages: [page],
+            thumbnailCacheRevision: 0,
+            isRearranging: true,
+            draggedPage: page,
+            draggedPageOffset: CGSize(width: 18, height: -24),
+            colorScheme: .light
+        )
+
+        XCTAssertNotEqual(restingRevision, dragStartedRevision)
+        XCTAssertNotEqual(dragStartedRevision, dragMovedRevision)
+    }
+
     func testLibraryNotebookTileLayoutUsesSingleColumnForSquareNotebooks() throws {
         let layout = LibraryNotebookTileLayout(columns: 2, rows: 2)
 

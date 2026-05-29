@@ -65,13 +65,14 @@ struct NotebookView: View {
     }
 
     private var notebookContentRevision: String {
-        let pageRevision = pages
-            .map { page in
-                "\(page.id?.uuidString ?? ""):\(page.positionX ?? 0):\(page.positionY ?? 0):\(page.thumbnailData?.count ?? 0)"
-            }
-            .joined(separator: "|")
-
-        return "\(pageRevision)|\(pageManager.thumbnailCacheRevision)|\(isRearranging)|\(colorScheme)"
+        NotebookContentRevision.make(
+            pages: pages,
+            thumbnailCacheRevision: pageManager.thumbnailCacheRevision,
+            isRearranging: isRearranging,
+            draggedPage: draggedPage,
+            draggedPageOffset: draggedPageOffset,
+            colorScheme: colorScheme
+        )
     }
     // MARK: - Body
     var body: some View {
@@ -561,6 +562,31 @@ struct NotebookView: View {
 enum NotebookOverviewLayout {
     static func previewEdgePadding(for layout: NotebookLayout) -> Int {
         layout.edgePadding
+    }
+}
+
+enum NotebookContentRevision {
+    static func make(
+        pages: [Page],
+        thumbnailCacheRevision: Int,
+        isRearranging: Bool,
+        draggedPage: Page?,
+        draggedPageOffset: CGSize,
+        colorScheme: ColorScheme
+    ) -> String {
+        let pageRevision = pages
+            .map { page in
+                "\(page.id?.uuidString ?? ""):\(page.positionX ?? 0):\(page.positionY ?? 0):\(page.thumbnailData?.count ?? 0)"
+            }
+            .joined(separator: "|")
+
+        let dragRevision = [
+            draggedPage?.id?.uuidString ?? "none",
+            String(format: "%.2f", draggedPageOffset.width),
+            String(format: "%.2f", draggedPageOffset.height)
+        ].joined(separator: ":")
+
+        return "\(pageRevision)|\(thumbnailCacheRevision)|\(isRearranging)|\(dragRevision)|\(colorScheme)"
     }
 }
 
