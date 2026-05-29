@@ -55,11 +55,13 @@ struct PageView: View {
         .onAppear {
             updateUndoRedoState()
             updateCanGoToPreviousPage()
-            setupToolPicker()
-            selectPen(color: .black)
+            if DeviceCapabilities.supportsInkEditing {
+                setupToolPicker()
+                selectPen(color: .black)
+            }
         }
         .onPencilSqueeze { phase in
-            if case .ended = phase {
+            if DeviceCapabilities.supportsInkEditing, case .ended = phase {
                 handleSqueeze()
             }
         }
@@ -71,7 +73,7 @@ struct PageView: View {
             ZStack {
                 VStack(spacing: 0) {
                     toolbarView
-                        .padding(.top, geometry.safeAreaInsets.top)
+                        .padding(.top, TopChromeLayout.pageToolbarTopPadding(geometry.safeAreaInsets.top))
 
                     GeometryReader { contentGeometry in
                         ZStack {
@@ -79,10 +81,16 @@ struct PageView: View {
                             drawingView
                         }
                         .onAppear {
-                            pageManager.updatePageSize(contentGeometry.size)
+                            pageManager.updatePageSize(
+                                contentGeometry.size,
+                                updatesThumbnails: DeviceCapabilities.supportsInkEditing
+                            )
                         }
                         .onChange(of: contentGeometry.size) { _, newSize in
-                            pageManager.updatePageSize(newSize)
+                            pageManager.updatePageSize(
+                                newSize,
+                                updatesThumbnails: DeviceCapabilities.supportsInkEditing
+                            )
                         }
                     }
                 }
@@ -100,14 +108,25 @@ struct PageView: View {
                              dragState: dragState)
     }
 
+    @ViewBuilder
     private var drawingView: some View {
-        PencilKitView(canvasView: $canvasView,
-                      toolPicker: $toolPicker,
-                      drawing: pageManager.drawingForDisplay(for: pageManager.getCurrentPage()),
-                      onDrawingChange: handleDrawingChange,
-                      pageRect: pageManager.pageRect,
-                      onSwipe: handleSwipe,
-                      onPinch: handlePinch)
+        if DeviceCapabilities.supportsInkEditing {
+            PencilKitView(canvasView: $canvasView,
+                          toolPicker: $toolPicker,
+                          drawing: pageManager.drawingForDisplay(for: pageManager.getCurrentPage()),
+                          onDrawingChange: handleDrawingChange,
+                          pageRect: pageManager.pageRect,
+                          onSwipe: handleSwipe,
+                          onPinch: handlePinch)
+        } else {
+            PageSnapshotView(
+                image: pageManager.drawingImageForDisplay(for: pageManager.getCurrentPage()),
+                onSwipe: handleSwipe,
+                onPinch: handlePinch
+            )
+            .frame(width: pageManager.pageRect.width, height: pageManager.pageRect.height)
+            .allowsHitTesting(true)
+        }
     }
     
     private var navIndicatorView: some View {
@@ -121,7 +140,27 @@ struct PageView: View {
         .allowsHitTesting(false)
     }
     
+    @ViewBuilder
     private var toolbarView: some View {
+        if !DeviceCapabilities.supportsInkEditing {
+            readOnlyToolbarView
+        } else {
+            editingToolbarView
+        }
+    }
+
+    private var readOnlyToolbarView: some View {
+        HStack(spacing: 0) {
+            pageFlipButton
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 15)
+        .frame(maxWidth: .infinity)
+        .background(Color(UIColor.systemGray6))
+    }
+
+    private var editingToolbarView: some View {
         HStack(spacing: 0) {
             pageFlipButton
 
@@ -241,6 +280,12 @@ struct PageView: View {
     
     // MARK: - Helper Methods
     private func updateUndoRedoState() {
+        guard DeviceCapabilities.supportsInkEditing else {
+            canUndo = false
+            canRedo = false
+            return
+        }
+
         DispatchQueue.main.async {
             self.canUndo = self.canvasView.undoManager?.canUndo ?? false
             self.canRedo = self.canvasView.undoManager?.canRedo ?? false
@@ -254,15 +299,21 @@ struct PageView: View {
     }
     
     private func handleDrawingChange(_ drawing: PKDrawing) {
+        guard DeviceCapabilities.supportsInkEditing else { return }
+
         pageManager.updateDrawing(drawing, colorScheme: colorScheme)
         updateUndoRedoState()
     }
     
     private func handlePageFlip() {
-        canvasView.undoManager?.removeAllActions()
+        if DeviceCapabilities.supportsInkEditing {
+            canvasView.undoManager?.removeAllActions()
+        }
         
-        if let previousPage = pageManager.goToPreviousPage() {
-            canvasView.drawing = pageManager.drawingForDisplay(for: previousPage)
+        if let previousPage = pageManager.goToPreviousPage(persistLastSelection: DeviceCapabilities.supportsInkEditing) {
+            if DeviceCapabilities.supportsInkEditing {
+                canvasView.drawing = pageManager.drawingForDisplay(for: previousPage)
+            }
             updateUndoRedoState()
             updateCanGoToPreviousPage()
         }
@@ -279,10 +330,18 @@ struct PageView: View {
     }
     
     private func handlePageSelection(_ selectedPage: Page) {
-        canvasView.undoManager?.removeAllActions()
+        if DeviceCapabilities.supportsInkEditing {
+            canvasView.undoManager?.removeAllActions()
+        }
         
-        pageManager.setCurrentPage(selectedPage, updatePrevious: true)
-        canvasView.drawing = pageManager.drawingForDisplay(for: selectedPage)
+        pageManager.setCurrentPage(
+            selectedPage,
+            updatePrevious: true,
+            persistLastSelection: DeviceCapabilities.supportsInkEditing
+        )
+        if DeviceCapabilities.supportsInkEditing {
+            canvasView.drawing = pageManager.drawingForDisplay(for: selectedPage)
+        }
         updateUndoRedoState()
         updateCanGoToPreviousPage()
         navigationLevel = .page
@@ -304,9 +363,14 @@ struct PageView: View {
             swipeProgress = SwipeProgress(direction: direction, progress: progress, isMapGesture: false)
         case .ended:
             if progress >= 1.0 {
-                pageManager.addPage(translation: CGSize(width: translation.x, height: translation.y))
-                canvasView.drawing = pageManager.drawingForDisplay(for: pageManager.getCurrentPage())
-                canvasView.undoManager?.removeAllActions()
+                let swipeTranslation = CGSize(width: translation.x, height: translation.y)
+                if DeviceCapabilities.supportsInkEditing {
+                    pageManager.addPage(translation: swipeTranslation)
+                    canvasView.drawing = pageManager.drawingForDisplay(for: pageManager.getCurrentPage())
+                    canvasView.undoManager?.removeAllActions()
+                } else {
+                    navigateToExistingPage(translation: swipeTranslation)
+                }
             }
             withAnimation(.linear(duration: 0)) {
                 swipeProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
@@ -329,13 +393,39 @@ struct PageView: View {
             }
         case .ended:
             if scale <= 0.6 {
-                canvasView.undoManager?.removeAllActions()
+                if DeviceCapabilities.supportsInkEditing {
+                    canvasView.undoManager?.removeAllActions()
+                }
                 navigationLevel = .notebook
             }
             swipeProgress = SwipeProgress(direction: nil, progress: 0, isMapGesture: false)
         default:
             break
         }
+    }
+
+    private func navigateToExistingPage(translation: CGSize) {
+        guard let currentPage = pageManager.getCurrentPage(),
+              let positionX = currentPage.positionX,
+              let positionY = currentPage.positionY else { return }
+
+        let targetPosition: (x: Int, y: Int)
+        if abs(translation.width) > abs(translation.height) {
+            targetPosition = (translation.width > 0 ? positionX - 1 : positionX + 1, positionY)
+        } else {
+            targetPosition = (positionX, translation.height < 0 ? positionY - 1 : positionY + 1)
+        }
+
+        guard let targetPage = pageManager.pages.first(where: {
+            $0.positionX == targetPosition.x && $0.positionY == targetPosition.y
+        }) else { return }
+
+        pageManager.setCurrentPage(
+            targetPage,
+            updatePrevious: false,
+            persistLastSelection: DeviceCapabilities.supportsInkEditing
+        )
+        updateCanGoToPreviousPage()
     }
     
     private func getAdjacentPages() -> AdjacentPages {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct AdjacentPages {
     let left: Bool
@@ -33,6 +34,40 @@ enum EdgeDirection: CaseIterable {
 enum DragState: Equatable {
     case inactive
     case dragging(translation: CGSize)
+}
+
+enum DeviceCapabilities {
+    static var supportsInkEditing: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+}
+
+enum TopChromeLayout {
+    static func pageToolbarTopPadding(_ safeAreaTop: CGFloat) -> CGFloat {
+        guard isPhone else {
+            return safeAreaTop
+        }
+
+        return max(safeAreaTop, currentWindowSafeAreaInsets.top)
+    }
+
+    static func floatingChromeTopPadding(_ safeAreaTop: CGFloat) -> CGFloat {
+        safeAreaTop + (isPhone ? 0 : 24)
+    }
+
+    private static var isPhone: Bool {
+        UIDevice.current.userInterfaceIdiom == .phone
+    }
+
+    private static var currentWindowSafeAreaInsets: UIEdgeInsets {
+        let windows = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .flatMap(\.windows)
+
+        return windows.first(where: \.isKeyWindow)?.safeAreaInsets
+            ?? windows.first?.safeAreaInsets
+            ?? .zero
+    }
 }
 
 // MARK: - Color interpolation

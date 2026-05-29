@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import PencilKit
 import SwiftData
+import UIKit
 
 // MARK: - PageManager
 @MainActor
@@ -68,18 +69,20 @@ class PageManager: ObservableObject {
         return newPage
     }
     
-    func setCurrentPage(_ page: Page, updatePrevious: Bool = true) {
+    func setCurrentPage(_ page: Page, updatePrevious: Bool = true, persistLastSelection: Bool = true) {
         if updatePrevious {
             previousPageID = currentPageID
         }
         currentPageID = page.id
-        saveLastSelectedPage(page)
+        if persistLastSelection {
+            saveLastSelectedPage(page)
+        }
         // Save current page position
         UserDefaults.standard.set(page.positionX, forKey: "CurrentPageX")
         UserDefaults.standard.set(page.positionY, forKey: "CurrentPageY")
     }
     
-    func goToPreviousPage() -> Page? {
+    func goToPreviousPage(persistLastSelection: Bool = true) -> Page? {
         guard let previousPageID = previousPageID,
               let previousPage = pages.first(where: { $0.id == previousPageID }) else {
             return nil
@@ -88,7 +91,9 @@ class PageManager: ObservableObject {
         let currentPage = getCurrentPage()
         self.currentPageID = previousPageID
         self.previousPageID = currentPage?.id
-        saveLastSelectedPage(previousPage)
+        if persistLastSelection {
+            saveLastSelectedPage(previousPage)
+        }
         
         // Save current page position
         UserDefaults.standard.set(previousPage.positionX, forKey: "CurrentPageX")
@@ -125,7 +130,7 @@ class PageManager: ObservableObject {
         return pages.first { $0.id == currentPageID }
     }
 
-    func updatePageSize(_ size: CGSize) {
+    func updatePageSize(_ size: CGSize, updatesThumbnails: Bool = true) {
         guard size.width > 0, size.height > 0 else { return }
 
         let currentSize = pageRect.size
@@ -134,6 +139,8 @@ class PageManager: ObservableObject {
         }
 
         pageRect = CGRect(origin: .zero, size: size)
+        guard updatesThumbnails else { return }
+
         invalidateThumbnailCache()
         updateAllThumbnails(colorScheme: .light)
     }
@@ -149,7 +156,7 @@ class PageManager: ObservableObject {
         return notebook
     }
 
-    func switchToNotebook(_ notebook: Notebook) {
+    func switchToNotebook(_ notebook: Notebook, persistLastSelection: Bool = true) {
         guard let notebookID = notebook.id else { return }
 
         currentNotebookID = notebookID
@@ -161,12 +168,16 @@ class PageManager: ObservableObject {
             let page = pages.first(where: { $0.id == notebook.lastSelectedPageID }) ?? firstPage
             currentPageID = page.id
             saveCurrentPagePosition(page)
-            saveLastSelectedPage(page)
+            if persistLastSelection {
+                saveLastSelectedPage(page)
+            }
         } else {
             let initialPage = createPage(position: (0, 0))
             currentPageID = initialPage.id
             saveCurrentPagePosition(initialPage)
-            saveLastSelectedPage(initialPage)
+            if persistLastSelection {
+                saveLastSelectedPage(initialPage)
+            }
         }
     }
 
@@ -220,6 +231,10 @@ class PageManager: ObservableObject {
         }
 
         return drawing.scaled(from: page.pageSize, to: pageRect.size)
+    }
+
+    func drawingImageForDisplay(for page: Page?) -> UIImage {
+        drawingForDisplay(for: page).image(from: pageRect, scale: UIScreen.main.scale)
     }
 
     private func migratePagesMissingPageSize() -> Bool {

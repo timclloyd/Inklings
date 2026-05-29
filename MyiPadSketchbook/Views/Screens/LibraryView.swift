@@ -64,7 +64,7 @@ struct LibraryView: View {
             )
         }
 
-        return LibraryBentoLayout.rows(for: notebookItems + [.addNotebook])
+        return LibraryBentoLayout.rows(for: DeviceCapabilities.supportsInkEditing ? notebookItems + [.addNotebook] : notebookItems)
     }
 
     @ViewBuilder
@@ -98,7 +98,15 @@ struct LibraryView: View {
                 colorScheme: colorScheme,
                 aspectRatio: layout.aspectRatio
             )
-            .gesture(notebookGesture(for: notebook))
+            .onTapGesture {
+                onNotebookSelected(notebook)
+            }
+            .onLongPressGesture(minimumDuration: 0.5) {
+                guard DeviceCapabilities.supportsInkEditing else { return }
+
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                notebookPendingTrash = notebook
+            }
         case .addNotebook:
             Button(action: onAddNotebook) {
                 LibraryAddNotebookTile(colorScheme: colorScheme)
@@ -107,23 +115,6 @@ struct LibraryView: View {
         }
     }
 
-    private func notebookGesture(for notebook: Notebook) -> some Gesture {
-        ExclusiveGesture(
-            LongPressGesture(minimumDuration: 0.5),
-            TapGesture()
-        )
-        .onEnded { value in
-            switch value {
-            case .first(true):
-                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                notebookPendingTrash = notebook
-            case .second:
-                onNotebookSelected(notebook)
-            default:
-                break
-            }
-        }
-    }
 }
 
 // MARK: - LibraryBentoLayout

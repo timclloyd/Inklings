@@ -94,9 +94,12 @@ struct NotebookView: View {
                     if navigationLevel == .library {
                         LibraryView(
                             pageManager: pageManager,
-                            topInset: geometry.safeAreaInsets.top + 24,
+                            topInset: TopChromeLayout.floatingChromeTopPadding(geometry.safeAreaInsets.top),
                             onNotebookSelected: { notebook in
-                                pageManager.switchToNotebook(notebook)
+                                pageManager.switchToNotebook(
+                                    notebook,
+                                    persistLastSelection: DeviceCapabilities.supportsInkEditing
+                                )
                                 centreOnCurrentPage(visibleSize: geometry.size, animated: false)
                                 navigationLevel = .notebook
                             },
@@ -138,7 +141,7 @@ struct NotebookView: View {
                             Spacer()
                             toolbarView
                         }
-                        .padding(.top, geometry.safeAreaInsets.top + 24)
+                        .padding(.top, TopChromeLayout.floatingChromeTopPadding(geometry.safeAreaInsets.top))
                         .padding(.trailing, 24)
 
                         Spacer()
@@ -208,7 +211,7 @@ struct NotebookView: View {
                 Spacer()
             }
             .padding(.leading, 24)
-            .padding(.top, geometry.safeAreaInsets.top + 24)
+            .padding(.top, TopChromeLayout.floatingChromeTopPadding(geometry.safeAreaInsets.top))
 
             Spacer()
         }
@@ -217,7 +220,9 @@ struct NotebookView: View {
     
     private var toolbarView: some View {
         HStack(spacing: 18) {
-            rearrangeButton
+            if DeviceCapabilities.supportsInkEditing {
+                rearrangeButton
+            }
             ShareButton(pageManager: pageManager)
         }
         .padding(8)
@@ -350,7 +355,8 @@ struct NotebookView: View {
     }
 
     private func handleNotebookPinchChanged(_ scale: CGFloat) {
-        guard navigationLevel == .notebook, !isRearranging else { return }
+        guard navigationLevel == .notebook,
+              !isRearranging else { return }
         if scale <= 0.72 {
             libraryPinchProgress = SwipeProgress(direction: .top, progress: 1, isMapGesture: true)
         } else {
@@ -437,7 +443,8 @@ struct NotebookView: View {
     }
 
     private func scheduleVisibleThumbnailGeneration(visibleSize: CGSize, layout: NotebookLayout) {
-        guard navigationLevel == .notebook else { return }
+        guard navigationLevel == .notebook,
+              DeviceCapabilities.supportsInkEditing else { return }
 
         let visibleRect = CGRect(origin: contentOffset, size: visibleSize)
             .insetBy(dx: -thumbnailSize.width * 2, dy: -thumbnailSize.height * 2)
